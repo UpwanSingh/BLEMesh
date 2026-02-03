@@ -1,0 +1,557 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		007E6D79C7684F559F5E95EA /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5957AC411B6EFF5F4A7030F /* Constants.swift */; };
+		1BB24E318695F374B2C174DF /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC565F20BE78C76CBCDC089D /* Conversation.swift */; };
+		2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245963C629043F211DA896AA /* OnboardingView.swift */; };
+		2BAEBC146E06B30B598FCEA6 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF602DEDF7C524E18CEB86D /* ChatViewModel.swift */; };
+		2EEA678858351E95DC395DF1 /* RouteMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71896497C1F24820BE674DF3 /* RouteMessages.swift */; };
+		4674D58499A0EF9EE33EF5BB /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30CA183ED5B34211432F7253 /* BluetoothManager.swift */; };
+		47DA775CCB8F140B6AB24306 /* ConversationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0E5CE1165C21D4A6578C86 /* ConversationManager.swift */; };
+		489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D01DA76685C068E3E3CCAB /* SettingsView.swift */; };
+		5D0B05A53D45C7471D132933 /* DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98939B8459285CF1ABB79EB2 /* DeliveryService.swift */; };
+		66D0C9A80988D0278A0DD764 /* MessageEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = 968FB0FAE917229C4B40FB89 /* MessageEnvelope.swift */; };
+		6C2739E11A7FC762014142E4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BB45FC858867B87819C033 /* ContentView.swift */; };
+		6E3FA96B99F56FE22BFFEB04 /* OfflineQueueService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2A561B1F8B693B3FF4F0BE8 /* OfflineQueueService.swift */; };
+		6E8153F8E061928B7E046ABD /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1204DDFE6456C497463939DB /* Logger.swift */; };
+		6EC50AB24EFE1959B455E247 /* RoutingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF032C93F0F203C42AC0B958 /* RoutingService.swift */; };
+		7A3A3D135576AD6BB51B414B /* RoutingTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4FE5CB303A5BFB883D5228 /* RoutingTable.swift */; };
+		88BB69D5B572DBCDA0DC8BA2 /* Peer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888001E60814A0DD133777B9 /* Peer.swift */; };
+		8A3F848C0E7002E157ED18BC /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46999965A350B3923313FB /* ChatView.swift */; };
+		976A3C24B42EC73E2BCBD803 /* GroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CD7B4B00C65391206019D9 /* GroupViews.swift */; };
+		9F0F5EE22495225D5D6A236D /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95AEA9FD4D3B701FC0F3660 /* StorageService.swift */; };
+		A496289A208F193B111277B5 /* EncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0756156CD3E6442D9C8CF2E /* EncryptionService.swift */; };
+		B40F4A7C4FA8B25C4738CFB2 /* BLEMeshApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */; };
+		B41DA85008427253E8BA24DA /* SecurePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B6AB7EFAF4F03069A0945E /* SecurePayload.swift */; };
+		CD9A8AF1CA6B00E7350BBBCF /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FD0D02437CD7A01A75478DD /* Message.swift */; };
+		D2CFB997CA837FAA22BF2559 /* MessageRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F55A7BBE79CE2606C2E95E /* MessageRelayService.swift */; };
+		D586FFCCC7B7EF41600EB8B7 /* StorageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CC7A0D6B53193B635F0F0EB /* StorageModels.swift */; };
+		EB803052C960F2BEB750AC88 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A370768E575CE1FBA847E6E6 /* KeychainService.swift */; };
+		EC5ECC70F0E0C03F37AAA7A5 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A773169C91FAFA93EE434037 /* DeviceIdentity.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		05B6AB7EFAF4F03069A0945E /* SecurePayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurePayload.swift; sourceTree = "<group>"; };
+		0CC7A0D6B53193B635F0F0EB /* StorageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageModels.swift; sourceTree = "<group>"; };
+		1204DDFE6456C497463939DB /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		1A4FE5CB303A5BFB883D5228 /* RoutingTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTable.swift; sourceTree = "<group>"; };
+		245963C629043F211DA896AA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		30CA183ED5B34211432F7253 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
+		35D01DA76685C068E3E3CCAB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3F7BFD1123719513BB6FE1BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		71896497C1F24820BE674DF3 /* RouteMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteMessages.swift; sourceTree = "<group>"; };
+		73F55A7BBE79CE2606C2E95E /* MessageRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRelayService.swift; sourceTree = "<group>"; };
+		7FD0D02437CD7A01A75478DD /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		888001E60814A0DD133777B9 /* Peer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Peer.swift; sourceTree = "<group>"; };
+		968FB0FAE917229C4B40FB89 /* MessageEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageEnvelope.swift; sourceTree = "<group>"; };
+		98939B8459285CF1ABB79EB2 /* DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryService.swift; sourceTree = "<group>"; };
+		A2A561B1F8B693B3FF4F0BE8 /* OfflineQueueService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineQueueService.swift; sourceTree = "<group>"; };
+		A370768E575CE1FBA847E6E6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		A773169C91FAFA93EE434037 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		A9BB45FC858867B87819C033 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshApp.swift; sourceTree = "<group>"; };
+		BC515D9BE23EFA3836D289CF /* BLEMesh.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BLEMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C95AEA9FD4D3B701FC0F3660 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		CC46999965A350B3923313FB /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		DEF602DEDF7C524E18CEB86D /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		E2CD7B4B00C65391206019D9 /* GroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupViews.swift; sourceTree = "<group>"; };
+		E5957AC411B6EFF5F4A7030F /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		EF032C93F0F203C42AC0B958 /* RoutingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingService.swift; sourceTree = "<group>"; };
+		F0756156CD3E6442D9C8CF2E /* EncryptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptionService.swift; sourceTree = "<group>"; };
+		FC565F20BE78C76CBCDC089D /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		FF0E5CE1165C21D4A6578C86 /* ConversationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		074F2F62FF2FECB47EA4FE6E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BC515D9BE23EFA3836D289CF /* BLEMesh.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		081E3D025CFA869B11F1A771 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				35D01DA76685C068E3E3CCAB /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		0F37B68CA0F871DF3C2AA128 /* Messaging */ = {
+			isa = PBXGroup;
+			children = (
+				FF0E5CE1165C21D4A6578C86 /* ConversationManager.swift */,
+			);
+			path = Messaging;
+			sourceTree = "<group>";
+		};
+		104238DF18CA911EF2E0C492 /* BLEMesh */ = {
+			isa = PBXGroup;
+			children = (
+				3F7BFD1123719513BB6FE1BD /* Info.plist */,
+				F235463710844BEDCE7C1B12 /* App */,
+				FCABA38C6653D7A5538828F9 /* Core */,
+				4AC642DEF810BC4903BFB8EE /* Managers */,
+				380E9B0773D1833901C0AC93 /* Models */,
+				10A1A5EA9D7F5D7824D4428B /* Resources */,
+				AF16280E94C2B49AB61FC7B8 /* Services */,
+				B56230315D304D874B21C4CC /* ViewModels */,
+				BAD5FCD5D3708C4A50BB343B /* Views */,
+			);
+			path = BLEMesh;
+			sourceTree = "<group>";
+		};
+		10A1A5EA9D7F5D7824D4428B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		380E9B0773D1833901C0AC93 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7FD0D02437CD7A01A75478DD /* Message.swift */,
+				888001E60814A0DD133777B9 /* Peer.swift */,
+				99078CD9426020F806CCB900 /* Identity */,
+				6D1F0AD691226414AA072284 /* Messaging */,
+				8AE0FDBF58F7522E6F3A5A1F /* Routing */,
+				4D5BD4DC6345EF0115DC8C30 /* Storage */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		453621E2FFA5DFF3E97DA3ED /* Encryption */ = {
+			isa = PBXGroup;
+			children = (
+				F0756156CD3E6442D9C8CF2E /* EncryptionService.swift */,
+				A370768E575CE1FBA847E6E6 /* KeychainService.swift */,
+			);
+			path = Encryption;
+			sourceTree = "<group>";
+		};
+		4AC642DEF810BC4903BFB8EE /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				30CA183ED5B34211432F7253 /* BluetoothManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		4D5BD4DC6345EF0115DC8C30 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				0CC7A0D6B53193B635F0F0EB /* StorageModels.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		55CD4CD66A0BA42A0D571F11 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				245963C629043F211DA896AA /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		58ECC2A60FA8CFB48EF2CC53 /* Groups */ = {
+			isa = PBXGroup;
+			children = (
+				E2CD7B4B00C65391206019D9 /* GroupViews.swift */,
+			);
+			path = Groups;
+			sourceTree = "<group>";
+		};
+		6D1F0AD691226414AA072284 /* Messaging */ = {
+			isa = PBXGroup;
+			children = (
+				FC565F20BE78C76CBCDC089D /* Conversation.swift */,
+				05B6AB7EFAF4F03069A0945E /* SecurePayload.swift */,
+			);
+			path = Messaging;
+			sourceTree = "<group>";
+		};
+		85CD68C92F8340AD4C1A659B = {
+			isa = PBXGroup;
+			children = (
+				104238DF18CA911EF2E0C492 /* BLEMesh */,
+				074F2F62FF2FECB47EA4FE6E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		875C882A4ACB7229113C8E12 /* Reliability */ = {
+			isa = PBXGroup;
+			children = (
+				98939B8459285CF1ABB79EB2 /* DeliveryService.swift */,
+				A2A561B1F8B693B3FF4F0BE8 /* OfflineQueueService.swift */,
+			);
+			path = Reliability;
+			sourceTree = "<group>";
+		};
+		8AE0FDBF58F7522E6F3A5A1F /* Routing */ = {
+			isa = PBXGroup;
+			children = (
+				968FB0FAE917229C4B40FB89 /* MessageEnvelope.swift */,
+				71896497C1F24820BE674DF3 /* RouteMessages.swift */,
+				1A4FE5CB303A5BFB883D5228 /* RoutingTable.swift */,
+			);
+			path = Routing;
+			sourceTree = "<group>";
+		};
+		99078CD9426020F806CCB900 /* Identity */ = {
+			isa = PBXGroup;
+			children = (
+				A773169C91FAFA93EE434037 /* DeviceIdentity.swift */,
+			);
+			path = Identity;
+			sourceTree = "<group>";
+		};
+		AF16280E94C2B49AB61FC7B8 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				73F55A7BBE79CE2606C2E95E /* MessageRelayService.swift */,
+				EF032C93F0F203C42AC0B958 /* RoutingService.swift */,
+				453621E2FFA5DFF3E97DA3ED /* Encryption */,
+				0F37B68CA0F871DF3C2AA128 /* Messaging */,
+				875C882A4ACB7229113C8E12 /* Reliability */,
+				E370B3785A1AA3DDEC1BEE65 /* Storage */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B56230315D304D874B21C4CC /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				DEF602DEDF7C524E18CEB86D /* ChatViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		BAD5FCD5D3708C4A50BB343B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A9BB45FC858867B87819C033 /* ContentView.swift */,
+				C256CD43E01436C92D452C5F /* Chat */,
+				58ECC2A60FA8CFB48EF2CC53 /* Groups */,
+				55CD4CD66A0BA42A0D571F11 /* Onboarding */,
+				081E3D025CFA869B11F1A771 /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C256CD43E01436C92D452C5F /* Chat */ = {
+			isa = PBXGroup;
+			children = (
+				CC46999965A350B3923313FB /* ChatView.swift */,
+			);
+			path = Chat;
+			sourceTree = "<group>";
+		};
+		E370B3785A1AA3DDEC1BEE65 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				C95AEA9FD4D3B701FC0F3660 /* StorageService.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		F235463710844BEDCE7C1B12 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FCABA38C6653D7A5538828F9 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E5957AC411B6EFF5F4A7030F /* Constants.swift */,
+				1204DDFE6456C497463939DB /* Logger.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AF6A30E75EB922791A5FD902 /* BLEMesh */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD797EDDE714B580C42F04D2 /* Build configuration list for PBXNativeTarget "BLEMesh" */;
+			buildPhases = (
+				33798337E118833793FA8134 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BLEMesh;
+			packageProductDependencies = (
+			);
+			productName = BLEMesh;
+			productReference = BC515D9BE23EFA3836D289CF /* BLEMesh.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6DC7227B1382636CA7DA9D57 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					AF6A30E75EB922791A5FD902 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = E9701A014F4D271A3565075B /* Build configuration list for PBXProject "BLEMesh" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 85CD68C92F8340AD4C1A659B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AF6A30E75EB922791A5FD902 /* BLEMesh */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		33798337E118833793FA8134 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B40F4A7C4FA8B25C4738CFB2 /* BLEMeshApp.swift in Sources */,
+				4674D58499A0EF9EE33EF5BB /* BluetoothManager.swift in Sources */,
+				8A3F848C0E7002E157ED18BC /* ChatView.swift in Sources */,
+				2BAEBC146E06B30B598FCEA6 /* ChatViewModel.swift in Sources */,
+				007E6D79C7684F559F5E95EA /* Constants.swift in Sources */,
+				6C2739E11A7FC762014142E4 /* ContentView.swift in Sources */,
+				1BB24E318695F374B2C174DF /* Conversation.swift in Sources */,
+				47DA775CCB8F140B6AB24306 /* ConversationManager.swift in Sources */,
+				5D0B05A53D45C7471D132933 /* DeliveryService.swift in Sources */,
+				EC5ECC70F0E0C03F37AAA7A5 /* DeviceIdentity.swift in Sources */,
+				A496289A208F193B111277B5 /* EncryptionService.swift in Sources */,
+				976A3C24B42EC73E2BCBD803 /* GroupViews.swift in Sources */,
+				EB803052C960F2BEB750AC88 /* KeychainService.swift in Sources */,
+				6E8153F8E061928B7E046ABD /* Logger.swift in Sources */,
+				CD9A8AF1CA6B00E7350BBBCF /* Message.swift in Sources */,
+				66D0C9A80988D0278A0DD764 /* MessageEnvelope.swift in Sources */,
+				D2CFB997CA837FAA22BF2559 /* MessageRelayService.swift in Sources */,
+				6E3FA96B99F56FE22BFFEB04 /* OfflineQueueService.swift in Sources */,
+				2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */,
+				88BB69D5B572DBCDA0DC8BA2 /* Peer.swift in Sources */,
+				2EEA678858351E95DC395DF1 /* RouteMessages.swift in Sources */,
+				6EC50AB24EFE1959B455E247 /* RoutingService.swift in Sources */,
+				7A3A3D135576AD6BB51B414B /* RoutingTable.swift in Sources */,
+				B41DA85008427253E8BA24DA /* SecurePayload.swift in Sources */,
+				489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */,
+				D586FFCCC7B7EF41600EB8B7 /* StorageModels.swift in Sources */,
+				9F0F5EE22495225D5D6A236D /* StorageService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		53FDA717C56A77D4AB9144DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BLEMesh/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.blemesh.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5AEFF832A62256D6AE6AAFF7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BLEMesh/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.blemesh.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AB74E4BF1E6557F1631A1708 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = BLEMesh/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B476D1C6EAFD960528ECF4EC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = BLEMesh/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E9701A014F4D271A3565075B /* Build configuration list for PBXProject "BLEMesh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B476D1C6EAFD960528ECF4EC /* Debug */,
+				AB74E4BF1E6557F1631A1708 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD797EDDE714B580C42F04D2 /* Build configuration list for PBXNativeTarget "BLEMesh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53FDA717C56A77D4AB9144DC /* Debug */,
+				5AEFF832A62256D6AE6AAFF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6DC7227B1382636CA7DA9D57 /* Project object */;
+}

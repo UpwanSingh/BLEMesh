@@ -1,0 +1,51 @@
+name: BLEMesh
+options:
+  bundleIdPrefix: com.blemesh
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    INFOPLIST_FILE: BLEMesh/Info.plist
+    CODE_SIGN_STYLE: Automatic
+    DEBUG_INFORMATION_FORMAT: dwarf
+    ENABLE_BITCODE: NO
+
+targets:
+  BLEMesh:
+    type: application
+    platform: iOS
+    sources:
+      - BLEMesh
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.blemesh.app
+        INFOPLIST_FILE: BLEMesh/Info.plist
+    info:
+      path: BLEMesh/Info.plist
+      properties:
+        CFBundleName: BLEMesh
+        CFBundleDisplayName: BLE Mesh
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0"
+        CFBundlePackageType: APPL
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen:
+          UIColorName: systemBackgroundColor
+          UIImageName: ""
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
+        NSBluetoothAlwaysUsageDescription: "This app uses Bluetooth to discover nearby devices and exchange messages."
+        NSBluetoothPeripheralUsageDescription: "This app uses Bluetooth to advertise and receive messages from nearby devices."
+        UIBackgroundModes:
+          - bluetooth-central
+          - bluetooth-peripheral
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
