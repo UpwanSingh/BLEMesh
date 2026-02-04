@@ -24,6 +24,8 @@ struct ChatView: View {
         .sheet(isPresented: $showNewGroupSheet) {
             NewGroupView(viewModel: viewModel)
         }
+        .navigationTitle(destinationTitle)
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     // MARK: - Destination Bar

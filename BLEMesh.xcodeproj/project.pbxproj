@@ -24,6 +24,7 @@
 		7A3A3D135576AD6BB51B414B /* RoutingTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4FE5CB303A5BFB883D5228 /* RoutingTable.swift */; };
 		88BB69D5B572DBCDA0DC8BA2 /* Peer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888001E60814A0DD133777B9 /* Peer.swift */; };
 		8A3F848C0E7002E157ED18BC /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46999965A350B3923313FB /* ChatView.swift */; };
+		936F34B9D55CD429BDE209AE /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8F8694D1A12A8676798F86 /* Theme.swift */; };
 		976A3C24B42EC73E2BCBD803 /* GroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CD7B4B00C65391206019D9 /* GroupViews.swift */; };
 		9F0F5EE22495225D5D6A236D /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95AEA9FD4D3B701FC0F3660 /* StorageService.swift */; };
 		A496289A208F193B111277B5 /* EncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0756156CD3E6442D9C8CF2E /* EncryptionService.swift */; };
@@ -55,6 +56,7 @@
 		A370768E575CE1FBA847E6E6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		A773169C91FAFA93EE434037 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		A9BB45FC858867B87819C033 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA8F8694D1A12A8676798F86 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshApp.swift; sourceTree = "<group>"; };
 		BC515D9BE23EFA3836D289CF /* BLEMesh.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BLEMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C95AEA9FD4D3B701FC0F3660 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 				58ECC2A60FA8CFB48EF2CC53 /* Groups */,
 				55CD4CD66A0BA42A0D571F11 /* Onboarding */,
 				081E3D025CFA869B11F1A771 /* Settings */,
+				D41508D0A59E97FA5AA56BD8 /* Theme */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -253,6 +256,14 @@
 				CC46999965A350B3923313FB /* ChatView.swift */,
 			);
 			path = Chat;
+			sourceTree = "<group>";
+		};
+		D41508D0A59E97FA5AA56BD8 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				AA8F8694D1A12A8676798F86 /* Theme.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 		E370B3785A1AA3DDEC1BEE65 /* Storage */ = {
@@ -365,6 +376,7 @@
 				489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */,
 				D586FFCCC7B7EF41600EB8B7 /* StorageModels.swift in Sources */,
 				9F0F5EE22495225D5D6A236D /* StorageService.swift in Sources */,
+				936F34B9D55CD429BDE209AE /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

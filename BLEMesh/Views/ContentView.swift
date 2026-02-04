@@ -1,6 +1,30 @@
 import SwiftUI
 
 /// Main content view with tabbed navigation
+// Local theme tokens (kept here so the file builds even if Theme.swift isn't included in the Xcode target)
+private enum ThemeLocal {
+    enum Colors {
+        static let primary = SwiftUI.Color("AccentColor")
+        static let background = SwiftUI.Color(.systemBackground)
+        static let card = SwiftUI.Color(.secondarySystemBackground)
+        static let accent = SwiftUI.Color.blue
+        static let success = SwiftUI.Color.green
+        static let muted = SwiftUI.Color(.secondaryLabel)
+    }
+
+    enum Spacing {
+        static let small: CGFloat = 6
+        static let base: CGFloat = 12
+        static let large: CGFloat = 20
+    }
+
+    enum Corner {
+        static let small: CGFloat = 8
+        static let medium: CGFloat = 12
+        static let large: CGFloat = 16
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var viewModel: ChatViewModel
     @State private var showSettings = false
@@ -17,6 +41,8 @@ struct ContentView: View {
                 TabView {
                     // Chat tab
                     ChatTabView()
+                        .navigationTitle("Messages")
+                        .navigationBarTitleDisplayMode(.inline)
                         .tabItem {
                             Label("Chat", systemImage: "message.fill")
                         }
@@ -31,6 +57,8 @@ struct ContentView: View {
                     
                     // Network tab (Peers + Routes)
                     NetworkTabView()
+                        .navigationTitle("Network")
+                        .navigationBarTitleDisplayMode(.inline)
                         .tabItem {
                             Label("Network", systemImage: "antenna.radiowaves.left.and.right")
                         }
@@ -390,7 +418,7 @@ struct MessageBubble: View {
     let message: MeshMessage
     
     var body: some View {
-        VStack(alignment: message.isFromLocalDevice ? .trailing : .leading, spacing: 2) {
+        VStack(alignment: message.isFromLocalDevice ? .trailing : .leading, spacing: 4) {
             // Sender info
             HStack(spacing: 4) {
                 Text(message.senderName)
@@ -412,10 +440,13 @@ struct MessageBubble: View {
             
             // Message content
             Text(message.content)
-                .padding(10)
-                .background(message.isFromLocalDevice ? Color.blue : Color(.systemGray5))
+                .padding(12)
                 .foregroundColor(message.isFromLocalDevice ? .white : .primary)
-                .cornerRadius(12)
+                .background(
+                    RoundedRectangle(cornerRadius: ThemeLocal.Corner.medium, style: .continuous)
+                        .fill(message.isFromLocalDevice ? ThemeLocal.Colors.accent : ThemeLocal.Colors.card)
+                )
+                .shadow(color: Color.black.opacity(0.02), radius: 2, x: 0, y: 1)
             
             // Timestamp
             Text(message.timestamp, style: .time)
@@ -443,7 +474,7 @@ struct MessageInputView: View {
                 Image(systemName: viewModel.isSending ? "hourglass" : "paperplane.fill")
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
-                    .background(canSend ? Color.blue : Color.gray)
+                    .background(canSend ? ThemeLocal.Colors.accent : Color.gray)
                     .cornerRadius(22)
             }
             .disabled(!canSend || viewModel.isSending)
