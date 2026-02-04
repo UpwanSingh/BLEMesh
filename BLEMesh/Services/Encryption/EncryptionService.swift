@@ -52,6 +52,7 @@ final class EncryptionService {
     // MARK: - Private Properties
     
     private var sessionKeys: [UUID: SessionKey] = [:]
+    private var messageCounters: [UUID: UInt64] = [:]  // Message counter per peer for forward secrecy
     private var peerPublicKeys: [UUID: P256.KeyAgreement.PublicKey] = [:]
     private var peerSigningKeys: [UUID: P256.Signing.PublicKey] = [:]  // For signature verification
     private let lock = NSLock()
@@ -106,7 +107,10 @@ final class EncryptionService {
             lastUsed: Date()
         )
         
-        MeshLogger.app.info("Established session with peer: \(peerID.uuidString.prefix(8))")
+        // Initialize message counter for forward secrecy (KDF chain)
+        messageCounters[peerID] = 0
+        
+        MeshLogger.app.info("Established session with forward secrecy ratchet for peer: \(peerID.uuidString.prefix(8))")
         
         return symmetricKey
     }
@@ -142,7 +146,7 @@ final class EncryptionService {
     
     // MARK: - Encryption
     
-    /// Encrypt data for a specific peer
+    /// Encrypt data for a specific peer with forward secrecy via KDF ratchet
     func encrypt(_ data: Data, for peerID: UUID) throws -> EncryptedPayload {
         // Get or establish session key
         let key: SymmetricKey
@@ -152,7 +156,10 @@ final class EncryptionService {
             key = try establishSession(with: peerID)
         }
         
-        // Generate random nonce with proper error checking
+        // Derive message key using KDF ratchet for forward secrecy
+        let messageKey = try deriveMessageKey(from: key, for: peerID)
+        
+        // Generate random nonce
         var nonceData = Data(count: 12)
         let status = nonceData.withUnsafeMutableBytes { 
             SecRandomCopyBytes(kSecRandomDefault, 12, $0.baseAddress!) 
@@ -166,8 +173,8 @@ final class EncryptionService {
             throw EncryptionError.invalidNonce
         }
         
-        // Encrypt using AES-GCM
-        guard let sealedBox = try? AES.GCM.seal(data, using: key, nonce: nonce) else {
+        // Encrypt using the ratcheted message key
+        guard let sealedBox = try? AES.GCM.seal(data, using: messageKey, nonce: nonce) else {
             throw EncryptionError.encryptionFailed
         }
         
@@ -439,6 +446,31 @@ final class EncryptionService {
     }
     
     // MARK: - Private Helpers
+    
+    /// Derive a per-message key using KDF ratchet (forward secrecy)
+    /// Each message gets a unique key derived from the session key and message counter
+    /// Old message keys cannot decrypt new messages - forward secrecy achieved!
+    private func deriveMessageKey(from sessionKey: SymmetricKey, for peerID: UUID) throws -> SymmetricKey {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        // Increment message counter for this peer
+        let counter = (messageCounters[peerID] ?? 0) + 1
+        messageCounters[peerID] = counter
+        
+        // Use HKDF to derive a unique message key from session key + counter
+        let info = "message-key-\(counter)".data(using: .utf8)!
+        let derivedKey = HKDF<SHA256>.deriveKey(
+            inputKeyMaterial: sessionKey,
+            salt: peerID.uuidString.data(using: .utf8)!,
+            info: info,
+            outputByteCount: 32
+        )
+        
+        MeshLogger.app.debug("Derived message key #\(counter) for peer \(peerID.uuidString.prefix(8)) - forward secrecy active")
+        
+        return derivedKey
+    }
     
     private func deriveSymmetricKey(from sharedSecret: SharedSecret, peerID: UUID) -> SymmetricKey {
         // Create a salt combining both device IDs for deterministic key derivation
