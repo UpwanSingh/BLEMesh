@@ -1,9 +1,8 @@
 import Foundation
 import Combine
 import CoreBluetooth
-import CryptoKit
 
-/// Enhanced ViewModel for chat interface with routing, encryption, and groups
+/// Enhanced ViewModel for chat interface with routing and groups
 @MainActor
 final class ChatViewModel: ObservableObject {
     
@@ -21,7 +20,7 @@ final class ChatViewModel: ObservableObject {
     @Published var isSending: Bool = false
     @Published var isScanning: Bool = false
     @Published var isAdvertising: Bool = false
-    @Published var encryptionEnabled: Bool = true
+    @Published var encryptionEnabled: Bool = false // Always false now
     
     // Target for direct messaging
     @Published var selectedDestination: UUID? = nil
@@ -39,8 +38,8 @@ final class ChatViewModel: ObservableObject {
         var peersDiscovered: Int = 0
         var routeCount: Int = 0
         var pendingRoutes: Int = 0
-        var encryptedMessages: Int = 0
-        var decryptedMessages: Int = 0
+        var encryptedMessages: Int = 0 // Legacy field, always 0
+        var decryptedMessages: Int = 0 // Legacy field, always 0
     }
     
     // MARK: - Dependencies
@@ -48,12 +47,10 @@ final class ChatViewModel: ObservableObject {
     private let bluetoothManager: BluetoothManager
     private let routingService: RoutingService
     private let messageRelayService: MessageRelayService
-    private let encryptionService = EncryptionService.shared
     
     // MARK: - Private
     
     private var cancellables = Set<AnyCancellable>()
-    private var groupKeys: [UUID: SymmetricKey] = [:] // Group ID -> Key
     
     // MARK: - Initialization
     
@@ -71,7 +68,7 @@ final class ChatViewModel: ObservableObject {
         loadGroups()
         loadPersistedConversations()
         
-        MeshLogger.app.info("ChatViewModel initialized with encryption: \(self.encryptionEnabled)")
+        MeshLogger.app.info("ChatViewModel initialized (Unencrypted)")
     }
     
     // MARK: - Constants
@@ -108,13 +105,13 @@ final class ChatViewModel: ObservableObject {
         Task {
             do {
                 if let group = selectedGroup {
-                    // Group message
+                    // Group message (now plaintext)
                     try await sendGroupMessage(to: group, content: content)
                 } else if let destinationID = selectedDestination {
-                    // Direct message (encrypted)
+                    // Direct message (plaintext)
                     try await sendDirectMessage(to: destinationID, content: content)
                 } else {
-                    // Broadcast (unencrypted)
+                    // Broadcast (plaintext)
                     try await sendBroadcastMessage(content: content)
                 }
                 
@@ -129,25 +126,10 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-    /// Send encrypted direct message
+    /// Send direct message
     private func sendDirectMessage(to destinationID: UUID, content: String) async throws {
-        if encryptionEnabled {
-            // Try to encrypt
-            do {
-                try await messageRelayService.sendEncryptedMessage(
-                    to: destinationID,
-                    content: content
-                )
-                stats.encryptedMessages += 1
-                MeshLogger.message.info("Sent encrypted message to \(destinationID.uuidString.prefix(8))")
-            } catch EncryptionService.EncryptionError.noSessionKey {
-                // Fall back to unencrypted if no session key
-                MeshLogger.message.warning("No session key, sending unencrypted")
-                try await messageRelayService.sendDirectMessage(to: destinationID, content: content)
-            }
-        } else {
-            try await messageRelayService.sendDirectMessage(to: destinationID, content: content)
-        }
+        // Always send unencrypted
+        try await messageRelayService.sendDirectMessage(to: destinationID, content: content)
         
         // Add to local messages
         var message = MeshMessage(
@@ -162,22 +144,13 @@ final class ChatViewModel: ObservableObject {
         persistMessage(message, conversationID: getOrCreateDirectConversation(with: destinationID, name: "Device \(destinationID.uuidString.prefix(4))").id)
     }
     
-    /// Send encrypted group message
+    /// Send group message
     private func sendGroupMessage(to group: Conversation, content: String) async throws {
-        guard let groupKey = groupKeys[group.id] ?? group.groupKey else {
-            throw EncryptionService.EncryptionError.noSessionKey
+        // Group messages are now just direct messages to all participants
+        // Iterate and send to each member
+        for memberID in group.participantIDs where memberID != bluetoothManager.localDeviceID {
+             try await messageRelayService.sendDirectMessage(to: memberID, content: content)
         }
-        
-        // Store the group key for this session
-        groupKeys[group.id] = groupKey
-        
-        // Use the proper sendGroupMessage method on relay service
-        try await messageRelayService.sendGroupMessage(
-            to: group.id,
-            memberIDs: Array(group.participantIDs),
-            content: content,
-            groupKey: groupKey
-        )
         
         // Add to local messages
         var message = MeshMessage(
@@ -197,7 +170,7 @@ final class ChatViewModel: ObservableObject {
         MeshLogger.message.info("Sent group message to \(group.name)")
     }
     
-    /// Send broadcast message (unencrypted)
+    /// Send broadcast message
     private func sendBroadcastMessage(content: String) async throws {
         try await messageRelayService.sendBroadcastMessage(content: content)
         MeshLogger.message.info("Broadcast message sent")
@@ -209,33 +182,27 @@ final class ChatViewModel: ObservableObject {
     func createGroup(name: String, members: Set<UUID>) {
         let group = Conversation(groupName: name, members: members)
         
-        // Store group key
-        if let key = group.groupKey {
-            groupKeys[group.id] = key
-        }
-        
         groups.append(group)
         saveGroups()
         
-        // Distribute key to members (simplified - in production would use proper key exchange)
+        // Notify members about new group (simplified)
         Task {
             for memberID in members {
-                try? await distributeGroupKey(group, to: memberID)
+                 try? await messageRelayService.sendDirectMessage(to: memberID, content: "Added to group: \(name)")
             }
         }
         
         MeshLogger.message.info("Created group '\(name)' with \(members.count) members")
     }
     
-    /// Leave a group (notifies members and triggers key rotation)
+    /// Leave a group
     func leaveGroup(_ group: Conversation) {
-        // Notify remaining members that we're leaving (they should rotate the key)
+        // Notify remaining members
         Task {
             await notifyGroupMemberLeft(group, memberID: bluetoothManager.localDeviceID)
         }
         
         groups.removeAll { $0.id == group.id }
-        groupKeys.removeValue(forKey: group.id)
         saveGroups()
         
         if selectedGroup?.id == group.id {
@@ -245,7 +212,7 @@ final class ChatViewModel: ObservableObject {
         MeshLogger.message.info("Left group '\(group.name)'")
     }
     
-    /// Remove a member from a group (admin action)
+    /// Remove a member from a group
     func removeMemberFromGroup(_ memberID: UUID, group: Conversation) {
         guard let groupToUpdate = groups.first(where: { $0.id == group.id }) else { return }
         
@@ -257,18 +224,12 @@ final class ChatViewModel: ObservableObject {
             groups[index] = groupToUpdate
         }
         
-        // Rotate group key (excluded member won't get the new key)
-        Task {
-            await rotateGroupKeyAfterMemberRemoval(groupToUpdate)
-        }
-        
+        saveGroups()
         MeshLogger.message.info("Removed member from group '\(group.name)'")
     }
     
     /// Notify group members that someone left
     private func notifyGroupMemberLeft(_ group: Conversation, memberID: UUID) async {
-        // Send a system message to the group indicating member left
-        // Route to all remaining members
         for participant in group.participantIDs where participant != memberID {
             do {
                 try await messageRelayService.sendDirectMessage(to: participant, content: "[Member left the group]")
@@ -276,32 +237,6 @@ final class ChatViewModel: ObservableObject {
                 MeshLogger.app.error("Failed to notify member of leave: \(error)")
             }
         }
-    }
-    
-    /// Rotate group key after member removal and distribute to remaining members
-    private func rotateGroupKeyAfterMemberRemoval(_ group: Conversation) async {
-        // Generate new group key
-        let newKey = SymmetricKey(size: .bits256)
-        groupKeys[group.id] = newKey
-        
-        // Update group with new key
-        if let index = groups.firstIndex(where: { $0.id == group.id }) {
-            groups[index].groupKeyData = newKey.withUnsafeBytes { Data($0) }
-        }
-        
-        // Distribute new key to remaining members
-        for memberID in group.participantIDs where memberID != bluetoothManager.localDeviceID {
-            do {
-                let groupWithNewKey = group
-                groupWithNewKey.groupKeyData = newKey.withUnsafeBytes { Data($0) }
-                try await distributeGroupKey(groupWithNewKey, to: memberID)
-            } catch {
-                MeshLogger.app.error("Failed to distribute rotated key to \(memberID.uuidString.prefix(8)): \(error)")
-            }
-        }
-        
-        saveGroups()
-        MeshLogger.app.info("Rotated group key for '\(group.name)' after member removal")
     }
     
     /// Open a conversation
@@ -365,55 +300,6 @@ final class ChatViewModel: ObservableObject {
         case .read: return .read
         case .failed: return .failed
         }
-    }
-    
-    /// Distribute group key to a member
-    private func distributeGroupKey(_ group: Conversation, to memberID: UUID) async throws {
-        guard let groupKey = group.groupKey else { return }
-        
-        // Encrypt group key for this specific member using their session key
-        let encryptedPayload = try encryptionService.exportGroupKey(groupKey, for: memberID)
-        
-        // Create group key distribution message
-        let gkd = GroupKeyDistribute(
-            groupID: group.id,
-            groupName: group.name,
-            memberIDs: Array(group.participantIDs),
-            encryptedKey: encryptedPayload.ciphertext,
-            nonce: encryptedPayload.nonce,
-            tag: encryptedPayload.tag,
-            senderID: DeviceIdentity.shared.deviceID
-        )
-        
-        // Send as control message
-        let controlMsg = try ControlMessage(type: .groupKeyDistribute, content: gkd)
-        let envelope = try MessageEnvelope(
-            originID: bluetoothManager.localDeviceID,
-            originName: bluetoothManager.localDeviceName,
-            controlMessage: controlMsg
-        )
-        
-        // Route to the member
-        let data = try envelope.serialize()
-        let chunks = ChunkCreator.createChunks(messageID: envelope.id, data: data)
-        
-        // Try direct send or via route
-        if let directPeer = bluetoothManager.connectedPeers[memberID] {
-            for chunk in chunks {
-                if let chunkData = try? chunk.serialize() {
-                    _ = bluetoothManager.send(data: chunkData, to: directPeer)
-                }
-            }
-        } else if let route = routingService.getRoute(to: memberID),
-                  let nextPeer = bluetoothManager.connectedPeers[route.nextHopID] {
-            for chunk in chunks {
-                if let chunkData = try? chunk.serialize() {
-                    _ = bluetoothManager.send(data: chunkData, to: nextPeer)
-                }
-            }
-        }
-        
-        MeshLogger.message.info("Distributed group key for '\(group.name)' to \(memberID.uuidString.prefix(8))")
     }
     
     // MARK: - Peer Actions
@@ -529,8 +415,8 @@ final class ChatViewModel: ObservableObject {
     }
     
     func toggleEncryption() {
-        encryptionEnabled.toggle()
-        MeshLogger.app.info("Encryption \(self.encryptionEnabled ? "enabled" : "disabled")")
+        // No-op or show error
+        MeshLogger.app.info("Encryption is disabled in this version")
     }
     
     // MARK: - Private Methods
@@ -641,25 +527,7 @@ final class ChatViewModel: ObservableObject {
             MeshLogger.app.info("UI received message from: \(message.senderName)")
         }
         
-        // Group message received
-        messageRelayService.onGroupMessageReceived = { [weak self] message, groupID in
-            guard let self = self else { return }
-            MeshLogger.app.info("UI received group message from: \(message.senderName) in group \(groupID.uuidString.prefix(8))")
-            
-            // Find the group and update it
-            if let group = self.groups.first(where: { $0.id == groupID }) {
-                DispatchQueue.main.async {
-                    group.updateWithMessage(message)
-                }
-            }
-        }
-        
-        // Provide group key lookup for decryption
-        messageRelayService.getGroupKey = { [weak self] groupID in
-            return self?.groupKeys[groupID]
-        }
-        
-        // Handle delivery confirmations - update message status in UI and storage
+        // Delivery callbacks
         messageRelayService.onDeliveryConfirmed = { [weak self] messageID in
             self?.updateMessageDeliveryStatus(messageID, status: .delivered)
         }
@@ -677,39 +545,7 @@ final class ChatViewModel: ObservableObject {
             MeshLogger.app.warning("Route lost to \(deviceID.uuidString.prefix(8))")
         }
         
-        // Handle incoming group key distribution
-        routingService.onGroupKeyReceived = { [weak self] groupID, groupName, memberIDs, encryptedPayload, senderID in
-            guard let self = self else { return }
-            
-            do {
-                // Import the group key
-                let groupKey = try self.encryptionService.importGroupKey(from: encryptedPayload, senderID: senderID)
-                
-                // Store it
-                self.groupKeys[groupID] = groupKey
-                
-                // Create the group if we don't have it
-                if !self.groups.contains(where: { $0.id == groupID }) {
-                    let group = Conversation(
-                        id: groupID,
-                        type: .group,
-                        participantIDs: Set(memberIDs),
-                        name: groupName,
-                        createdAt: Date(),
-                        updatedAt: Date(),
-                        groupKeyData: groupKey.withUnsafeBytes { Data($0) }
-                    )
-                    self.groups.append(group)
-                    self.saveGroups()
-                }
-                
-                MeshLogger.app.info("Imported group key for '\(groupName)'")
-            } catch {
-                MeshLogger.app.error("Failed to import group key: \(error)")
-            }
-        }
-        
-        // Handle read receipts - update message status to .read
+        // Handle read receipts
         routingService.onReadReceiptReceived = { [weak self] messageID, readerID in
             self?.updateMessageDeliveryStatus(messageID, status: .read)
             MeshLogger.app.debug("Message \(messageID.uuidString.prefix(8)) was read by \(readerID.uuidString.prefix(8))")
@@ -723,9 +559,8 @@ final class ChatViewModel: ObservableObject {
     
     // MARK: - Read Receipts
     
-    /// Send a read receipt for a message (call when user views a message)
+    /// Send a read receipt for a message
     func sendReadReceipt(for message: MeshMessage) {
-        // Only send read receipts for messages from others
         guard !message.isFromLocalDevice,
               let senderUUID = UUID(uuidString: message.senderID) else {
             return
@@ -741,19 +576,16 @@ final class ChatViewModel: ObservableObject {
                 
                 let controlMsg = try ControlMessage(type: .readReceipt, content: receipt)
                 
-                // Route to original sender using messageRelayService
                 try await messageRelayService.sendControlMessage(controlMsg, to: senderUUID)
                 MeshLogger.app.debug("Sent read receipt for message \(message.id.uuidString.prefix(8))")
             } catch {
-                // Silent failure - read receipts are optional
                 MeshLogger.app.debug("Failed to send read receipt: \(error)")
             }
         }
     }
     
-    /// Mark messages as read and send receipts (call when conversation is opened)
+    /// Mark messages as read and send receipts
     func markMessagesAsRead(in conversationID: UUID) {
-        // Get unread messages from this conversation that aren't from us
         let unreadMessages = messages.filter { msg in
             msg.conversationID == conversationID && !msg.isFromLocalDevice && msg.deliveryStatus != .read
         }
@@ -803,7 +635,7 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-    /// Update delivery status for a message (in-memory and persisted)
+    /// Update delivery status for a message
     private func updateMessageDeliveryStatus(_ messageID: UUID, status: MessageDeliveryStatus) {
         Task { @MainActor in
             // Update in-memory messages array
@@ -877,27 +709,21 @@ final class ChatViewModel: ObservableObject {
     
     private func loadPersistedConversations() {
         Task { @MainActor in
-            // Wait for StorageService to be ready
             guard StorageService.shared.isReady else {
-                // Retry after a short delay
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 loadPersistedConversations()
                 return
             }
             
-            // Load all conversations from SwiftData
             let persistedConversations = StorageService.shared.getAllConversations()
             
             for persisted in persistedConversations {
-                // Skip if already loaded as a group
                 if groups.contains(where: { $0.id == persisted.id }) {
                     continue
                 }
                 
-                // Convert persisted type to Conversation type
                 let conversationType: Conversation.ConversationType = persisted.type == .group ? .group : .direct
                 
-                // Create Conversation from persisted data
                 let conversation = Conversation(
                     id: persisted.id,
                     type: conversationType,
@@ -910,9 +736,6 @@ final class ChatViewModel: ObservableObject {
                 
                 if persisted.type == .group {
                     groups.append(conversation)
-                    if let key = conversation.groupKey {
-                        groupKeys[conversation.id] = key
-                    }
                 }
             }
             
@@ -933,47 +756,14 @@ final class ChatViewModel: ObservableObject {
         }
         
         groups = models.map { Conversation(from: $0) }
-        
-        // Load group keys from Keychain (secure storage)
-        do {
-            let storedKeys = try KeychainService.shared.loadGroupKeys()
-            for (groupID, keyData) in storedKeys {
-                groupKeys[groupID] = SymmetricKey(data: keyData)
-            }
-            MeshLogger.app.info("Loaded \(storedKeys.count) group keys from Keychain")
-        } catch KeychainService.KeychainError.itemNotFound {
-            // No keys stored yet, that's fine
-        } catch {
-            MeshLogger.app.error("Failed to load group keys from Keychain: \(error)")
-        }
     }
     
     private func saveGroups() {
-        // Save group metadata to UserDefaults (non-sensitive data only)
-        // Group keys are stored separately in Keychain
         let models = groups.map { $0.storageModel }
         guard let data = try? JSONEncoder().encode(models) else { return }
         UserDefaults.standard.set(data, forKey: "mesh.groups")
-        
-        // Save group keys to Keychain (secure storage)
-        var keyDataMap: [UUID: Data] = [:]
-        for (groupID, key) in groupKeys {
-            let keyData = key.withUnsafeBytes { Data($0) }
-            keyDataMap[groupID] = keyData
-        }
-        
-        do {
-            try KeychainService.shared.saveGroupKeys(keyDataMap)
-            MeshLogger.app.debug("Saved \(keyDataMap.count) group keys to Keychain")
-        } catch {
-            MeshLogger.app.error("Failed to save group keys to Keychain: \(error)")
-        }
     }
-}
-
-// MARK: - Convenience Extensions
-
-extension ChatViewModel {
+    
     var localDeviceName: String {
         bluetoothManager.localDeviceName
     }
@@ -992,7 +782,8 @@ extension ChatViewModel {
     }
     
     var isEncrypted: Bool {
-        encryptionEnabled && (selectedDestination != nil || selectedGroup != nil)
+        // ALWAYS FALSE
+        false
     }
     
     /// Force route announcement to mesh
@@ -1031,6 +822,32 @@ extension ChatViewModel {
             return 1
         }
         return routingService.getRoute(to: peerID)?.hopCount
+    }
+    
+    /// Get route reliability (0.0-1.0)
+    func routeReliability(to peerID: UUID) -> Float? {
+        if bluetoothManager.connectedPeers[peerID] != nil {
+            return 1.0
+        }
+        return routingService.getRoute(to: peerID)?.reliability
+    }
+    
+    /// Get formatted route quality string
+    func formattedRouteQuality(to peerID: UUID) -> String {
+        if let reliability = routeReliability(to: peerID) {
+            let percentage = Int(reliability * 100)
+            return "Quality: \(percentage)%"
+        }
+        return "Unknown"
+    }
+    
+    /// Get display name for a peer ID (uses nickname if available)
+    func getDisplayName(for peerIDString: String) -> String? {
+        guard let uuid = UUID(uuidString: peerIDString),
+              let peer = peers.first(where: { $0.id == uuid }) else {
+            return nil
+        }
+        return peer.displayName
     }
 }
 

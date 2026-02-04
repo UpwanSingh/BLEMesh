@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Settings view for app configuration
+/// Settings view for app configuration (Plaintext Version)
 struct SettingsView: View {
     @ObservedObject var viewModel: ChatViewModel
-    @AppStorage("defaultEncryption") private var defaultEncryption = true
     @AppStorage("messageRetention") private var messageRetention = 7 // days
     @AppStorage("showDeliveryStatus") private var showDeliveryStatus = true
     @AppStorage("enableNotifications") private var enableNotifications = true
@@ -31,25 +30,6 @@ struct SettingsView: View {
                         Text(viewModel.localDeviceID)
                             .font(.caption)
                             .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Encryption
-                Section("Security") {
-                    Toggle("Encrypt Messages by Default", isOn: $defaultEncryption)
-                        .onChange(of: defaultEncryption) { oldValue, newValue in
-                            viewModel.encryptionEnabled = newValue
-                        }
-                    
-                    NavigationLink {
-                        EncryptionDetailsView(viewModel: viewModel)
-                    } label: {
-                        HStack {
-                            Text("Encryption Details")
-                            Spacer()
-                            Image(systemName: "lock.shield")
-                                .foregroundColor(.green)
-                        }
                     }
                 }
                 
@@ -125,13 +105,6 @@ struct SettingsView: View {
                     }
                     
                     HStack {
-                        Text("Encrypted Messages")
-                        Spacer()
-                        Text("\(viewModel.stats.encryptedMessages)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
                         Text("Messages Relayed")
                         Spacer()
                         Text("\(viewModel.stats.messagesRelayed)")
@@ -199,299 +172,10 @@ struct SettingsView: View {
     }
     
     private func resetAllSettings() {
-        defaultEncryption = true
         messageRetention = 7
         showDeliveryStatus = true
         enableNotifications = true
         autoReconnect = true
-    }
-}
-
-// MARK: - Encryption Details View
-
-struct EncryptionDetailsView: View {
-    @ObservedObject var viewModel: ChatViewModel
-    @State private var showingPeerKeys = false
-    
-    var body: some View {
-        List {
-            Section("Encryption Protocol") {
-                InfoRow(title: "Key Exchange", value: "ECDH P-256")
-                InfoRow(title: "Encryption", value: "AES-256-GCM")
-                InfoRow(title: "Key Derivation", value: "HKDF-SHA256")
-                InfoRow(title: "Signatures", value: "ECDSA P-256")
-                InfoRow(title: "Replay Protection", value: "Sequence Numbers")
-            }
-            
-            Section("How It Works") {
-                Text("""
-                BLE Mesh uses end-to-end encryption for direct messages:
-                
-                1. Each device generates a P-256 key pair on first launch
-                2. Public keys are exchanged during peer discovery via BLE
-                3. A shared secret is derived using ECDH
-                4. Messages are encrypted with AES-256-GCM
-                5. All messages are signed with ECDSA
-                6. Sequence numbers prevent replay attacks
-                7. Only the intended recipient can decrypt
-                """)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            }
-            
-            Section("Your Public Key Fingerprint") {
-                let fingerprint = DeviceIdentity.shared.publicKeyFingerprint
-                HStack {
-                    Text(formatFingerprint(fingerprint))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Button {
-                        UIPasteboard.general.string = fingerprint
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
-                    }
-                }
-                
-                Text("Share this fingerprint to verify your identity with peers")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("Your Signing Key Fingerprint") {
-                let signingFingerprint = DeviceIdentity.shared.signingKeyFingerprint
-                HStack {
-                    Text(formatFingerprint(signingFingerprint))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Button {
-                        UIPasteboard.general.string = signingFingerprint
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
-                    }
-                }
-                
-                Text("This key signs your messages to prove authenticity")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            Section("Peer Key Verification") {
-                NavigationLink {
-                    PeerKeyVerificationView(viewModel: viewModel)
-                } label: {
-                    HStack {
-                        Image(systemName: "person.badge.key")
-                            .foregroundColor(.blue)
-                        Text("Verify Peer Keys")
-                    }
-                }
-                
-                Text("Compare fingerprints with peers to ensure secure communication")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .navigationTitle("Encryption")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-    
-    private func formatFingerprint(_ fingerprint: String) -> String {
-        // Format fingerprint for readability: XXXX XXXX XXXX XXXX
-        var result = ""
-        for (index, char) in fingerprint.enumerated() {
-            if index > 0 && index % 4 == 0 {
-                result += " "
-            }
-            result += String(char)
-        }
-        return result
-    }
-}
-
-// MARK: - Peer Key Verification View
-
-struct PeerKeyVerificationView: View {
-    @ObservedObject var viewModel: ChatViewModel
-    @State private var selectedPeer: Peer?
-    
-    private var connectedPeers: [Peer] {
-        viewModel.peers.filter { $0.isConnected }
-    }
-    
-    var body: some View {
-        List {
-            instructionsSection
-            peersSection
-            if let peer = selectedPeer {
-                peerDetailsSection(peer)
-            }
-        }
-        .navigationTitle("Peer Verification")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-    
-    private var instructionsSection: some View {
-        Section {
-            Text("Compare these fingerprints with your peers out-of-band (in person or via a trusted channel) to verify you're communicating securely.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    private var peersSection: some View {
-        Section("Connected Peers") {
-            if connectedPeers.isEmpty {
-                Text("No connected peers")
-                    .foregroundColor(.secondary)
-            } else {
-                ForEach(connectedPeers) { peer in
-                    PeerKeyRow(peer: peer, isSelected: selectedPeer?.id == peer.id)
-                        .onTapGesture {
-                            selectedPeer = peer
-                        }
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func peerDetailsSection(_ peer: Peer) -> some View {
-        Section("Peer Details: \(peer.name)") {
-            peerIDRow(peer)
-            publicKeyRow(peer)
-            signingKeyRow(peer)
-            verificationStatusRow(peer)
-        }
-    }
-    
-    private func peerIDRow(_ peer: Peer) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Device ID")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Text(peer.id.uuidString)
-                .font(.system(.caption2, design: .monospaced))
-        }
-    }
-    
-    @ViewBuilder
-    private func publicKeyRow(_ peer: Peer) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Public Key Fingerprint")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            if let fingerprint = EncryptionService.shared.getPeerPublicKeyFingerprint(for: peer.id) {
-                HStack {
-                    Text(formatFingerprint(fingerprint))
-                        .font(.system(.caption2, design: .monospaced))
-                    Spacer()
-                    Image(systemName: peer.hasExchangedKeys ? "checkmark.shield.fill" : "exclamationmark.shield")
-                        .foregroundColor(peer.hasExchangedKeys ? .green : .orange)
-                }
-            } else {
-                Text("Key not yet exchanged")
-                    .font(.caption2)
-                    .foregroundColor(.orange)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func signingKeyRow(_ peer: Peer) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Signing Key Fingerprint")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            if let fingerprint = EncryptionService.shared.getPeerSigningKeyFingerprint(for: peer.id) {
-                HStack {
-                    Text(formatFingerprint(fingerprint))
-                        .font(.system(.caption2, design: .monospaced))
-                    Spacer()
-                    Image(systemName: peer.hasExchangedSigningKeys ? "checkmark.shield.fill" : "exclamationmark.shield")
-                        .foregroundColor(peer.hasExchangedSigningKeys ? .green : .orange)
-                }
-            } else {
-                Text("Signing key not yet exchanged")
-                    .font(.caption2)
-                    .foregroundColor(.orange)
-            }
-        }
-    }
-    
-    private func verificationStatusRow(_ peer: Peer) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Verification Status")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            HStack {
-                let keysExchanged = peer.hasExchangedKeys && peer.hasExchangedSigningKeys
-                Image(systemName: keysExchanged ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .foregroundColor(keysExchanged ? .green : .orange)
-                Text(keysExchanged ? "Keys Exchanged" : "Pending Key Exchange")
-                    .font(.caption2)
-                    .foregroundColor(keysExchanged ? .green : .orange)
-            }
-        }
-    }
-    
-    private func formatFingerprint(_ fingerprint: String) -> String {
-        var result = ""
-        for (index, char) in fingerprint.enumerated() {
-            if index > 0 && index % 4 == 0 {
-                result += " "
-            }
-            result += String(char)
-        }
-        return result
-    }
-}
-
-// MARK: - Peer Key Row
-
-struct PeerKeyRow: View {
-    let peer: Peer
-    let isSelected: Bool
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(peer.name)
-                    .font(.body)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: peer.hasExchangedKeys ? "key.fill" : "key")
-                        .font(.caption2)
-                        .foregroundColor(peer.hasExchangedKeys ? .green : .gray)
-                    
-                    Image(systemName: peer.hasExchangedSigningKeys ? "signature" : "pencil.slash")
-                        .font(.caption2)
-                        .foregroundColor(peer.hasExchangedSigningKeys ? .green : .gray)
-                    
-                    Text(peer.id.uuidString.prefix(8).description)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.blue)
-            }
-        }
-        .contentShape(Rectangle())
     }
 }
 
@@ -514,7 +198,7 @@ struct NetworkDiagnosticsView: View {
                         Circle()
                             .fill(peer.isConnected ? Color.green : Color.red)
                             .frame(width: 8, height: 8)
-                        Text(peer.name)
+                        Text(peer.displayName) // Changed peer.name to peer.displayName
                         Spacer()
                         Text(peer.id.uuidString.prefix(8).description)
                             .font(.caption)
@@ -537,6 +221,8 @@ struct NetworkDiagnosticsView: View {
                             Text("via \(entry.nextHopID.uuidString.prefix(8))")
                             Text("•")
                             Text("\(entry.hopCount) hop\(entry.hopCount > 1 ? "s" : "")")
+                            Text("•")
+                            Text(viewModel.formattedRouteQuality(to: entry.id))
                         }
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -592,7 +278,7 @@ struct AboutView: View {
                     
                     Features:
                     • Multi-hop message routing
-                    • End-to-end encryption
+                    • Nicknames and Route Quality metrics
                     • Group messaging
                     • Offline message queueing
                     • No internet required

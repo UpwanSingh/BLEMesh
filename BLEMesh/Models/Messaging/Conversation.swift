@@ -1,7 +1,6 @@
 import Foundation
-import CryptoKit
 
-/// Represents a conversation (direct or group chat)
+/// Represents a conversation (direct or group chat - Plaintext Version)
 final class Conversation: ObservableObject, Identifiable {
     
     // MARK: - Properties
@@ -15,22 +14,8 @@ final class Conversation: ObservableObject, Identifiable {
     let createdAt: Date
     @Published var updatedAt: Date
     
-    // For groups
-    private(set) var groupKey: SymmetricKey?
-    
-    /// External access to update group key data
-    var groupKeyData: Data? {
-        get {
-            return groupKey?.withUnsafeBytes { Data($0) }
-        }
-        set {
-            if let data = newValue {
-                groupKey = SymmetricKey(data: data)
-            } else {
-                groupKey = nil
-            }
-        }
-    }
+    // Group key logic removed for plaintext version
+    var groupKeyData: Data? = nil
     
     // MARK: - Types
     
@@ -59,7 +44,6 @@ final class Conversation: ObservableObject, Identifiable {
         self.name = groupName
         self.createdAt = Date()
         self.updatedAt = Date()
-        self.groupKey = EncryptionService.shared.generateGroupKey()
     }
     
     /// Restore from storage
@@ -78,10 +62,7 @@ final class Conversation: ObservableObject, Identifiable {
         self.name = name
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        
-        if let data = keyData {
-            self.groupKey = SymmetricKey(data: data)
-        }
+        self.groupKeyData = keyData
     }
     
     // MARK: - Public API
@@ -112,11 +93,9 @@ final class Conversation: ObservableObject, Identifiable {
         }
     }
     
-    /// Rotate group key (call when member leaves)
-    func rotateGroupKey() -> SymmetricKey? {
-        guard type == .group else { return nil }
-        groupKey = EncryptionService.shared.generateGroupKey()
-        return groupKey
+    /// Rotate group key (stub for unencrypted version)
+    func rotateGroupKey() -> Any? {
+        return nil
     }
 }
 

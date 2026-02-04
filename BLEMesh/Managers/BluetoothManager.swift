@@ -3,7 +3,7 @@ import CoreBluetooth
 import Combine
 import UIKit
 
-/// Dual-role Bluetooth manager handling both Central and Peripheral operations
+/// Dual-role Bluetooth manager handling both Central and Peripheral operations (Plaintext Version)
 final class BluetoothManager: NSObject, ObservableObject {
     
     // MARK: - Published State
@@ -54,7 +54,7 @@ final class BluetoothManager: NSObject, ObservableObject {
     // MARK: - Initialization
     
     override init() {
-        self.localDeviceID = UUID()
+        self.localDeviceID = DeviceIdentity.shared.deviceID
         self.localDeviceName = "\(BLEConstants.deviceNamePrefix)-\(UIDevice.current.name.prefix(10))"
         
         super.init()
@@ -214,11 +214,6 @@ final class BluetoothManager: NSObject, ObservableObject {
                 for: characteristic,
                 type: .withResponse
             )
-            MeshLogger.message.messageSent(
-                id: "chunk",
-                to: peer.name,
-                size: data.count
-            )
             return true
         }
         
@@ -231,13 +226,6 @@ final class BluetoothManager: NSObject, ObservableObject {
                 for: characteristic,
                 onSubscribedCentrals: [central]
             )
-            if success {
-                MeshLogger.message.messageSent(
-                    id: "chunk",
-                    to: peer.name,
-                    size: data.count
-                )
-            }
             return success
         }
         
@@ -306,22 +294,6 @@ final class BluetoothManager: NSObject, ObservableObject {
             permissions: [.readable]
         )
         
-        // Create public key characteristic for ECDH key exchange (read only)
-        let publicKeyCharacteristic = CBMutableCharacteristic(
-            type: BLEConstants.publicKeyCharacteristicUUID,
-            properties: [.read],
-            value: DeviceIdentity.shared.publicKeyData,
-            permissions: [.readable]
-        )
-        
-        // Create signing key characteristic for ECDSA verification (read only)
-        let signingKeyCharacteristic = CBMutableCharacteristic(
-            type: BLEConstants.signingKeyCharacteristicUUID,
-            properties: [.read],
-            value: DeviceIdentity.shared.signingPublicKeyData,
-            permissions: [.readable]
-        )
-        
         // Create service
         let service = CBMutableService(
             type: BLEConstants.meshServiceUUID,
@@ -329,14 +301,12 @@ final class BluetoothManager: NSObject, ObservableObject {
         )
         service.characteristics = [
             messageCharacteristic!,
-            deviceIDCharacteristic!,
-            publicKeyCharacteristic,
-            signingKeyCharacteristic
+            deviceIDCharacteristic!
         ]
         
         peripheralManager.add(service)
         
-        MeshLogger.bluetooth.info("Peripheral service configured with encryption keys")
+        MeshLogger.bluetooth.info("Peripheral service configured (No encryption)")
     }
     
     private func scheduleReconnect(for peer: Peer) {
@@ -346,14 +316,11 @@ final class BluetoothManager: NSObject, ObservableObject {
         }
         
         peer.reconnectAttempts += 1
-        
         let delay = BLEConstants.reconnectDelay * Double(peer.reconnectAttempts)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self = self else { return }
-            
             if peer.state == .disconnected {
-                MeshLogger.connection.info("Attempting reconnect \(peer.reconnectAttempts) for: \(peer.name)")
                 self.connect(to: peer)
             }
         }
@@ -369,8 +336,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
             self.centralState = central.state
         }
         
-        MeshLogger.bluetooth.info("Central state: \(central.state.rawValue)")
-        
         if central.state == .poweredOn {
             startScanning()
         }
@@ -383,8 +348,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
         rssi RSSI: NSNumber
     ) {
         let rssiValue = RSSI.intValue
-        
-        // Filter out weak signals
         guard rssiValue > -90 else { return }
         
         DispatchQueue.main.async {
@@ -393,12 +356,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
             } else {
                 let peer = Peer(peripheral: peripheral, rssi: rssiValue)
                 self.discoveredPeers[peripheral.identifier] = peer
-                
-                MeshLogger.bluetooth.deviceDiscovered(
-                    name: peer.name,
-                    rssi: rssiValue,
-                    uuid: peripheral.identifier.uuidString
-                )
             }
         }
     }
@@ -406,23 +363,16 @@ extension BluetoothManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         pendingConnections.remove(peripheral.identifier)
         peripheral.delegate = self
-        
-        // Discover services
         peripheral.discoverServices([BLEConstants.meshServiceUUID])
-        
-        MeshLogger.connection.info("Connected to peripheral: \(peripheral.name ?? "Unknown")")
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         pendingConnections.remove(peripheral.identifier)
-        
         DispatchQueue.main.async {
             if let peer = self.discoveredPeers[peripheral.identifier] {
                 peer.updateState(.failed)
             }
         }
-        
-        MeshLogger.connection.error("Failed to connect: \(peripheral.name ?? "Unknown") - \(error?.localizedDescription ?? "unknown")")
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
@@ -432,16 +382,9 @@ extension BluetoothManager: CBCentralManagerDelegate {
                 self.connectedPeers.removeValue(forKey: peripheral.identifier)
                 self.updatePeerSnapshot()
                 self.onPeerDisconnected?(peer)
-                
-                // Attempt reconnect
                 self.scheduleReconnect(for: peer)
             }
         }
-        
-        MeshLogger.connection.deviceDisconnected(
-            name: peripheral.name ?? "Unknown",
-            uuid: peripheral.identifier.uuidString
-        )
     }
 }
 
@@ -450,21 +393,13 @@ extension BluetoothManager: CBCentralManagerDelegate {
 extension BluetoothManager: CBPeripheralDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard error == nil else {
-            MeshLogger.bluetooth.error("Service discovery error: \(error!.localizedDescription)")
-            return
-        }
-        
-        guard let services = peripheral.services else { return }
+        guard error == nil, let services = peripheral.services else { return }
         
         for service in services where service.uuid == BLEConstants.meshServiceUUID {
-            // Discover all characteristics including encryption keys
             peripheral.discoverCharacteristics(
                 [
                     BLEConstants.messageCharacteristicUUID,
-                    BLEConstants.deviceIDCharacteristicUUID,
-                    BLEConstants.publicKeyCharacteristicUUID,
-                    BLEConstants.signingKeyCharacteristicUUID
+                    BLEConstants.deviceIDCharacteristicUUID
                 ],
                 for: service
             )
@@ -472,38 +407,20 @@ extension BluetoothManager: CBPeripheralDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        guard error == nil else {
-            MeshLogger.bluetooth.error("Characteristic discovery error: \(error!.localizedDescription)")
-            return
-        }
-        
-        guard let characteristics = service.characteristics else { return }
+        guard error == nil, let characteristics = service.characteristics else { return }
         
         for characteristic in characteristics {
             switch characteristic.uuid {
             case BLEConstants.messageCharacteristicUUID:
-                // Subscribe to notifications
                 peripheral.setNotifyValue(true, for: characteristic)
-                
-                // Store reference in peer
                 DispatchQueue.main.async {
                     if let peer = self.discoveredPeers[peripheral.identifier] {
                         peer.messageCharacteristic = characteristic
+                        self.checkPeerConnectionComplete(peer, peripheral: peripheral)
                     }
                 }
-                
-            case BLEConstants.publicKeyCharacteristicUUID:
-                // Read peer's ECDH public key for encryption
-                peripheral.readValue(for: characteristic)
-                
-            case BLEConstants.signingKeyCharacteristicUUID:
-                // Read peer's ECDSA signing key for verification
-                peripheral.readValue(for: characteristic)
-                
             case BLEConstants.deviceIDCharacteristicUUID:
-                // Read device ID
                 peripheral.readValue(for: characteristic)
-                
             default:
                 break
             }
@@ -511,114 +428,50 @@ extension BluetoothManager: CBPeripheralDelegate {
     }
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        guard error == nil, let data = characteristic.value else {
-            if let error = error {
-                MeshLogger.bluetooth.error("Read value error: \(error.localizedDescription)")
-            }
-            return
-        }
+        guard error == nil, let data = characteristic.value else { return }
         
         switch characteristic.uuid {
         case BLEConstants.messageCharacteristicUUID:
-            // Message data received
             DispatchQueue.main.async {
                 if let peer = self.connectedPeers[peripheral.identifier] {
                     self.onMessageReceived?(data, peer)
                 }
             }
-            
-        case BLEConstants.publicKeyCharacteristicUUID:
-            // Received peer's ECDH public key - store for encryption
-            DispatchQueue.main.async {
-                if let peer = self.discoveredPeers[peripheral.identifier] {
-                    do {
-                        try EncryptionService.shared.storePeerPublicKey(data, for: peer.id)
-                        peer.hasExchangedKeys = true
-                        MeshLogger.app.info("Received ECDH public key from \(peer.name)")
-                        
-                        // Check if peer is now fully connected
-                        self.checkPeerConnectionComplete(peer, peripheral: peripheral)
-                    } catch {
-                        MeshLogger.app.error("Failed to store peer public key: \(error)")
-                    }
-                }
-            }
-            
-        case BLEConstants.signingKeyCharacteristicUUID:
-            // Received peer's ECDSA signing key - store for verification
-            DispatchQueue.main.async {
-                if let peer = self.discoveredPeers[peripheral.identifier] {
-                    do {
-                        try EncryptionService.shared.storePeerSigningKey(data, for: peer.id)
-                        peer.hasExchangedSigningKeys = true
-                        MeshLogger.app.info("Received ECDSA signing key from \(peer.name)")
-                        
-                        // Check if peer is now fully connected
-                        self.checkPeerConnectionComplete(peer, peripheral: peripheral)
-                    } catch {
-                        MeshLogger.app.error("Failed to store peer signing key: \(error)")
-                    }
-                }
-            }
-            
         case BLEConstants.deviceIDCharacteristicUUID:
-            // Received device ID
             if let deviceIDString = String(data: data, encoding: .utf8),
                let deviceID = UUID(uuidString: deviceIDString) {
                 DispatchQueue.main.async {
                     if let peer = self.discoveredPeers[peripheral.identifier] {
                         peer.meshDeviceID = deviceID
-                        MeshLogger.app.debug("Received mesh device ID from \(peer.name): \(deviceID.uuidString.prefix(8))")
+                        self.checkPeerConnectionComplete(peer, peripheral: peripheral)
                     }
                 }
             }
-            
         default:
             break
         }
     }
     
-    /// Check if peer has completed all key exchanges and mark as connected
     private func checkPeerConnectionComplete(_ peer: Peer, peripheral: CBPeripheral) {
-        // Peer is fully connected when we have message characteristic and both keys
-        guard peer.messageCharacteristic != nil,
-              peer.hasExchangedKeys,
-              peer.hasExchangedSigningKeys else {
-            return
+        // Peer is connected when we have message characteristic
+        guard peer.messageCharacteristic != nil else { return }
+        
+        DispatchQueue.main.async {
+            peer.updateState(.connected)
+            self.connectedPeers[peripheral.identifier] = peer
+            self.updatePeerSnapshot()
+            self.onPeerConnected?(peer)
+            
+            MeshLogger.connection.deviceConnected(
+                name: peer.name,
+                uuid: peripheral.identifier.uuidString
+            )
         }
-        
-        // Mark as connected
-        peer.updateState(.connected)
-        connectedPeers[peripheral.identifier] = peer
-        updatePeerSnapshot()
-        onPeerConnected?(peer)
-        
-        MeshLogger.connection.deviceConnected(
-            name: peer.name,
-            uuid: peripheral.identifier.uuidString
-        )
-        MeshLogger.app.info("Peer \(peer.name) fully connected with encryption keys exchanged")
     }
     
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
             MeshLogger.message.error("Write error: \(error.localizedDescription)")
-        }
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-        if let error = error {
-            MeshLogger.bluetooth.error("Notification state error: \(error.localizedDescription)")
-        } else {
-            MeshLogger.bluetooth.debug("Notifications enabled for: \(characteristic.uuid)")
-        }
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        guard error == nil else { return }
-        
-        DispatchQueue.main.async {
-            self.discoveredPeers[peripheral.identifier]?.updateRSSI(RSSI.intValue)
         }
     }
 }
@@ -631,34 +484,18 @@ extension BluetoothManager: CBPeripheralManagerDelegate {
         DispatchQueue.main.async {
             self.peripheralState = peripheral.state
         }
-        
-        MeshLogger.bluetooth.info("Peripheral state: \(peripheral.state.rawValue)")
-        
         if peripheral.state == .poweredOn {
             startAdvertising()
         }
     }
     
-    func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
-        if let error = error {
-            MeshLogger.bluetooth.error("Failed to add service: \(error.localizedDescription)")
-        } else {
-            MeshLogger.bluetooth.info("Service added successfully")
-        }
-    }
+    func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) { }
     
-    func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
-        if let error = error {
-            MeshLogger.bluetooth.error("Advertising error: \(error.localizedDescription)")
-        } else {
-            MeshLogger.bluetooth.info("Advertising started successfully")
-        }
-    }
+    func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) { }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         subscribedCentrals.insert(central)
         
-        // Create peer for this central
         DispatchQueue.main.async {
             let peer = Peer(central: central)
             self.connectedPeers[central.identifier] = peer
@@ -674,17 +511,11 @@ extension BluetoothManager: CBPeripheralManagerDelegate {
     
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
         subscribedCentrals.remove(central)
-        
         DispatchQueue.main.async {
             if let peer = self.connectedPeers[central.identifier] {
                 self.connectedPeers.removeValue(forKey: central.identifier)
                 self.updatePeerSnapshot()
                 self.onPeerDisconnected?(peer)
-                
-                MeshLogger.connection.deviceDisconnected(
-                    name: peer.name,
-                    uuid: central.identifier.uuidString
-                )
             }
         }
     }
@@ -693,23 +524,17 @@ extension BluetoothManager: CBPeripheralManagerDelegate {
         for request in requests {
             if request.characteristic.uuid == BLEConstants.messageCharacteristicUUID,
                let data = request.value {
-                
-                // Find or create peer for this central
                 DispatchQueue.main.async {
                     var peer = self.connectedPeers[request.central.identifier]
-                    
                     if peer == nil {
                         peer = Peer(central: request.central)
                         self.connectedPeers[request.central.identifier] = peer
                         self.updatePeerSnapshot()
                     }
-                    
                     if let peer = peer {
                         self.onMessageReceived?(data, peer)
                     }
                 }
-                
-                // Respond to write request
                 peripheral.respond(to: request, withResult: .success)
             }
         }

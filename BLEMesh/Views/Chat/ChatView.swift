@@ -96,7 +96,7 @@ struct ChatView: View {
             return group.name
         } else if let destID = viewModel.selectedDestination,
                   let peer = viewModel.availablePeers.first(where: { $0.id == destID }) {
-            return peer.name
+            return peer.displayName
         } else {
             return "Broadcast"
         }
@@ -122,7 +122,10 @@ struct ChatView: View {
                 } else {
                     LazyVStack(spacing: 8) {
                         ForEach(filteredMessages) { message in
-                            ChatMessageBubble(message: message)
+                            ChatMessageBubble(
+                                message: message,
+                                senderDisplayName: viewModel.getDisplayName(for: message.senderID)
+                            )
                                 .id(message.id)
                         }
                     }
@@ -242,6 +245,7 @@ struct ChatView: View {
 
 struct ChatMessageBubble: View {
     let message: MeshMessage
+    var senderDisplayName: String? = nil
     
     var body: some View {
         HStack {
@@ -251,7 +255,7 @@ struct ChatMessageBubble: View {
             
             VStack(alignment: message.isFromLocalDevice ? .trailing : .leading, spacing: 4) {
                 if !message.isFromLocalDevice {
-                    Text(message.senderName)
+                    Text(senderDisplayName ?? message.senderName)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -368,14 +372,21 @@ struct DestinationPickerSheet: View {
                                     .frame(width: 8, height: 8)
                                 
                                 VStack(alignment: .leading) {
-                                    Text(peer.name)
+                                    Text(peer.displayName)
                                         .foregroundColor(.primary)
                                     
-                                    if let hopCount = viewModel.hopCountTo(peer.id) {
-                                        Text("\(hopCount) hop\(hopCount > 1 ? "s" : "")")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
+                                    HStack(spacing: 4) {
+                                        if let hopCount = viewModel.hopCountTo(peer.id) {
+                                            Text("\(hopCount) hop\(hopCount > 1 ? "s" : "")")
+                                        }
+                                        
+                                        if viewModel.routeReliability(to: peer.id) != nil {
+                                            Text("•")
+                                            Text(viewModel.formattedRouteQuality(to: peer.id))
+                                        }
                                     }
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                                 }
                                 
                                 Spacer()

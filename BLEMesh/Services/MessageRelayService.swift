@@ -1,8 +1,7 @@
 import Foundation
 import Combine
-import CryptoKit
 
-/// Enhanced service for message routing and relay with targeted delivery
+/// Enhanced service for message routing and relay with targeted delivery (Plaintext Version)
 final class MessageRelayService: ObservableObject {
     
     // MARK: - Published State
@@ -20,11 +19,11 @@ final class MessageRelayService: ObservableObject {
     var onDeliveryConfirmed: ((UUID) -> Void)?
     var onDeliveryFailed: ((UUID) -> Void)?
     
-    /// Callback to get group key for decryption (set by ChatViewModel)
-    var getGroupKey: ((UUID) -> SymmetricKey?)?
-    
     /// Callback for persisting messages (set by ChatViewModel)
     var onPersistMessage: ((MeshMessage, UUID?) -> Void)?  // message, conversationID
+    
+    // Added for compatibility with ChatViewModel although always nil now
+    var getGroupKey: ((UUID) -> Any?)?
     
     // MARK: - Dependencies
     
@@ -48,6 +47,26 @@ final class MessageRelayService: ObservableObject {
     /// Chunk assembler for incoming data
     private let chunkAssembler = ChunkAssembler()
     
+    // MARK: - Bitchat Relay Enhancement Properties
+    
+    /// Link identifier for ingress tracking
+    private enum LinkID: Hashable {
+        case peripheral(UUID)  // Peer ID when we're acting as central
+        case central(UUID)     // Peer ID when we're acting as peripheral
+    }
+    
+    /// Track which link each message arrived from (prevents echo)
+    private var ingressByMessageID: [String: (link: LinkID, timestamp: Date)] = [:]
+    
+    /// Scheduled relay work items (for jitter and deduplication)
+    private var scheduledRelays: [String: DispatchWorkItem] = [:]
+    
+    /// Store-and-forward queue for directed messages when links unavailable
+    private var pendingDirectedRelays: [UUID: [String: (envelope: MessageEnvelope, enqueuedAt: Date)]] = [:]
+    
+    /// High degree threshold for adaptive relay behavior
+    private let highDegreeThreshold = 5
+    
     private let lock = NSLock()
     private var cleanupTimer: Timer?
     
@@ -62,11 +81,7 @@ final class MessageRelayService: ObservableObject {
         setupReliabilityServices()
         startCleanupTimer()
         
-        MeshLogger.message.info("MessageRelayService initialized with routing")
-    }
-    
-    deinit {
-        cleanupTimer?.invalidate()
+        MeshLogger.message.info("MessageRelayService initialized (Unencrypted)")
     }
     
     // MARK: - Reliability Setup
@@ -130,7 +145,7 @@ final class MessageRelayService: ObservableObject {
         
         markAsSeen(envelope.messageHash)
         
-        // Create legacy MeshMessage for UI
+        // Create MeshMessage for UI
         var meshMessage = MeshMessage(
             id: envelope.id,
             senderID: envelope.originID.uuidString,
@@ -163,77 +178,6 @@ final class MessageRelayService: ObservableObject {
             to: "broadcast",
             size: data.count
         )
-    }
-    
-    /// Send an encrypted message to a specific device
-    func sendEncryptedMessage(to destinationID: UUID, content: String) async throws {
-        let securePayload = try SecureMessagePayload.encrypt(text: content, for: destinationID)
-        let payloadData = try securePayload.serialize()
-        
-        let envelope = MessageEnvelope(
-            originID: bluetoothManager.localDeviceID,
-            originName: bluetoothManager.localDeviceName,
-            destinationID: destinationID,
-            content: payloadData,
-            isEncrypted: true
-        )
-        
-        try await sendEnvelope(envelope)
-        
-        // Create local message for UI
-        var meshMessage = MeshMessage(
-            id: envelope.id,
-            senderID: envelope.originID.uuidString,
-            senderName: envelope.originName,
-            content: content,
-            ttl: envelope.ttl,
-            originID: envelope.id
-        )
-        meshMessage.isFromLocalDevice = true
-        
-        DispatchQueue.main.async {
-            self.receivedMessages.append(meshMessage)
-        }
-        
-        MeshLogger.message.info("Sent encrypted message to \(destinationID.uuidString.prefix(8))")
-    }
-    
-    /// Send an encrypted group message to all group members
-    func sendGroupMessage(
-        to groupID: UUID,
-        memberIDs: [UUID],
-        content: String,
-        groupKey: CryptoKit.SymmetricKey
-    ) async throws {
-        // Encrypt with group key
-        let groupPayload = try GroupMessagePayload.encrypt(
-            text: content,
-            for: groupID,
-            using: groupKey
-        )
-        let payloadData = try groupPayload.serialize()
-        
-        // Send to each member via their route
-        for memberID in memberIDs where memberID != bluetoothManager.localDeviceID {
-            let envelope = MessageEnvelope(
-                originID: bluetoothManager.localDeviceID,
-                originName: bluetoothManager.localDeviceName,
-                destinationID: memberID,
-                conversationID: groupID,  // Important: marks this as a group message
-                content: payloadData,
-                isEncrypted: true,
-                isGroupMessage: true
-            )
-            
-            try await sendEnvelope(envelope)
-        }
-        
-        MeshLogger.message.info("Sent group message to \(memberIDs.count - 1) members")
-    }
-    
-    /// Legacy method - send message (maintains compatibility)
-    func sendMessage(_ message: MeshMessage) async throws {
-        try await sendBroadcastMessage(content: message.content)
     }
     
     /// Send a control message to a specific device (routed)
@@ -327,7 +271,6 @@ final class MessageRelayService: ObservableObject {
             } else {
                 MeshLogger.message.error("Route discovery failed for \(destinationID.uuidString.prefix(8))")
                 self.onDeliveryFailed?(pendingEnvelope.id)
-                
                 DispatchQueue.main.async {
                     self.failedCount += 1
                 }
@@ -339,46 +282,13 @@ final class MessageRelayService: ObservableObject {
         let data = try envelope.serialize()
         let chunks = ChunkCreator.createChunks(messageID: envelope.id, data: data)
         
-        var failedChunks = 0
-        let maxRetries = 2
-        
         for chunk in chunks {
             let chunkData = try chunk.serialize()
-            var sent = false
-            
-            // Retry chunk sending with backoff
-            for attempt in 0..<maxRetries {
-                if bluetoothManager.send(data: chunkData, to: peer) {
-                    sent = true
-                    break
-                }
-                
-                // Brief delay before retry
-                if attempt < maxRetries - 1 {
-                    try await Task.sleep(nanoseconds: UInt64(50_000_000 * (attempt + 1))) // 50ms, 100ms
-                }
-            }
-            
-            if !sent {
-                failedChunks += 1
-                MeshLogger.chunk.error("Failed to send chunk \(chunk.chunkIndex)/\(chunk.totalChunks) for message \(envelope.id.uuidString.prefix(8)) after \(maxRetries) attempts")
-            } else {
-                MeshLogger.chunk.chunkSent(
-                    messageId: envelope.id.uuidString.prefix(8).description,
-                    index: chunk.chunkIndex,
-                    total: chunk.totalChunks
-                )
-            }
+            _ = bluetoothManager.send(data: chunkData, to: peer)
             
             if chunks.count > 1 {
                 try await Task.sleep(nanoseconds: 10_000_000)
             }
-        }
-        
-        // If any chunks failed, notify delivery failure
-        if failedChunks > 0 {
-            MeshLogger.message.error("Message \(envelope.id.uuidString.prefix(8)) had \(failedChunks) failed chunks out of \(chunks.count)")
-            // Still track for ACK - peer might receive enough to reconstruct
         }
         
         // Track for ACK
@@ -405,12 +315,6 @@ final class MessageRelayService: ObservableObject {
                 try await Task.sleep(nanoseconds: 10_000_000)
             }
         }
-        
-        MeshLogger.message.messageSent(
-            id: envelope.id.uuidString.prefix(8).description,
-            to: "broadcast",
-            size: data.count
-        )
     }
     
     // MARK: - Message Receiving
@@ -424,43 +328,52 @@ final class MessageRelayService: ObservableObject {
     private func setupPeerHandling() {
         bluetoothManager.onPeerConnected = { [weak self] peer in
             self?.routingService.registerDirectPeer(peer)
-            // Announce ourselves through new connection
             self?.routingService.announceSelf()
-            
-            // Flush offline queue for this peer
             self?.offlineQueue.flushForDestination(peer.id)
-            
-            // Notify that peer is now reachable
             self?.offlineQueue.networkStatusChanged(isConnected: true)
+            // Flush any spooled directed messages for this peer
+            self?.flushDirectedSpool(for: peer.id)
         }
     }
     
     private func handleIncomingData(_ data: Data, from peer: Peer) {
         do {
             let chunk = try MessageChunk.deserialize(from: data)
-            
             if let completeData = chunkAssembler.addChunk(chunk) {
-                processCompleteEnvelope(completeData, from: peer)
+                // Determine link type for ingress tracking
+                let linkID: LinkID = peer.peripheral != nil ? .peripheral(peer.id) : .central(peer.id)
+                processCompleteEnvelope(completeData, from: peer, ingressLink: linkID)
             }
         } catch {
             MeshLogger.chunk.error("Failed to process chunk: \(error)")
         }
     }
     
-    private func processCompleteEnvelope(_ data: Data, from peer: Peer) {
+    private func processCompleteEnvelope(_ data: Data, from peer: Peer, ingressLink: LinkID) {
         do {
             let envelope = try MessageEnvelope.deserialize(from: data)
             
-            // Atomic check-and-mark to prevent race condition
-            if checkAndMarkSeen(envelope.messageHash) {
+            // Create message ID for deduplication and ingress tracking
+            let messageID = makeMessageID(for: envelope)
+            
+            if checkAndMarkSeen(envelope.messageHash, messageID: messageID, ingressLink: ingressLink) {
+                // Check if we should cancel scheduled relay in dense networks
+                let connectedCount = bluetoothManager.getAllConnectedPeers().count
+                if connectedCount > 2 {
+                    lock.lock()
+                    if let workItem = scheduledRelays.removeValue(forKey: messageID) {
+                        workItem.cancel()
+                        MeshLogger.relay.info("Cancelled duplicate relay for \(messageID.prefix(8))")
+                    }
+                    lock.unlock()
+                }
+                
                 DispatchQueue.main.async {
                     self.duplicatesBlocked += 1
                 }
-                MeshLogger.relay.debug("Duplicate blocked: \(envelope.id.uuidString.prefix(8))")
                 return
             }
             
-            // Handle control messages
             if envelope.isControlMessage {
                 if let controlMessage = try envelope.getControlMessage() {
                     routingService.handleControlMessage(controlMessage, from: peer)
@@ -468,23 +381,18 @@ final class MessageRelayService: ObservableObject {
                 return
             }
             
-            // Is this message for us?
             let isForUs = envelope.isFor(deviceID: bluetoothManager.localDeviceID)
             
             if isForUs {
-                // Process the message
                 processUserMessage(envelope, from: peer)
-                
-                // Send ACK for direct messages
                 if envelope.destinationID != nil {
                     sendAck(for: envelope, via: peer)
                 }
             }
             
-            // Relay to other peers if broadcast or TTL allows
             if envelope.isBroadcast || !isForUs {
                 Task {
-                    await relayEnvelope(envelope, excludingPeer: peer)
+                    await relayEnvelopeWithJitter(envelope, excludingPeer: peer, messageID: messageID, ingressLink: ingressLink)
                 }
             }
             
@@ -494,46 +402,9 @@ final class MessageRelayService: ObservableObject {
     }
     
     private func processUserMessage(_ envelope: MessageEnvelope, from peer: Peer) {
-        // Verify signature first
-        guard envelope.verifySignature() else {
-            MeshLogger.message.error("Message signature verification failed - rejecting message")
-            return
-        }
-        
-        // Replay protection: check and update sequence number
-        guard EncryptionService.shared.checkAndUpdateSequence(from: envelope.originID, sequenceNumber: envelope.sequenceNumber) else {
-            MeshLogger.message.warning("Replay attack blocked - message from \(envelope.originName) has old sequence number")
-            return
-        }
-        
         do {
-            var content: String
-            var groupID: UUID? = nil
-            
-            // Check if this is a group message
-            if envelope.isGroupMessage, let _ = envelope.conversationID {
-                // Group message - decrypt with group key
-                let groupPayload = try GroupMessagePayload.deserialize(from: envelope.payload)
-                groupID = groupPayload.groupID
-                
-                guard let groupKey = getGroupKey?(groupPayload.groupID) else {
-                    MeshLogger.message.error("No group key for group \(groupPayload.groupID.uuidString.prefix(8))")
-                    return
-                }
-                
-                content = try groupPayload.decrypt(using: groupKey)
-                MeshLogger.message.debug("Decrypted group message from \(envelope.originName)")
-                
-            } else if envelope.isEncrypted {
-                // Direct encrypted message - decrypt with session key
-                let securePayload = try SecureMessagePayload.deserialize(from: envelope.payload)
-                content = try securePayload.decrypt(from: envelope.originID)
-                MeshLogger.message.debug("Decrypted message from \(envelope.originName)")
-            } else {
-                // Regular unencrypted message
-                let payload = try MessagePayload.deserialize(from: envelope.payload)
-                content = payload.text
-            }
+            let payload = try MessagePayload.deserialize(from: envelope.payload)
+            let content = payload.text
             
             var meshMessage = MeshMessage(
                 id: envelope.id,
@@ -548,12 +419,10 @@ final class MessageRelayService: ObservableObject {
             
             DispatchQueue.main.async {
                 self.receivedMessages.append(meshMessage)
-                
-                // Persist the message
                 self.onPersistMessage?(meshMessage, envelope.conversationID)
                 
-                if let gid = groupID {
-                    self.onGroupMessageReceived?(meshMessage, gid)
+                if envelope.isGroupMessage {
+                    self.onGroupMessageReceived?(meshMessage, envelope.conversationID ?? UUID())
                 } else {
                     self.onMessageReceived?(meshMessage)
                 }
@@ -593,62 +462,121 @@ final class MessageRelayService: ObservableObject {
                     _ = bluetoothManager.send(data: chunkData, to: peer)
                 }
             }
-            
-            MeshLogger.message.debug("Sent ACK for \(envelope.id.uuidString.prefix(8))")
         } catch {
             MeshLogger.message.error("Failed to send ACK: \(error)")
         }
     }
     
-    // MARK: - Relay
-    
-    private func relayEnvelope(_ envelope: MessageEnvelope, excludingPeer: Peer) async {
-        guard let forwardedEnvelope = envelope.forwarded(by: bluetoothManager.localDeviceID) else {
-            MeshLogger.relay.info("Message \(envelope.id.uuidString.prefix(8)) reached TTL limit")
+    private func relayEnvelopeWithJitter(_ envelope: MessageEnvelope, excludingPeer: Peer, messageID: String, ingressLink: LinkID) async {
+        // Get relay decision from controller
+        let connectedPeers = bluetoothManager.getAllConnectedPeers()
+        let degree = connectedPeers.count
+        
+        let decision = RelayController.decide(
+            ttl: envelope.ttl,
+            senderIsSelf: envelope.originID == bluetoothManager.localDeviceID,
+            isEncrypted: envelope.isEncrypted,
+            isDirectedEncrypted: envelope.isEncrypted && envelope.destinationID != nil,
+            isFragment: false, // Chunks are handled separately
+            isDirectedFragment: false,
+            isHandshake: false,
+            isAnnounce: false,
+            degree: degree,
+            highDegreeThreshold: highDegreeThreshold
+        )
+        
+        guard decision.shouldRelay else {
+            MeshLogger.relay.debug("Relay suppressed for \(messageID.prefix(8))")
             return
         }
+        
+        // Schedule relay with jitter
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            
+            // Remove from scheduled relays
+            self.lock.lock()
+            _ = self.scheduledRelays.removeValue(forKey: messageID)
+            self.lock.unlock()
+            
+            // Execute relay
+            Task {
+                await self.executeRelay(envelope, excludingPeer: excludingPeer, ingressLink: ingressLink, newTTL: decision.newTTL)
+            }
+        }
+        
+        // Track the scheduled relay
+        lock.lock()
+        scheduledRelays[messageID] = workItem
+        lock.unlock()
+        
+        // Schedule with jitter delay
+        let delay = DispatchTimeInterval.milliseconds(decision.delayMs)
+        DispatchQueue.global().asyncAfter(deadline: .now() + delay, execute: workItem)
+        
+        MeshLogger.relay.debug("Scheduled relay for \(messageID.prefix(8)) with \(decision.delayMs)ms jitter")
+    }
+    
+    private func executeRelay(_ envelope: MessageEnvelope, excludingPeer: Peer, ingressLink: LinkID, newTTL: Int) async {
+        // Create forwarded envelope with new TTL
+        guard var forwardedEnvelope = envelope.forwarded(by: bluetoothManager.localDeviceID) else {
+            return
+        }
+        forwardedEnvelope.ttl = newTTL
         
         do {
             let data = try forwardedEnvelope.serialize()
             let chunks = ChunkCreator.createChunks(messageID: forwardedEnvelope.id, data: data)
             
-            // Determine where to send
             var targetPeers: [Peer] = []
             
             if let destinationID = envelope.destinationID {
-                // Targeted message - use routing
+                // Directed message - use routing
                 if let route = routingService.getRoute(to: destinationID),
                    let nextPeer = bluetoothManager.connectedPeers[route.nextHopID],
                    nextPeer.id != excludingPeer.id {
                     targetPeers = [nextPeer]
+                } else {
+                    // No route - store and forward
+                    spoolDirectedMessage(forwardedEnvelope, to: destinationID)
+                    return
                 }
             } else {
-                // Broadcast - send to all except source
-                targetPeers = bluetoothManager.getAllConnectedPeers()
+                // Broadcast - use K-of-N fanout with ingress exclusion
+                let allPeers = bluetoothManager.getAllConnectedPeers()
                     .filter { $0.id != excludingPeer.id && !envelope.hopPath.contains($0.id) }
+                
+                // Exclude ingress link
+                let peersExcludingIngress = allPeers.filter { peer in
+                    switch ingressLink {
+                    case .peripheral(let id):
+                        return peer.id != id
+                    case .central(let id):
+                        return peer.id != id
+                    }
+                }
+                
+                // Apply K-of-N fanout for broadcasts
+                targetPeers = selectDeterministicSubset(
+                    peers: peersExcludingIngress,
+                    k: subsetSizeForFanout(peersExcludingIngress.count),
+                    seed: makeMessageID(for: envelope)
+                )
             }
             
+            // Send to selected peers
             for peer in targetPeers {
                 for chunk in chunks {
                     let chunkData = try chunk.serialize()
                     _ = bluetoothManager.send(data: chunkData, to: peer)
-                    
-                    if chunks.count > 1 {
-                        try await Task.sleep(nanoseconds: 10_000_000)
-                    }
                 }
-                
-                MeshLogger.relay.messageRelayed(
-                    id: envelope.id.uuidString.prefix(8).description,
-                    ttl: forwardedEnvelope.ttl,
-                    to: peer.name
-                )
             }
             
             if !targetPeers.isEmpty {
                 DispatchQueue.main.async {
                     self.relayedCount += targetPeers.count
                 }
+                MeshLogger.relay.info("Relayed to \(targetPeers.count) peers (K-of-N)")
             }
             
         } catch {
@@ -656,12 +584,23 @@ final class MessageRelayService: ObservableObject {
         }
     }
     
-    // MARK: - Helpers
+    // MARK: - Maintenance
     
-    private func hasSeenMessage(_ hash: String) -> Bool {
+    private func checkAndMarkSeen(_ hash: String, messageID: String, ingressLink: LinkID) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        return seenMessageIDs.contains(hash)
+        
+        if seenMessageIDs.contains(hash) {
+            return true
+        }
+        
+        seenMessageIDs.insert(hash)
+        messageTimestamps[hash] = Date()
+        
+        // Track ingress link
+        ingressByMessageID[messageID] = (link: ingressLink, timestamp: Date())
+        
+        return false
     }
     
     private func markAsSeen(_ hash: String) {
@@ -670,27 +609,6 @@ final class MessageRelayService: ObservableObject {
         seenMessageIDs.insert(hash)
         messageTimestamps[hash] = Date()
     }
-    
-    /// Atomic check-and-mark operation to prevent race conditions
-    /// Returns true if message was already seen (duplicate), false if newly marked
-    private func checkAndMarkSeen(_ hash: String) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        
-        if seenMessageIDs.contains(hash) {
-            return true // Already seen (duplicate)
-        }
-        
-        seenMessageIDs.insert(hash)
-        messageTimestamps[hash] = Date()
-        return false // Newly seen
-    }
-    
-    func hasSeenMessage(_ id: UUID) -> Bool {
-        hasSeenMessage("\(id.uuidString)-*")
-    }
-    
-    // MARK: - Maintenance
     
     private func startCleanupTimer() {
         cleanupTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -701,38 +619,119 @@ final class MessageRelayService: ObservableObject {
     private func performCleanup() {
         lock.lock()
         defer { lock.unlock() }
-        
         let now = Date()
-        let expiry: TimeInterval = 300 // 5 minutes
         
-        // Clean old seen messages
-        let expiredHashes = messageTimestamps.filter {
-            now.timeIntervalSince($0.value) > expiry
-        }.map { $0.key }
-        
+        // Clean up expired message hashes (5 minutes)
+        let expiredHashes = messageTimestamps.filter { now.timeIntervalSince($0.value) > 300 }.map { $0.key }
         for hash in expiredHashes {
             seenMessageIDs.remove(hash)
             messageTimestamps.removeValue(forKey: hash)
         }
         
-        // Clean old pending messages
-        let expiredPending = pendingMessages.filter {
-            now.timeIntervalSince($0.value.0.timestamp) > 30
-        }.map { $0.key }
-        
-        for id in expiredPending {
-            pendingMessages.removeValue(forKey: id)
+        // Clean up old ingress records (5 minutes)
+        let expiredIngress = ingressByMessageID.filter { now.timeIntervalSince($0.value.timestamp) > 300 }.map { $0.key }
+        for id in expiredIngress {
+            ingressByMessageID.removeValue(forKey: id)
         }
         
-        // Clean old ACK tracking
-        let expiredAcks = awaitingAck.filter {
-            now.timeIntervalSince($0.value) > 30
-        }.map { $0.key }
+        // Clean up stale scheduled relays (> 2 seconds means something went wrong)
+        let staleRelays = scheduledRelays.filter { _ in true } // Get all for safety
+        for (id, _) in staleRelays {
+            scheduledRelays.removeValue(forKey: id)
+        }
         
-        for id in expiredAcks {
-            awaitingAck.removeValue(forKey: id)
+        // Clean up old store-and-forward entries (30 seconds)
+        for (peerID, messages) in pendingDirectedRelays {
+            let freshMessages = messages.filter { now.timeIntervalSince($0.value.enqueuedAt) < 30 }
+            if freshMessages.isEmpty {
+                pendingDirectedRelays.removeValue(forKey: peerID)
+            } else {
+                pendingDirectedRelays[peerID] = freshMessages
+            }
         }
         
         chunkAssembler.cleanupExpired()
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Create deterministic message ID for tracking
+    private func makeMessageID(for envelope: MessageEnvelope) -> String {
+        return "\(envelope.originID.uuidString)-\(envelope.timestamp.timeIntervalSince1970)-\(envelope.id.uuidString.prefix(8))"
+    }
+    
+    /// Calculate subset size for K-of-N fanout
+    private func subsetSizeForFanout(_ n: Int) -> Int {
+        guard n > 0 else { return 0 }
+        // For N peers, relay to K = ceil(sqrt(N)) + 1 peers
+        return Int(ceil(sqrt(Double(n)))) + 1
+    }
+    
+    /// Select deterministic subset of peers using message ID as seed
+    private func selectDeterministicSubset(peers: [Peer], k: Int, seed: String) -> [Peer] {
+        guard k > 0 && !peers.isEmpty else { return [] }
+        guard k < peers.count else { return peers }
+        
+        // Use seed hash to deterministically shuffle
+        let seedHash = abs(seed.hashValue)
+        var rng = SeededRandomNumberGenerator(seed: UInt64(seedHash))
+        var shuffled = peers
+        
+        // Fisher-Yates shuffle with seeded RNG
+        for i in (1..<shuffled.count).reversed() {
+            let j = Int(rng.next() % UInt64(i + 1))
+            shuffled.swapAt(i, j)
+        }
+        
+        return Array(shuffled.prefix(k))
+    }
+    
+    /// Store directed message when no route available
+    private func spoolDirectedMessage(_ envelope: MessageEnvelope, to destinationID: UUID) {
+        let messageID = makeMessageID(for: envelope)
+        
+        lock.lock()
+        defer { lock.unlock() }
+        
+        var messages = pendingDirectedRelays[destinationID] ?? [:]
+        if messages[messageID] == nil {
+            messages[messageID] = (envelope: envelope, enqueuedAt: Date())
+            pendingDirectedRelays[destinationID] = messages
+            MeshLogger.relay.info("Spooled directed message for \(destinationID.uuidString.prefix(8))")
+        }
+    }
+    
+    /// Flush spooled messages for a destination
+    private func flushDirectedSpool(for destinationID: UUID) {
+        lock.lock()
+        let messages = pendingDirectedRelays.removeValue(forKey: destinationID)
+        lock.unlock()
+        
+        guard let messages = messages else { return }
+        
+        MeshLogger.relay.info("Flushing \(messages.count) spooled messages for \(destinationID.uuidString.prefix(8))")
+        
+        for (_, entry) in messages {
+            Task {
+                try? await sendEnvelope(entry.envelope)
+            }
+        }
+    }
+}
+
+// MARK: - Seeded Random Number Generator
+
+/// Simple LCG-based RNG for deterministic peer selection
+struct SeededRandomNumberGenerator: RandomNumberGenerator {
+    private var state: UInt64
+    
+    init(seed: UInt64) {
+        self.state = seed
+    }
+    
+    mutating func next() -> UInt64 {
+        // Linear Congruential Generator (LCG) constants
+        state = state &* 6364136223846793005 &+ 1442695040888963407
+        return state
     }
 }

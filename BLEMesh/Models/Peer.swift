@@ -1,7 +1,7 @@
 import Foundation
 import CoreBluetooth
 
-/// Represents a discovered BLE peer device
+/// Represents a discovered BLE peer device (Plaintext Version)
 final class Peer: Identifiable, ObservableObject, Hashable {
     let id: UUID
     let peripheral: CBPeripheral?
@@ -15,11 +15,9 @@ final class Peer: Identifiable, ObservableObject, Hashable {
     @Published var messageCharacteristic: CBCharacteristic?
     @Published var reconnectAttempts: Int = 0
     
-    /// Tracks if ECDH public key has been exchanged
-    @Published var hasExchangedKeys: Bool = false
-    
-    /// Tracks if ECDSA signing key has been exchanged
-    @Published var hasExchangedSigningKeys: Bool = false
+    // Key exchange flags removed in this version
+    var hasExchangedKeys: Bool { true }
+    var hasExchangedSigningKeys: Bool { true }
     
     /// Mesh network device ID (different from BLE peripheral ID)
     @Published var meshDeviceID: UUID?

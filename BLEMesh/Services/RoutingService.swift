@@ -131,8 +131,6 @@ final class RoutingService: ObservableObject {
             handleAck(controlMessage, from: peer)
         case .readReceipt:
             handleReadReceipt(controlMessage, from: peer)
-        case .groupKeyDistribute:
-            handleGroupKeyDistribute(controlMessage, from: peer)
         }
     }
     
@@ -154,39 +152,6 @@ final class RoutingService: ObservableObject {
             }
         } catch {
             MeshLogger.relay.error("Failed to decode read receipt: \(error)")
-        }
-    }
-    
-    // MARK: - Group Key Distribution
-    
-    /// Callback for group key received (set by ChatViewModel)
-    var onGroupKeyReceived: ((UUID, String, [UUID], EncryptionService.EncryptedPayload, UUID) -> Void)?
-    
-    private func handleGroupKeyDistribute(_ controlMessage: ControlMessage, from peer: Peer) {
-        do {
-            let gkd = try controlMessage.decode(GroupKeyDistribute.self)
-            
-            // Convert to EncryptedPayload
-            let encryptedPayload = EncryptionService.EncryptedPayload(
-                ciphertext: gkd.encryptedKey,
-                nonce: gkd.nonce,
-                tag: gkd.tag
-            )
-            
-            // Notify ChatViewModel to import the key
-            DispatchQueue.main.async {
-                self.onGroupKeyReceived?(
-                    gkd.groupID,
-                    gkd.groupName,
-                    gkd.memberIDs,
-                    encryptedPayload,
-                    gkd.senderID
-                )
-            }
-            
-            MeshLogger.relay.info("Received group key for '\(gkd.groupName)' from \(gkd.senderID.uuidString.prefix(8))")
-        } catch {
-            MeshLogger.relay.error("Failed to decode group key distribute: \(error)")
         }
     }
     

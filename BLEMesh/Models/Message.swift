@@ -22,9 +22,26 @@ struct MeshMessage: Identifiable, Codable, Equatable {
     var isFromLocalDevice: Bool = false
     var conversationID: UUID? = nil // Group or conversation ID if applicable
     var deliveryStatus: MessageDeliveryStatus = .pending
+    var deliveryPath: [DeliveryHop] = []
     
     enum CodingKeys: String, CodingKey {
-        case id, senderID, senderName, content, timestamp, ttl, originID, conversationID, deliveryStatus
+        case id, senderID, senderName, content, timestamp, ttl, originID, conversationID, deliveryStatus, deliveryPath
+    }
+    
+    struct DeliveryHop: Codable, Equatable {
+        let deviceID: UUID
+        let deviceName: String
+        let status: HopStatus
+        let timestamp: Date
+        let latency: Double?  // milliseconds
+        
+        enum HopStatus: String, Codable {
+            case pending      // Waiting for this hop
+            case sent         // Sent to this device
+            case received     // Device received
+            case relayed      // Device relayed forward
+            case failed       // Failed at this device
+        }
     }
     
     init(

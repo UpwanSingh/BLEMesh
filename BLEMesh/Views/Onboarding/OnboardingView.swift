@@ -138,18 +138,18 @@ struct OnboardingView: View {
             description: "Messages automatically hop through intermediate devices to reach their destination, even if you're not directly connected."
         ),
         OnboardingPage(
-            icon: "lock.shield.fill",
+            icon: "person.2.fill",
             iconColor: .green,
-            title: "End-to-End Encrypted",
-            subtitle: "Private by Design",
-            description: "All direct messages are encrypted using modern cryptography. Only you and your recipient can read your conversation."
+            title: "Direct & Group Chat",
+            subtitle: "Stay Connected",
+            description: "Chat with individuals or create groups for team communication. Perfect for events, emergencies, or off-grid areas."
         ),
         OnboardingPage(
-            icon: "person.3.fill",
+            icon: "chart.bar.fill",
             iconColor: .orange,
-            title: "Group Messaging",
-            subtitle: "Stay Connected Together",
-            description: "Create groups for team communication. Perfect for events, emergencies, or anywhere traditional networks aren't available."
+            title: "Route Quality",
+            subtitle: "Smart Messaging",
+            description: "See the reliability of paths to your peers and track message delivery status across every hop in the mesh."
         ),
         OnboardingPage(
             icon: "bolt.fill",
@@ -199,7 +199,6 @@ struct OnboardingView: View {
                         Circle()
                             .fill(index == currentPage ? Color.blue : Color.gray.opacity(0.3))
                             .frame(width: index == currentPage ? 10 : 8, height: index == currentPage ? 10 : 8)
-                            .animation(.spring(response: 0.3), value: currentPage)
                     }
                 }
                 .padding(.bottom, 30)
@@ -237,17 +236,6 @@ struct OnboardingView: View {
                 .padding(.bottom, 40)
             }
         }
-        .gesture(
-            DragGesture()
-                .onEnded { value in
-                    let threshold: CGFloat = 50
-                    if value.translation.width < -threshold && currentPage < pages.count - 1 {
-                        withAnimation { currentPage += 1 }
-                    } else if value.translation.width > threshold && currentPage > 0 {
-                        withAnimation { currentPage -= 1 }
-                    }
-                }
-        )
     }
     
     private func completeOnboarding() {
@@ -364,18 +352,18 @@ struct OnboardingReplayView: View {
             description: "Messages automatically hop through intermediate devices to reach their destination, even if you're not directly connected."
         ),
         OnboardingPage(
-            icon: "lock.shield.fill",
+            icon: "person.2.fill",
             iconColor: .green,
-            title: "End-to-End Encrypted",
-            subtitle: "Private by Design",
-            description: "All direct messages are encrypted using modern cryptography. Only you and your recipient can read your conversation."
+            title: "Direct & Group Chat",
+            subtitle: "Stay Connected",
+            description: "Chat with individuals or create groups for team communication. Perfect for events, emergencies, or off-grid areas."
         ),
         OnboardingPage(
-            icon: "person.3.fill",
+            icon: "chart.bar.fill",
             iconColor: .orange,
-            title: "Group Messaging",
-            subtitle: "Stay Connected Together",
-            description: "Create groups for team communication. Perfect for events, emergencies, or anywhere traditional networks aren't available."
+            title: "Route Quality",
+            subtitle: "Smart Messaging",
+            description: "See the reliability of paths to your peers and track message delivery status across every hop in the mesh."
         ),
         OnboardingPage(
             icon: "bolt.fill",
@@ -465,24 +453,4 @@ struct OnboardingReplayView: View {
             }
         }
     }
-}
-
-// MARK: - Preview
-
-#Preview("Onboarding") {
-    OnboardingView()
-}
-
-#Preview("Onboarding Replay") {
-    OnboardingReplayView()
-}
-
-#Preview("Onboarding Page") {
-    OnboardingPageView(page: OnboardingPage(
-        icon: "antenna.radiowaves.left.and.right.circle.fill",
-        iconColor: .blue,
-        title: "Welcome to BLE Mesh",
-        subtitle: "Decentralized Messaging",
-        description: "Send messages without internet or cell service. Your device becomes part of a wireless mesh network."
-    ))
 }

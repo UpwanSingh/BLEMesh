@@ -8,7 +8,6 @@ enum ControlMessageType: String, Codable {
     case peerAnnounce = "ANNOUNCE"  // Periodic presence broadcast
     case ack = "ACK"                // Delivery acknowledgment
     case readReceipt = "READ"       // Message read confirmation
-    case groupKeyDistribute = "GKD" // Group key distribution
 }
 
 /// Route Request - broadcast to find path to destination
@@ -145,37 +144,6 @@ struct ReadReceipt: Codable {
         self.messageID = messageID
         self.readerID = readerID
         self.originalSenderID = originalSenderID
-        self.timestamp = Date()
-    }
-}
-
-/// Group key distribution message
-struct GroupKeyDistribute: Codable {
-    let groupID: UUID
-    let groupName: String
-    let memberIDs: [UUID]           // All group members
-    let encryptedKey: Data          // Group key encrypted for recipient
-    let nonce: Data
-    let tag: Data
-    let senderID: UUID
-    let timestamp: Date
-    
-    init(
-        groupID: UUID,
-        groupName: String,
-        memberIDs: [UUID],
-        encryptedKey: Data,
-        nonce: Data,
-        tag: Data,
-        senderID: UUID
-    ) {
-        self.groupID = groupID
-        self.groupName = groupName
-        self.memberIDs = memberIDs
-        self.encryptedKey = encryptedKey
-        self.nonce = nonce
-        self.tag = tag
-        self.senderID = senderID
         self.timestamp = Date()
     }
 }

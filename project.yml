@@ -1,6 +1,6 @@
 name: BLEMesh
 options:
-  bundleIdPrefix: com.blemesh
+  bundleIdPrefix: com.noxrail
   deploymentTarget:
     iOS: "17.0"
   xcodeVersion: "15.0"
@@ -12,6 +12,7 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     INFOPLIST_FILE: BLEMesh/Info.plist
     CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 4C8ZG43R2Q
     DEBUG_INFORMATION_FORMAT: dwarf
     ENABLE_BITCODE: NO
 
@@ -23,7 +24,7 @@ targets:
       - BLEMesh
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.blemesh.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.noxrail.app
         INFOPLIST_FILE: BLEMesh/Info.plist
     info:
       path: BLEMesh/Info.plist

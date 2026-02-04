@@ -253,7 +253,7 @@ struct ConversationListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showNewGroup = true }) {
-                        Image(systemName: "person.3.fill.badge.plus")
+                        Image(systemName: "person.3.fill")
                     }
                 }
             }
