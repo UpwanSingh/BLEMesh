@@ -8,6 +8,7 @@ final class Peer: Identifiable, ObservableObject, Hashable {
     let central: CBCentral?
     
     @Published var name: String
+    @Published var nickname: String?  // User-assigned nickname to distinguish devices
     @Published var rssi: Int
     @Published var state: ConnectionState
     @Published var lastSeen: Date
@@ -77,6 +78,36 @@ final class Peer: Identifiable, ObservableObject, Hashable {
         self.rssi = 0
         self.state = .discovered
         self.lastSeen = Date()
+    }
+    
+    // MARK: - Display Properties
+    
+    /// Display name: nickname if set, otherwise device name
+    var displayName: String {
+        nickname ?? name
+    }
+    
+    /// Full identifier with UUID and nickname if available
+    var fullIdentifier: String {
+        let uuidShort = id.uuidString.prefix(8)
+        if let nick = nickname {
+            return "\(nick) (\(name) / \(uuidShort))"
+        } else {
+            return "\(name) / \(uuidShort)"
+        }
+    }
+    
+    /// Save nickname to persistent storage
+    func setNickname(_ newNickname: String?) {
+        self.nickname = newNickname
+        UserDefaults.standard.set(newNickname, forKey: "peer_nickname_\(id.uuidString)")
+    }
+    
+    /// Load nickname from persistent storage
+    func loadNickname() {
+        if let savedNickname = UserDefaults.standard.string(forKey: "peer_nickname_\(id.uuidString)") {
+            self.nickname = savedNickname
+        }
     }
     
     func updateState(_ newState: ConnectionState) {

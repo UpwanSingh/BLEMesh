@@ -25,13 +25,6 @@ private enum ThemeLocal {
     }
 }
 
-// Namespace alias to match our Theme reference pattern
-private struct Theme {
-    typealias Color = ThemeLocal.Colors
-    typealias Spacing = ThemeLocal.Spacing
-    typealias Corner = ThemeLocal.Corner
-}
-
 struct ContentView: View {
     @EnvironmentObject var viewModel: ChatViewModel
     @State private var showSettings = false
@@ -450,8 +443,8 @@ struct MessageBubble: View {
                 .padding(12)
                 .foregroundColor(message.isFromLocalDevice ? .white : .primary)
                 .background(
-                    RoundedRectangle(cornerRadius: Theme.Corner.medium, style: .continuous)
-                        .fill(message.isFromLocalDevice ? Theme.Color.accent : Theme.Color.card)
+                    RoundedRectangle(cornerRadius: ThemeLocal.Corner.medium, style: .continuous)
+                        .fill(message.isFromLocalDevice ? ThemeLocal.Colors.accent : ThemeLocal.Colors.card)
                 )
                 .shadow(color: Color.black.opacity(0.02), radius: 2, x: 0, y: 1)
             
@@ -481,7 +474,7 @@ struct MessageInputView: View {
                 Image(systemName: viewModel.isSending ? "hourglass" : "paperplane.fill")
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
-                    .background(canSend ? Theme.Color.accent : Color.gray)
+                    .background(canSend ? ThemeLocal.Colors.accent : Color.gray)
                     .cornerRadius(22)
             }
             .disabled(!canSend || viewModel.isSending)
