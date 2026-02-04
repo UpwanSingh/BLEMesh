@@ -33,7 +33,90 @@ Message: "Hello" from A to C
 
 ---
 
-## Test Execution Steps
+## How Destination Picker Works (Critical Understanding)
+
+### Why You Can Select Device C Even Though It's Out of Range
+
+**The Destination Picker shows TWO types of devices:**
+
+```
+┌─────────────────────────────────────┐
+│  DESTINATION PICKER (on Device A)   │
+├─────────────────────────────────────┤
+│ [Broadcast to All] ← No encryption  │
+│                                     │
+│ DIRECT PEERS (in BLE range):        │
+│  ├─ Device B (1 hop, direct)        │
+│                                     │
+│ ROUTABLE PEERS (via mesh):          │
+│  ├─ Device C (2 hops) ← SELECT THIS │
+│                                     │
+│ GROUPS:                             │
+│  ├─ (none yet)                      │
+└─────────────────────────────────────┘
+```
+
+**What's happening:**
+1. Device B is in range of both A and C
+2. Device B tells Device A: "I know about Device C"
+3. Device A's routing table now has entry for C
+4. Device C appears in the "ROUTABLE PEERS" section with hop count
+5. You can select it even though you can't directly reach it
+
+**The key phrase you'll see in the picker:**
+- `Device C (2 hops)` ← This indicates it's reachable via routing, not direct BLE
+- `Device B (1 hop)` ← This would be direct (in BLE range)
+
+### How the Routing Discovery Happens (Behind the Scenes)
+
+```
+Timeline:
+─────────────────────────────────────────────────────────
+
+1. [Device A starts]
+   - Opens Messages tab
+   - Scans for peers
+   - Finds: Device B (direct)
+   - Routing table: A ↔ B (1 hop)
+
+2. [Device B receives route request]
+   - B has direct connection to both A and C
+   - B forwards route info to A
+   - Tells A: "Device C is reachable through me (2 hops)"
+
+3. [Device A updates routing table]
+   - New entry: A → C (via B, 2 hops)
+   - Device C now appears in destination picker
+   - You can now select Device C
+
+4. [You send message]
+   - Select "Device C (2 hops)"
+   - Message gets routed A → B → C
+```
+
+---
+
+## Before Test: Route Discovery Must Happen First
+
+**Important:** Before Device C appears in the picker, the routing must be discovered.
+
+**On Device A, to force route discovery:**
+1. Open **Network** tab
+2. Look at "Mesh Network" section
+3. If Device C is NOT listed, tap **"Force Route Discovery"** button
+4. Wait 2-3 seconds
+5. Device C should appear with hop count
+6. Now open **Messages** tab
+7. Tap destination picker
+8. Device C should be selectable under "ROUTABLE PEERS"
+
+**If Device C doesn't appear:**
+- Device B might not be relaying route info
+- Check Device B's Bluetooth is on
+- Check Device C's Bluetooth is on
+- Make sure B can see both A and C
+
+---
 
 ### Step 1: Verify Initial State
 **On Device A:**
@@ -52,11 +135,21 @@ Message: "Hello" from A to C
 ### Step 2: Send Test Message
 **On Device A:**
 1. Open **Messages** tab
-2. Tap destination picker
-3. Select **Device C** from the list
-4. Type message: `"Test hop from A through B to C"`
-5. **ENSURE ENCRYPTION IS ENABLED** (lock icon should be green/filled)
-6. Tap send
+2. Tap destination picker button
+3. **Device C will appear in two ways:**
+   - **Under "Direct Peers"** section if in direct range (won't be - out of range)
+   - **Under "Routable Peers" section** (from routing table) ← **SELECT FROM HERE**
+   - Device C should show: `"Device C (2 hops)"`
+4. Tap to select Device C
+5. Type message: `"Test hop from A through B to C"`
+6. **ENSURE ENCRYPTION IS ENABLED** (lock icon should be green/filled)
+7. Tap send
+
+**Why Device C appears even though out of range:**
+- The destination picker shows BOTH discovered peers (direct BLE) AND routable peers (via routing table)
+- When Device B discovers Device C earlier, it shares this info with Device A via the mesh
+- Device A's routing table now knows Device C is reachable via Device B
+- So Device C appears in the picker with hop count "2 hops"
 
 ### Step 3: Monitor Routing on Device B
 **On Device B:**

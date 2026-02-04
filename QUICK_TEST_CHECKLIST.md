@@ -20,10 +20,21 @@
 
 ### Device A (Sender) - Messages Tab
 1. Tap destination picker button
-2. Scroll down → find **Device C**
-3. Type: `Test message from A to C`
-4. **Verify LOCK ICON IS GREEN** (encryption enabled)
-5. Tap send button
+2. Look for **Device C** in the list
+   - **If Device C is NOT visible yet:**
+     - Go to Network tab
+     - Tap "Force Route Discovery"
+     - Wait 2-3 seconds
+     - Return to Messages tab
+3. You should see: `Device C (2 hops)` under "ROUTABLE PEERS" section
+4. Tap to select Device C
+5. Type: `Test message from A to C`
+6. **Verify LOCK ICON IS GREEN** (encryption enabled)
+7. Tap send button
+
+**Why Device C appears even though out of range:**
+- Destination picker shows both direct peers (BLE range) and routable peers (via mesh)
+- Device B shares route info, so Device C becomes routable from Device A
 
 ### Device B (Relay) - Debug Tab
 - [ ] Watch `messagesRelayed` counter increase by 1
