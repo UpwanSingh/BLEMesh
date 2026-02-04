@@ -17,6 +17,8 @@ struct ContentView: View {
                 TabView {
                     // Chat tab
                     ChatTabView()
+                        .navigationTitle("Messages")
+                        .navigationBarTitleDisplayMode(.inline)
                         .tabItem {
                             Label("Chat", systemImage: "message.fill")
                         }
@@ -31,6 +33,8 @@ struct ContentView: View {
                     
                     // Network tab (Peers + Routes)
                     NetworkTabView()
+                        .navigationTitle("Network")
+                        .navigationBarTitleDisplayMode(.inline)
                         .tabItem {
                             Label("Network", systemImage: "antenna.radiowaves.left.and.right")
                         }
