@@ -96,3 +96,30 @@ struct DigestTests {
         #expect(digest.items.first?.headline == "Violence: crowd crush at gate 3")
     }
 }
+
+@Suite("Emergency knowledge")
+struct KnowledgeTests {
+    @Test func findsRelevantGuidance() {
+        #expect(EmergencyKnowledge.search("my friend has a bad burn on his arm").first?.id == "burns")
+        #expect(EmergencyKnowledge.search("he is not breathing what do i do").first?.id == "cpr")
+        #expect(EmergencyKnowledge.search("water is rising in our street").first?.id == "flood")
+        #expect(EmergencyKnowledge.search("bitten by a snake").first?.id == "snake")
+    }
+
+    @Test func answersIncludeStepsAndDisclaimer() throws {
+        let answer = try #require(EmergencyKnowledge.answer("how to stop bleeding"))
+        #expect(answer.contains("Press firmly"))
+        #expect(answer.contains(EmergencyKnowledge.disclaimer))
+    }
+
+    @Test func unknownTopicsReturnNothing() {
+        #expect(EmergencyKnowledge.answer("what's the cricket score") == nil)
+    }
+
+    @Test func everyEntryIsWellFormed() {
+        #expect(Set(EmergencyKnowledge.entries.map(\.id)).count == EmergencyKnowledge.entries.count)
+        for entry in EmergencyKnowledge.entries {
+            #expect(!entry.keywords.isEmpty && entry.steps.count >= 3, "\(entry.id)")
+        }
+    }
+}

@@ -68,6 +68,15 @@ public final class SimulatedMesh {
         return node
     }
 
+    /// Attach an externally created node (e.g. the app's real node in demo mode). The caller
+    /// keeps its own delegate; the node's clock should track `now`.
+    public func adopt(_ node: MeshNode, as name: String) {
+        let transport = SimTransport(name: name, mesh: self)
+        node.transport = transport
+        nodes[name] = node
+        transports[name] = transport
+    }
+
     public func node(_ name: String) -> MeshNode { nodes[name]! }
     public func recorder(_ name: String) -> MeshRecorder { recorders[name]! }
 
