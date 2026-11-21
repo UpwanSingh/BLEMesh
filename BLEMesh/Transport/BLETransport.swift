@@ -20,6 +20,7 @@ final class BLETransport: NSObject, MeshTransport {
         static let minimumRSSI = -92
         static let connectTimeout: TimeInterval = 10
         static let rescanInterval: TimeInterval = 30
+        static let maintenanceInterval: TimeInterval = 2
         /// Never exceed this even if the stack negotiates more; keeps fragments small enough
         /// to interleave fairly between links.
         static let maxFrameCap = 512
@@ -32,7 +33,8 @@ final class BLETransport: NSObject, MeshTransport {
     private(set) var centralState: CBManagerState = .unknown
     private(set) var peripheralState: CBManagerState = .unknown
     var isPoweredOn: Bool { centralState == .poweredOn && peripheralState == .poweredOn }
-    var linkCount: Int { centralLinks.count + peripheralLinks.count }
+    /// Links that are fully up (connecting/discovering centrals don't count).
+    var linkCount: Int { centralLinks.values.filter(\.isUp).count + peripheralLinks.count }
 
     private var central: CBCentralManager!
     private var peripheralManager: CBPeripheralManager!
@@ -47,7 +49,11 @@ final class BLETransport: NSObject, MeshTransport {
         var isUp = false
     }
     private var centralLinks: [UUID: CentralLink] = [:]
+    /// Central links not yet up (connecting, discovering, subscribing) and when they started.
+    /// Cleared only when the link is up, so setup is bounded by the connect timeout end to end.
     private var connecting: [UUID: Date] = [:]
+    /// Peripherals handed back by state restoration, processed once the central is powered on.
+    private var restoredPeripherals: [CBPeripheral] = []
     /// Short cool-down after a failed/closed connection, to avoid hammering a peer.
     private var backoffUntil: [UUID: Date] = [:]
 
@@ -61,6 +67,7 @@ final class BLETransport: NSObject, MeshTransport {
     private var peripheralBlocked = false
 
     private var rescanTimer: Timer?
+    private var maintenanceTimer: Timer?
     /// The local name we advertise: the first 8 hex chars of our PeerID. When both devices see
     /// each other, only the one with the smaller ID initiates, avoiding duplicate links.
     private let advertisedName: String
@@ -82,13 +89,23 @@ final class BLETransport: NSObject, MeshTransport {
         rescanTimer = Timer.scheduledTimer(withTimeInterval: Constants.rescanInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.restartScan() }
         }
+        maintenanceTimer = Timer.scheduledTimer(withTimeInterval: Constants.maintenanceInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.expireStaleConnects()
+                self?.dropDuplicateLinks()
+            }
+        }
     }
 
     func stop() {
         rescanTimer?.invalidate()
         rescanTimer = nil
+        maintenanceTimer?.invalidate()
+        maintenanceTimer = nil
         central?.stopScan()
         peripheralManager?.stopAdvertising()
+        // Withdraw our GATT service so connected peers see it invalidated and drop the link.
+        peripheralManager?.removeAllServices()
         for link in centralLinks.values { central?.cancelPeripheralConnection(link.peripheral) }
         for id in Array(centralLinks.keys) { tearDownCentralLink(id) }
         for id in Array(peripheralLinks.keys) { tearDownPeripheralLink(id) }
@@ -223,12 +240,72 @@ final class BLETransport: NSObject, MeshTransport {
     }
 
     private func expireStaleConnects() {
+        guard let central else { return }
         let now = Date()
         for (id, started) in connecting where now.timeIntervalSince(started) > Constants.connectTimeout {
             connecting[id] = nil
             if let peripheral = centralLinks[id]?.peripheral { central.cancelPeripheralConnection(peripheral) }
             centralLinks[id] = nil
             backoffUntil[id] = now.addingTimeInterval(15)
+        }
+    }
+
+    /// When both phones connected to each other (e.g. a backgrounded advertiser hides its name,
+    /// defeating the tie-break), two links lead to the same proven neighbour. The phone with the
+    /// larger mesh ID closes its central connection; the other keeps it — so exactly one survives.
+    private func dropDuplicateLinks() {
+        guard let node, let central else { return }
+        var peripheralNeighbors: Set<PeerID> = []
+        for id in peripheralLinks.keys {
+            if let neighbor = node.provenNeighbor(on: Self.linkID(peripheral: id)) { peripheralNeighbors.insert(neighbor) }
+        }
+        for (id, link) in centralLinks where link.isUp {
+            guard let neighbor = node.provenNeighbor(on: Self.linkID(central: id)),
+                  peripheralNeighbors.contains(neighbor), node.peerID > neighbor else { continue }
+            MeshLogger.connection.info("Closing duplicate link to \(neighbor.short, privacy: .public)")
+            central.cancelPeripheralConnection(link.peripheral)
+        }
+    }
+
+    /// Mark a central link up once we're subscribed to the peer's characteristic.
+    private func centralLinkUp(_ id: UUID) {
+        guard var link = centralLinks[id], !link.isUp else { return }
+        link.isUp = true
+        centralLinks[id] = link
+        connecting[id] = nil
+        MeshLogger.connection.info("Link up (central) \(id.uuidString, privacy: .public)")
+        node?.linkDidConnect(Self.linkID(central: id))
+        onStateChange?()
+    }
+
+    /// Re-adopt connections iOS kept alive while the app was suspended or terminated.
+    private func adoptRestoredPeripherals() {
+        let restored = restoredPeripherals
+        restoredPeripherals = []
+        let now = Date()
+        for peripheral in restored {
+            let id = peripheral.identifier
+            switch peripheral.state {
+            case .connected:
+                var link = centralLinks[id] ?? CentralLink(peripheral: peripheral)
+                let characteristic = peripheral.services?
+                    .first { $0.uuid == Constants.serviceUUID }?
+                    .characteristics?.first { $0.uuid == Constants.frameCharacteristicUUID }
+                link.characteristic = characteristic
+                centralLinks[id] = link
+                if let characteristic, characteristic.isNotifying {
+                    centralLinkUp(id) // already subscribed; no callback will come
+                } else {
+                    connecting[id] = now
+                    peripheral.discoverServices([Constants.serviceUUID])
+                }
+            case .connecting:
+                centralLinks[id] = CentralLink(peripheral: peripheral)
+                connecting[id] = now
+            default:
+                central.cancelPeripheralConnection(peripheral)
+                centralLinks[id] = nil
+            }
         }
     }
 
@@ -268,6 +345,7 @@ extension BLETransport: CBCentralManagerDelegate {
         MainActor.assumeIsolated {
             centralState = central.state
             if central.state == .poweredOn {
+                adoptRestoredPeripherals()
                 startScanningIfPossible()
             } else {
                 for id in Array(centralLinks.keys) { tearDownCentralLink(id) }
@@ -278,15 +356,10 @@ extension BLETransport: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
         MainActor.assumeIsolated {
-            // Re-adopt connections iOS kept alive while we were suspended/terminated.
+            // Commands are ignored until the manager is powered on, so adopt them then.
             let restored = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
-            for peripheral in restored {
-                peripheral.delegate = self
-                centralLinks[peripheral.identifier] = CentralLink(peripheral: peripheral)
-                if peripheral.state == .connected {
-                    peripheral.discoverServices([Constants.serviceUUID])
-                }
-            }
+            for peripheral in restored { peripheral.delegate = self }
+            restoredPeripherals = restored
         }
     }
 
@@ -305,7 +378,7 @@ extension BLETransport: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         MainActor.assumeIsolated {
-            connecting[peripheral.identifier] = nil
+            // `connecting` stays set until the link is up, so discovery/subscription is time-bounded.
             peripheral.discoverServices([Constants.serviceUUID])
         }
     }
@@ -319,7 +392,8 @@ extension BLETransport: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         MainActor.assumeIsolated {
-            backoffUntil[peripheral.identifier] = Date().addingTimeInterval(3)
+            let minimum = Date().addingTimeInterval(3)
+            backoffUntil[peripheral.identifier] = max(backoffUntil[peripheral.identifier] ?? minimum, minimum)
             tearDownCentralLink(peripheral.identifier)
         }
     }
@@ -352,13 +426,21 @@ extension BLETransport: CBPeripheralDelegate {
 
     nonisolated func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         MainActor.assumeIsolated {
-            let id = peripheral.identifier
-            guard error == nil, characteristic.isNotifying, var link = centralLinks[id], !link.isUp else { return }
-            link.isUp = true
-            centralLinks[id] = link
-            MeshLogger.connection.info("Link up (central) \(id.uuidString, privacy: .public)")
-            node?.linkDidConnect(Self.linkID(central: id))
-            onStateChange?()
+            guard error == nil, characteristic.isNotifying else {
+                // Couldn't subscribe: give the slot back instead of holding a dead connection.
+                central.cancelPeripheralConnection(peripheral)
+                return
+            }
+            centralLinkUp(peripheral.identifier)
+        }
+    }
+
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
+        MainActor.assumeIsolated {
+            // The peer withdrew our service (app stopped, panic wipe…) while the radio link stayed up.
+            if invalidatedServices.contains(where: { $0.uuid == Constants.serviceUUID }) {
+                central.cancelPeripheralConnection(peripheral)
+            }
         }
     }
 
@@ -397,6 +479,12 @@ extension BLETransport: CBPeripheralManagerDelegate {
                let characteristic = service.characteristics?.first(where: { $0.uuid == Constants.frameCharacteristicUUID }) as? CBMutableCharacteristic {
                 frameCharacteristic = characteristic
                 serviceAdded = true
+                // Centrals still subscribed across the restore are live links already.
+                for central in characteristic.subscribedCentrals ?? [] where peripheralLinks[central.identifier] == nil {
+                    peripheralLinks[central.identifier] = PeripheralLink(central: central)
+                    node?.linkDidConnect(Self.linkID(peripheral: central.identifier))
+                }
+                onStateChange?()
             }
         }
     }

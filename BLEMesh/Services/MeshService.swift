@@ -25,7 +25,9 @@ final class MeshService: ObservableObject {
     @Published private(set) var digest: AreaDigest?
     @Published private(set) var digestOverview: String = ""
     @Published private(set) var isBuildingDigest = false
-    @Published private(set) var pendingQuestions: Set<UUID> = []
+    /// Outstanding "Ask the mesh" questions: queryID → the helper we asked. Answers from anyone
+    /// else (or to questions we never asked) are rejected.
+    @Published private(set) var pendingQuestions: [UUID: PeerID] = [:]
     @Published var lastError: String?
     /// Conversation currently on screen (incoming messages there don't count as unread).
     @Published var openConversationKey: String?
@@ -39,6 +41,8 @@ final class MeshService: ObservableObject {
     private var demo: DemoMesh?
     private var tickTimer: Timer?
     private var snapshotDirty = false
+    /// Changes on panic wipe; async work started before a wipe checks it and stands down.
+    private var session = UUID()
     private let snapshotURL: URL?
 
     var context: ModelContext { container.mainContext }
@@ -97,6 +101,13 @@ final class MeshService: ObservableObject {
         node.tick()
         refreshStats()
         if snapshotDirty { saveSnapshot() }
+    }
+
+    /// True when the user can actually see the screen (receipts / unread logic depend on it).
+    private var isVisible: Bool { mode == .demo || UIApplication.shared.applicationState == .active }
+
+    func appDidBecomeActive() {
+        if let key = openConversationKey { markRead(key: key) }
     }
 
     func appDidEnterBackground() {
@@ -167,6 +178,11 @@ final class MeshService: ObservableObject {
         do {
             let id: UUID
             var status: DeliveryStatus = .sent
+            if (key == ConversationKey.nearby || ConversationKey.groupID(from: key) != nil) && node.linkCount == 0 {
+                // Broadcast/group traffic isn't queued; don't pretend it went out.
+                lastError = "Nobody is in range yet, so this wasn't sent. Direct messages wait and send automatically; public and group messages need someone nearby."
+                return nil
+            }
             if key == ConversationKey.nearby {
                 id = try node.sendBroadcast(content)
             } else if let peer = ConversationKey.peer(from: key) {
@@ -185,14 +201,16 @@ final class MeshService: ObservableObject {
         }
     }
 
-    func sendText(_ text: String, to key: String) {
+    /// Returns false when nothing was sent (so the composer can keep the text).
+    @discardableResult
+    func sendText(_ text: String, to key: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty else { return false }
         guard trimmed.utf8.count <= 8_000 else {
             lastError = "Message too long"
-            return
+            return false
         }
-        send(.text(trimmed), to: key)
+        return send(.text(trimmed), to: key) != nil
     }
 
     func retry(_ messageID: UUID) {
@@ -216,35 +234,38 @@ final class MeshService: ObservableObject {
         let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         let query = AIQuery(prompt: trimmed)
-        let questionID = UUID()
-        storeLocal(id: questionID, content: .aiQuery(query), key: ConversationKey.askMesh, outgoing: true,
-                   senderName: nickname)
+        let session = self.session
 
         if !ai.hasGenerativeModel, let helper = node.bestAIHelper() {
             do {
+                // Stored under the mesh message ID so delivery updates / retry apply to it.
                 let messageID = try node.sendDirect(.aiQuery(query), to: helper.peerID)
-                pendingQuestions.insert(query.queryID)
-                if let stored = fetchMessage(questionID) { stored.status = node.outgoingStatus(messageID) ?? .sent }
+                storeLocal(id: messageID, content: .aiQuery(query), key: ConversationKey.askMesh, outgoing: true,
+                           senderName: nickname, status: node.outgoingStatus(messageID) ?? .sent)
+                pendingQuestions[query.queryID] = helper.peerID
                 // If nobody answers in time, fall back to local guidance.
                 Task { [weak self] in
                     try? await Task.sleep(nanoseconds: 45_000_000_000)
-                    await self?.fallbackIfUnanswered(query)
+                    await self?.fallbackIfUnanswered(query, session: session)
                 }
                 return
             } catch {
                 lastError = error.localizedDescription
             }
         }
+        storeLocal(id: UUID(), content: .aiQuery(query), key: ConversationKey.askMesh, outgoing: true, senderName: nickname)
         let answer = await ai.answer(trimmed)
+        guard session == self.session else { return }
         let source = ai.hasGenerativeModel ? "This phone (on-device AI)" : "Offline guide"
         storeLocal(id: UUID(), content: .aiResponse(AIResponse(queryID: query.queryID, text: answer, answeredBy: source)),
                    key: ConversationKey.askMesh, outgoing: false, senderName: source)
     }
 
-    private func fallbackIfUnanswered(_ query: AIQuery) async {
-        guard pendingQuestions.contains(query.queryID) else { return }
-        pendingQuestions.remove(query.queryID)
+    private func fallbackIfUnanswered(_ query: AIQuery, session: UUID) async {
+        guard session == self.session, pendingQuestions[query.queryID] != nil else { return }
+        pendingQuestions[query.queryID] = nil
         let answer = await OfflineKnowledgeEngine().answer(query.prompt)
+        guard session == self.session else { return }
         storeLocal(id: UUID(), content: .aiResponse(AIResponse(queryID: query.queryID, text: answer,
                                                                answeredBy: "Offline guide (no reply from mesh)")),
                    key: ConversationKey.askMesh, outgoing: false, senderName: "Offline guide")
@@ -288,6 +309,7 @@ final class MeshService: ObservableObject {
             storeLocal(id: UUID(), content: .text("You created “\(trimmed)” with \(members.count) member\(members.count == 1 ? "" : "s")"),
                        key: key, outgoing: true, senderName: nickname)
             refreshPeers()
+            saveSnapshot() // group keys must survive an immediate app kill
             return key
         } catch {
             lastError = error.localizedDescription
@@ -300,6 +322,7 @@ final class MeshService: ObservableObject {
         node.leaveGroup(groupID)
         deleteConversation(key: key)
         refreshPeers()
+        saveSnapshot()
     }
 
     func group(for key: String) -> GroupInfo? {
@@ -341,6 +364,7 @@ final class MeshService: ObservableObject {
     // MARK: - Digest
 
     func refreshDigest() async {
+        let session = self.session
         isBuildingDigest = true
         defer { isBuildingDigest = false }
         let since = Date().addingTimeInterval(-3600)
@@ -362,6 +386,7 @@ final class MeshService: ObservableObject {
         digest = built
         digestOverview = built.overview
         let overview = await ai.overview(for: built, recentTexts: inputs.map(\.text))
+        guard session == self.session else { return }
         digestOverview = overview
     }
 
@@ -369,6 +394,7 @@ final class MeshService: ObservableObject {
 
     /// Erase all messages, keys, groups and queued data, then start over with a new identity.
     func panicWipe() {
+        session = UUID() // in-flight tasks from the old identity stand down
         tickTimer?.invalidate()
         bleTransport?.stop()
         demo?.stop()
@@ -386,6 +412,11 @@ final class MeshService: ObservableObject {
         start()
         ensureConversation(ConversationKey.nearby, kind: .nearby, title: "Nearby")
         ensureConversation(ConversationKey.askMesh, kind: .askMesh, title: "Ask the Mesh")
+        digest = nil
+        digestOverview = ""
+        pendingQuestions = [:]
+        stats = MeshStats()
+        lastError = nil
         refreshPeers()
     }
 
@@ -453,7 +484,7 @@ final class MeshService: ObservableObject {
         if let conversation = fetchConversation(key) {
             conversation.updatedAt = Date()
             conversation.lastPreview = content.previewText
-            if !outgoing && openConversationKey != key { conversation.unreadCount += 1 }
+            if !outgoing && !(openConversationKey == key && isVisible) { conversation.unreadCount += 1 }
         }
         try? context.save()
         snapshotDirty = true
@@ -471,10 +502,15 @@ final class MeshService: ObservableObject {
             answerQuery(query, from: sender)
             return
         case .aiResponse(let response):
-            pendingQuestions.remove(response.queryID)
-            storeLocal(id: envelope.messageID, content: envelope.content, key: ConversationKey.askMesh, outgoing: false,
-                       senderName: response.answeredBy, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
-            notify(title: "Answer from \(response.answeredBy)", body: response.text, key: ConversationKey.askMesh)
+            // Only answers to questions we asked, from the phone we asked. The display name comes
+            // from the verified mesh identity, not from the (sender-controlled) `answeredBy` text.
+            guard pendingQuestions[response.queryID] == sender else { return }
+            pendingQuestions[response.queryID] = nil
+            let label = "\(senderName)’s on-device AI"
+            let verified = AIResponse(queryID: response.queryID, text: response.text, answeredBy: label)
+            storeLocal(id: envelope.messageID, content: .aiResponse(verified), key: ConversationKey.askMesh, outgoing: false,
+                       senderName: label, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
+            notify(title: "Answer from \(label)", body: response.text, key: ConversationKey.askMesh)
             return
         case .groupInvite(let invite):
             let key = ConversationKey.group(invite.groupID)
@@ -482,6 +518,7 @@ final class MeshService: ObservableObject {
             storeLocal(id: envelope.messageID, content: .text("\(senderName) added you to “\(invite.name)”"), key: key,
                        outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
             refreshPeers()
+            saveSnapshot()
             return
         case .groupLeave(let groupID):
             let key = ConversationKey.group(groupID)
@@ -489,6 +526,7 @@ final class MeshService: ObservableObject {
             storeLocal(id: envelope.messageID, content: .text("\(senderName) left the group"), key: key,
                        outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
             refreshPeers()
+            saveSnapshot()
             return
         default:
             break
@@ -508,7 +546,7 @@ final class MeshService: ObservableObject {
         storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
                    senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
 
-        if openConversationKey == key, message.scope == .direct {
+        if openConversationKey == key, isVisible, message.scope == .direct {
             node.sendReadReceipt(for: envelope.messageID, to: sender)
             fetchMessage(envelope.messageID)?.readReceiptSent = true
         }
@@ -523,11 +561,14 @@ final class MeshService: ObservableObject {
 
     private func answerQuery(_ query: AIQuery, from sender: PeerID) {
         guard settings.helpOthersWithAI, ai.hasGenerativeModel else { return }
+        let node = self.node
         Task { [weak self] in
             guard let self else { return }
             let answer = await self.ai.answer(query.prompt)
+            // Never answer from a new identity after a panic wipe (would link old and new).
+            guard self.node === node else { return }
             let response = AIResponse(queryID: query.queryID, text: answer, answeredBy: "\(self.nickname)’s on-device AI")
-            _ = try? self.node.sendDirect(.aiResponse(response), to: sender)
+            _ = try? node.sendDirect(.aiResponse(response), to: sender)
         }
     }
 
@@ -557,12 +598,12 @@ extension MeshService: MeshNodeDelegate {
 
     nonisolated func meshNode(_ node: MeshNode, didUpdateDelivery messageID: UUID, status: DeliveryStatus) {
         MainActor.assumeIsolated {
+            snapshotDirty = true // the outbox changed even if no stored message matches (control traffic)
             guard let message = fetchMessage(messageID) else { return }
             if status > message.status || message.status == .failed {
                 message.status = status
                 try? context.save()
             }
-            snapshotDirty = true
         }
     }
 

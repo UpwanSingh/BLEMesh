@@ -201,6 +201,9 @@ public final class MeshNode {
 
     public var linkCount: Int { links.count }
 
+    /// The neighbour that proved itself (hello handshake) on `link`, if any.
+    public func provenNeighbor(on link: LinkID) -> PeerID? { provenNeighbor[link] }
+
     public func outgoingStatus(_ messageID: UUID) -> DeliveryStatus? { outgoing[messageID]?.status }
 
     // MARK: - Sending

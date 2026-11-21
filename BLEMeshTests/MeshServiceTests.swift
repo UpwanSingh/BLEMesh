@@ -212,6 +212,25 @@ struct MeshServiceTests {
         #expect(await eventually { peer(service, "Asha") != nil }) // and the mesh works again
     }
 
+    @Test func publicMessagesAreNotFakedAsSentWhenNobodyIsInRange() {
+        let (service, _) = makeService()
+        service.setDemoLinks(enabled: false)
+        #expect(service.sendText("anyone?", to: ConversationKey.nearby) == false)
+        #expect(service.lastError?.contains("Nobody is in range") == true)
+        #expect(messages(service, ConversationKey.nearby).isEmpty)
+    }
+
+    @Test func panicWipeClearsDerivedState() async {
+        let (service, _) = makeService()
+        _ = await service.sendSOS(text: "Fire near the market", location: nil)
+        await service.refreshDigest()
+        #expect(service.digest != nil)
+        service.panicWipe()
+        #expect(service.digest == nil)
+        #expect(service.digestOverview.isEmpty)
+        #expect(service.pendingQuestions.isEmpty)
+    }
+
     @Test func retentionPurgesOldMessages() {
         let (service, _) = makeService()
         let old = StoredMessage(id: UUID(), conversationKey: ConversationKey.nearby, senderHex: service.myPeerID.hex,

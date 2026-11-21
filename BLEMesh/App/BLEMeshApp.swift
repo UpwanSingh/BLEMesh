@@ -19,11 +19,12 @@ struct BLEMeshApp: App {
             UserDefaults.standard.set("Tester", forKey: "mesh.nickname")
         }
         let demo = arguments.contains("-demoMesh") || isUITest || isUnitTest
-        let container = PersistenceController.makeContainer(inMemory: isUITest || isUnitTest)
+        // Demo mode never touches the real store, snapshot (outbox/group keys) or identity.
+        let container = PersistenceController.makeContainer(inMemory: demo)
         let settings = AppSettings()
         _settings = StateObject(wrappedValue: settings)
         _mesh = StateObject(wrappedValue: MeshService(mode: demo ? .demo : .bluetooth, container: container,
-                                                      settings: settings, persistSnapshot: !(isUITest || isUnitTest)))
+                                                      settings: settings, persistSnapshot: !demo))
     }
 
     var body: some Scene {
@@ -36,6 +37,7 @@ struct BLEMeshApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { mesh.appDidEnterBackground() }
+            if phase == .active { mesh.appDidBecomeActive() }
         }
     }
 }

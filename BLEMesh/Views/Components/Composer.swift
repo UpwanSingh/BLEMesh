@@ -106,6 +106,6 @@ struct Composer: View {
     private func send() {
         let value = text
         text = ""
-        mesh.sendText(value, to: conversationKey)
+        if !mesh.sendText(value, to: conversationKey) { text = value }
     }
 }
