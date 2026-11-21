@@ -1,321 +1,122 @@
 import SwiftUI
+import MeshCore
 
-/// Settings view for app configuration (Plaintext Version)
 struct SettingsView: View {
-    @ObservedObject var viewModel: ChatViewModel
-    @AppStorage("messageRetention") private var messageRetention = 7 // days
-    @AppStorage("showDeliveryStatus") private var showDeliveryStatus = true
-    @AppStorage("enableNotifications") private var enableNotifications = true
-    @AppStorage("autoReconnect") private var autoReconnect = true
-    
-    @State private var showingClearConfirmation = false
-    @State private var showingResetConfirmation = false
+    @EnvironmentObject private var mesh: MeshService
+    @EnvironmentObject private var settings: AppSettings
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var confirmWipe = false
+    @State private var confirmReset = false
     @State private var showOnboarding = false
-    
+
     var body: some View {
-        NavigationView {
-            List {
-                // Device Info
-                Section("Device") {
-                    HStack {
-                        Text("Name")
-                        Spacer()
-                        Text(viewModel.localDeviceName)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("ID")
-                        Spacer()
-                        Text(viewModel.localDeviceID)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+        NavigationStack {
+            Form {
+                Section("Profile") {
+                    TextField("Your name", text: $name)
+                        .onSubmit { mesh.rename(to: name) }
+                        .accessibilityIdentifier("settings.name")
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Your safety number").font(.caption).foregroundStyle(.secondary)
+                        Text(mesh.myFingerprint).font(.system(.body, design: .monospaced))
+                            .accessibilityIdentifier("settings.safetyNumber")
                     }
                 }
-                
-                // Network
-                Section("Network") {
-                    Toggle("Auto Reconnect", isOn: $autoReconnect)
-                    
-                    HStack {
-                        Text("Connected Peers")
-                        Spacer()
-                        Text("\(viewModel.connectedPeersCount)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Known Routes")
-                        Spacer()
-                        Text("\(viewModel.routes.count)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    NavigationLink {
-                        NetworkDiagnosticsView(viewModel: viewModel)
-                    } label: {
-                        Text("Network Diagnostics")
-                    }
-                }
-                
-                // Messages
-                Section("Messages") {
-                    Toggle("Show Delivery Status", isOn: $showDeliveryStatus)
-                    
-                    Picker("Message Retention", selection: $messageRetention) {
-                        Text("1 Day").tag(1)
-                        Text("7 Days").tag(7)
-                        Text("30 Days").tag(30)
-                        Text("Forever").tag(0)
-                    }
-                    
-                    HStack {
-                        Text("Stored Messages")
-                        Spacer()
-                        Text("\(viewModel.messages.count)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Button(role: .destructive) {
-                        showingClearConfirmation = true
-                    } label: {
-                        Text("Clear Message History")
-                    }
-                }
-                
-                // Notifications
-                Section("Notifications") {
-                    Toggle("Enable Notifications", isOn: $enableNotifications)
-                }
-                
-                // Stats
-                Section("Statistics") {
-                    HStack {
-                        Text("Messages Sent")
-                        Spacer()
-                        Text("\(viewModel.stats.messagesSent)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Messages Received")
-                        Spacer()
-                        Text("\(viewModel.stats.messagesReceived)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Messages Relayed")
-                        Spacer()
-                        Text("\(viewModel.stats.messagesRelayed)")
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // About
-                Section("About") {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("1.0.0")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    NavigationLink {
-                        AboutView()
-                    } label: {
-                        Text("About BLE Mesh")
-                    }
-                    
-                    Button {
-                        showOnboarding = true
-                    } label: {
-                        HStack {
-                            Text("View Onboarding")
-                            Spacer()
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
+
+                Section {
+                    Toggle("Answer questions for people nearby", isOn: $settings.helpOthersWithAI)
+                        .disabled(!mesh.ai.hasGenerativeModel)
+                        .onChange(of: settings.helpOthersWithAI) { _, _ in mesh.applySettingsChange() }
+                    Picker("My language", selection: $settings.preferredLanguage) {
+                        ForEach(AppSettings.supportedLanguages, id: \.code) { lang in
+                            Text(lang.name).tag(lang.code)
                         }
                     }
+                    Toggle("Auto-translate incoming messages", isOn: $settings.autoTranslate)
+                    Toggle("Read voice notes aloud on arrival", isOn: $settings.autoPlayVoice)
+                } header: {
+                    Text("On-device AI")
+                } footer: {
+                    Text(mesh.ai.statusDescription + ". Voice, translation, triage and answers never leave your phone.")
                 }
-                
-                // Debug
-                Section("Debug") {
-                    Button(role: .destructive) {
-                        showingResetConfirmation = true
-                    } label: {
-                        Text("Reset All Settings")
+
+                Section("Notifications") {
+                    Toggle("Message & SOS alerts", isOn: $settings.notificationsEnabled)
+                        .onChange(of: settings.notificationsEnabled) { _, enabled in
+                            if enabled { MeshService.requestNotificationPermission() }
+                        }
+                }
+
+                Section {
+                    Picker("Keep messages", selection: $settings.retentionDays) {
+                        Text("1 day").tag(1)
+                        Text("7 days").tag(7)
+                        Text("30 days").tag(30)
+                        Text("90 days").tag(90)
+                        Text("Forever").tag(0)
                     }
+                    .onChange(of: settings.retentionDays) { _, _ in mesh.purgeExpiredMessages() }
+                } header: {
+                    Text("Storage")
+                }
+
+                if mesh.mode == .demo {
+                    Section {
+                        Button("Walk out of range") { mesh.setDemoLinks(enabled: false) }
+                            .accessibilityIdentifier("demo.leave")
+                        Button("Walk back into range") { mesh.setDemoLinks(enabled: true) }
+                            .accessibilityIdentifier("demo.return")
+                    } header: {
+                        Text("Demo mesh")
+                    } footer: {
+                        Text("Simulated devices: Asha, Kabir (nearby), Ravi (2 hops, has on-device AI), Meera (3 hops).")
+                    }
+                }
+
+                Section {
+                    Button("Replay introduction") { showOnboarding = true }
+                    Button("Reset settings") { confirmReset = true }
+                    Button("Erase everything (panic wipe)", role: .destructive) { confirmWipe = true }
+                        .accessibilityIdentifier("settings.panicWipe")
+                } footer: {
+                    Text("Panic wipe deletes all messages, groups, contacts and your keys immediately, and gives this phone a new identity.")
+                }
+
+                Section("About") {
+                    LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
+                    LabeledContent("Protocol", value: "BLEMesh v\(Packet.currentVersion)")
+                    LabeledContent("Encryption", value: "X25519 · ChaCha20-Poly1305 · Ed25519")
                 }
             }
             .navigationTitle("Settings")
-            .sheet(isPresented: $showOnboarding) {
-                OnboardingReplayView()
-            }
-            .confirmationDialog("Clear Messages", isPresented: $showingClearConfirmation) {
-                Button("Clear All Messages", role: .destructive) {
-                    viewModel.clearMessages()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will delete all message history. This action cannot be undone.")
-            }
-            .confirmationDialog("Reset Settings", isPresented: $showingResetConfirmation) {
-                Button("Reset All", role: .destructive) {
-                    resetAllSettings()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will reset all settings to their defaults.")
-            }
-        }
-    }
-    
-    private func resetAllSettings() {
-        messageRetention = 7
-        showDeliveryStatus = true
-        enableNotifications = true
-        autoReconnect = true
-    }
-}
-
-// MARK: - Network Diagnostics View
-
-struct NetworkDiagnosticsView: View {
-    @ObservedObject var viewModel: ChatViewModel
-    
-    var body: some View {
-        List {
-            Section("Bluetooth") {
-                InfoRow(title: "State", value: viewModel.isBluetoothReady ? "Ready" : "Not Ready")
-                InfoRow(title: "Scanning", value: viewModel.isScanning ? "Yes" : "No")
-                InfoRow(title: "Advertising", value: viewModel.isAdvertising ? "Yes" : "No")
-            }
-            
-            Section("Connected Peers") {
-                ForEach(viewModel.availablePeers) { peer in
-                    HStack {
-                        Circle()
-                            .fill(peer.isConnected ? Color.green : Color.red)
-                            .frame(width: 8, height: 8)
-                        Text(peer.displayName) // Changed peer.name to peer.displayName
-                        Spacer()
-                        Text(peer.id.uuidString.prefix(8).description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        mesh.rename(to: name)
+                        dismiss()
                     }
-                }
-                
-                if viewModel.availablePeers.isEmpty {
-                    Text("No connected peers")
-                        .foregroundColor(.secondary)
+                    .accessibilityIdentifier("settings.done")
                 }
             }
-            
-            Section("Routing Table") {
-                ForEach(viewModel.routes) { entry in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("→ \(entry.id.uuidString.prefix(8))")
-                            .font(.caption.monospaced())
-                        HStack {
-                            Text("via \(entry.nextHopID.uuidString.prefix(8))")
-                            Text("•")
-                            Text("\(entry.hopCount) hop\(entry.hopCount > 1 ? "s" : "")")
-                            Text("•")
-                            Text(viewModel.formattedRouteQuality(to: entry.id))
-                        }
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 2)
+            .onAppear { name = mesh.nickname }
+            .sheet(isPresented: $showOnboarding) { OnboardingReplayView() }
+            .confirmationDialog("Erase everything?", isPresented: $confirmWipe, titleVisibility: .visible) {
+                Button("Erase now", role: .destructive) {
+                    mesh.panicWipe()
+                    dismiss()
                 }
-                
-                if viewModel.routes.isEmpty {
-                    Text("No routes")
-                        .foregroundColor(.secondary)
-                }
+                .accessibilityIdentifier("settings.confirmWipe")
+            } message: {
+                Text("This can't be undone.")
             }
-            
-            Section("Actions") {
-                Button("Force Route Discovery") {
-                    viewModel.forceRouteDiscovery()
+            .confirmationDialog("Reset all settings to defaults?", isPresented: $confirmReset, titleVisibility: .visible) {
+                Button("Reset", role: .destructive) {
+                    settings.resetToDefaults()
+                    mesh.applySettingsChange()
                 }
-                
-                Button("Clear Routing Table") {
-                    viewModel.clearRoutingTable()
-                }
-                .foregroundColor(.red)
             }
         }
-        .navigationTitle("Diagnostics")
-        .navigationBarTitleDisplayMode(.inline)
     }
-}
-
-// MARK: - About View
-
-struct AboutView: View {
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                    .padding(.top, 40)
-                
-                Text("BLE Mesh")
-                    .font(.largeTitle.bold())
-                
-                Text("Version 1.0.0")
-                    .foregroundColor(.secondary)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("About")
-                        .font(.headline)
-                    
-                    Text("""
-                    BLE Mesh is a decentralized messaging application that uses Bluetooth Low Energy to create ad-hoc mesh networks between nearby devices.
-                    
-                    Features:
-                    • Multi-hop message routing
-                    • Nicknames and Route Quality metrics
-                    • Group messaging
-                    • Offline message queueing
-                    • No internet required
-                    """)
-                    .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal)
-                
-                Spacer()
-            }
-        }
-        .navigationTitle("About")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-// MARK: - Helper Views
-
-struct InfoRow: View {
-    let title: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-
-// MARK: - Preview
-
-#Preview {
-    SettingsView(viewModel: .preview)
 }

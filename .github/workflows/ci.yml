@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meshcore:
+    name: MeshCore tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run MeshCore package tests
+        run: ./scripts/test-core.sh
+
+  app:
+    name: App build + unit & UI tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")))')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Test
+        run: |
+          xcodebuild test \
+            -project BLEMesh.xcodeproj -scheme BLEMesh \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath TestResults.xcresult
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: TestResults
+          path: TestResults.xcresult

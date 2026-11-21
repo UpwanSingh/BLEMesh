@@ -115,6 +115,44 @@ struct OnboardingPage: Identifiable {
     let title: String
     let subtitle: String
     let description: String
+
+    static let all: [OnboardingPage] = [
+        OnboardingPage(
+            icon: "antenna.radiowaves.left.and.right.circle.fill",
+            iconColor: .blue,
+            title: "Welcome to BLE Mesh",
+            subtitle: "Messaging without internet",
+            description: "Your phone talks directly to nearby phones over Bluetooth and passes messages along for others. No SIM, Wi-Fi, account or server needed."
+        ),
+        OnboardingPage(
+            icon: "lock.shield.fill",
+            iconColor: .green,
+            title: "Private by design",
+            subtitle: "End-to-end encrypted",
+            description: "Direct and group messages are encrypted on your phone. Phones that relay them can't read them. Compare safety numbers to verify a contact."
+        ),
+        OnboardingPage(
+            icon: "point.3.connected.trianglepath.dotted",
+            iconColor: .purple,
+            title: "Messages find their way",
+            subtitle: "Multi-hop & store-and-forward",
+            description: "Messages hop through other phones to reach people out of range, and wait to be carried forward when someone walks into range."
+        ),
+        OnboardingPage(
+            icon: "sparkles",
+            iconColor: .orange,
+            title: "AI that works offline",
+            subtitle: "Voice, translation, SOS triage",
+            description: "Speak and your words travel as tiny text, read aloud on arrival. Translate on-device, get an area summary, and ask the mesh — all without the cloud."
+        ),
+        OnboardingPage(
+            icon: "sos.circle.fill",
+            iconColor: .red,
+            title: "Help when it matters",
+            subtitle: "SOS to everyone nearby",
+            description: "Send an SOS with your location. It's triaged on-device so responders see the most urgent requests first. Allow Bluetooth to get started."
+        ),
+    ]
 }
 
 /// Elegant minimal onboarding for first-time users
@@ -122,43 +160,7 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var currentPage = 0
     
-    private let pages: [OnboardingPage] = [
-        OnboardingPage(
-            icon: "antenna.radiowaves.left.and.right.circle.fill",
-            iconColor: .blue,
-            title: "Welcome to BLE Mesh",
-            subtitle: "Decentralized Messaging",
-            description: "Send messages without internet or cell service. Your device becomes part of a wireless mesh network with nearby devices."
-        ),
-        OnboardingPage(
-            icon: "point.3.connected.trianglepath.dotted",
-            iconColor: .purple,
-            title: "Multi-Hop Routing",
-            subtitle: "Messages Find Their Way",
-            description: "Messages automatically hop through intermediate devices to reach their destination, even if you're not directly connected."
-        ),
-        OnboardingPage(
-            icon: "person.2.fill",
-            iconColor: .green,
-            title: "Direct & Group Chat",
-            subtitle: "Stay Connected",
-            description: "Chat with individuals or create groups for team communication. Perfect for events, emergencies, or off-grid areas."
-        ),
-        OnboardingPage(
-            icon: "chart.bar.fill",
-            iconColor: .orange,
-            title: "Route Quality",
-            subtitle: "Smart Messaging",
-            description: "See the reliability of paths to your peers and track message delivery status across every hop in the mesh."
-        ),
-        OnboardingPage(
-            icon: "bolt.fill",
-            iconColor: .yellow,
-            title: "Ready to Connect",
-            subtitle: "Let's Get Started",
-            description: "Enable Bluetooth and start discovering nearby devices. The more devices in range, the stronger your mesh network becomes."
-        )
-    ]
+    private let pages = OnboardingPage.all
     
     var body: some View {
         ZStack {
@@ -240,6 +242,7 @@ struct OnboardingView: View {
     
     private func completeOnboarding() {
         hasCompletedOnboarding = true
+        MeshService.requestNotificationPermission()
     }
 }
 
@@ -300,25 +303,19 @@ struct OnboardingPageView: View {
 /// Root view that manages splash, onboarding, and main app flow
 struct RootView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @State private var splashFinished = false
-    @EnvironmentObject var bluetoothManager: BluetoothManager
-    @EnvironmentObject var routingService: RoutingService
-    @EnvironmentObject var messageRelayService: MessageRelayService
-    @EnvironmentObject var chatViewModel: ChatViewModel
-    
+    @State private var splashFinished = ProcessInfo.processInfo.arguments.contains("-skipSplash")
+
     var body: some View {
         ZStack {
-            // Main content layer
             Group {
                 if hasCompletedOnboarding {
-                    ContentView()
+                    MainTabView()
                 } else {
                     OnboardingView()
                 }
             }
             .opacity(splashFinished ? 1 : 0)
-            
-            // Splash screen layer
+
             if !splashFinished {
                 SplashScreenView(isFinished: $splashFinished)
                     .transition(.opacity)
@@ -336,43 +333,7 @@ struct OnboardingReplayView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var currentPage = 0
     
-    private let pages: [OnboardingPage] = [
-        OnboardingPage(
-            icon: "antenna.radiowaves.left.and.right.circle.fill",
-            iconColor: .blue,
-            title: "Welcome to BLE Mesh",
-            subtitle: "Decentralized Messaging",
-            description: "Send messages without internet or cell service. Your device becomes part of a wireless mesh network with nearby devices."
-        ),
-        OnboardingPage(
-            icon: "point.3.connected.trianglepath.dotted",
-            iconColor: .purple,
-            title: "Multi-Hop Routing",
-            subtitle: "Messages Find Their Way",
-            description: "Messages automatically hop through intermediate devices to reach their destination, even if you're not directly connected."
-        ),
-        OnboardingPage(
-            icon: "person.2.fill",
-            iconColor: .green,
-            title: "Direct & Group Chat",
-            subtitle: "Stay Connected",
-            description: "Chat with individuals or create groups for team communication. Perfect for events, emergencies, or off-grid areas."
-        ),
-        OnboardingPage(
-            icon: "chart.bar.fill",
-            iconColor: .orange,
-            title: "Route Quality",
-            subtitle: "Smart Messaging",
-            description: "See the reliability of paths to your peers and track message delivery status across every hop in the mesh."
-        ),
-        OnboardingPage(
-            icon: "bolt.fill",
-            iconColor: .yellow,
-            title: "Ready to Connect",
-            subtitle: "Let's Get Started",
-            description: "Enable Bluetooth and start discovering nearby devices. The more devices in range, the stronger your mesh network becomes."
-        )
-    ]
+    private let pages = OnboardingPage.all
     
     var body: some View {
         NavigationView {
