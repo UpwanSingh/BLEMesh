@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import NaturalLanguage
 import MeshCore
 #if canImport(Translation)

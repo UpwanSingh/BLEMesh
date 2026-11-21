@@ -23,7 +23,7 @@ struct NetworkView: View {
                     }
                     ForEach(mesh.peers) { peer in
                         HStack {
-                            Circle().fill(peer.isNeighbor ? .green : (peer.isReachable ? .purple : .gray)).frame(width: 8, height: 8)
+                            Circle().fill(peer.isNeighbor ? Color.green : (peer.isReachable ? Color.purple : Color.gray)).frame(width: 8, height: 8)
                             VStack(alignment: .leading) {
                                 Text(peer.nickname)
                                 Text(peer.peerID.short).font(.caption2.monospaced()).foregroundStyle(.secondary)

@@ -119,38 +119,45 @@ struct ProtocolTests {
 
 @Suite("Crypto")
 struct CryptoTests {
-    @Test func directSealOpensOnlyForRecipient() throws {
+    @Test func directSealOpensOnlyForRecipientFromTheRealSender() throws {
         let alice = MeshIdentity(), bob = MeshIdentity(), eve = MeshIdentity()
+        let aliceKey = alice.publicIdentity.signingKey
         let secret = Data("meet at the north gate".utf8)
-        let sealed = try MeshCrypto.sealDirect(secret, to: bob.publicIdentity.agreementKey)
-        #expect(try MeshCrypto.openDirect(sealed, with: bob.agreementKey) == secret)
-        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: eve.agreementKey) }
-        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: alice.agreementKey) }
+        let sealed = try MeshCrypto.sealDirect(secret, to: bob.publicIdentity.agreementKey, from: aliceKey)
+        #expect(try MeshCrypto.openDirect(sealed, with: bob.agreementKey, from: aliceKey) == secret)
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: eve.agreementKey, from: aliceKey) }
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: alice.agreementKey, from: aliceKey) }
+        // Bound to the author: claiming another sender breaks decryption.
+        #expect(throws: MeshCryptoError.decryptionFailed) {
+            try MeshCrypto.openDirect(sealed, with: bob.agreementKey, from: eve.publicIdentity.signingKey)
+        }
         // Fresh ephemeral key per message: same plaintext never yields the same ciphertext.
-        #expect(try MeshCrypto.sealDirect(secret, to: bob.publicIdentity.agreementKey) != sealed)
+        #expect(try MeshCrypto.sealDirect(secret, to: bob.publicIdentity.agreementKey, from: aliceKey) != sealed)
     }
 
     @Test func directSealDetectsTampering() throws {
-        let bob = MeshIdentity()
-        var sealed = try MeshCrypto.sealDirect(Data("x".utf8), to: bob.publicIdentity.agreementKey)
+        let bob = MeshIdentity(), sender = MeshIdentity().publicIdentity.signingKey
+        var sealed = try MeshCrypto.sealDirect(Data("x".utf8), to: bob.publicIdentity.agreementKey, from: sender)
         sealed[sealed.count - 1] ^= 0xFF
-        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: bob.agreementKey) }
-        #expect(throws: MeshCryptoError.malformedCiphertext) { try MeshCrypto.openDirect(Data(count: 10), with: bob.agreementKey) }
-        #expect(throws: MeshCryptoError.invalidKey) { try MeshCrypto.sealDirect(Data(), to: Data(count: 5)) }
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openDirect(sealed, with: bob.agreementKey, from: sender) }
+        #expect(throws: MeshCryptoError.malformedCiphertext) { try MeshCrypto.openDirect(Data(count: 10), with: bob.agreementKey, from: sender) }
+        #expect(throws: MeshCryptoError.invalidKey) { try MeshCrypto.sealDirect(Data(), to: Data(count: 5), from: sender) }
     }
 
-    @Test func groupSealRequiresKeyAndBindsGroupID() throws {
+    @Test func groupSealRequiresKeyAndBindsGroupIDAndSender() throws {
         let key = MeshCrypto.makeGroupKey()
         let groupID = UUID()
-        let sealed = try MeshCrypto.sealGroup(Data("hello group".utf8), groupID: groupID, key: key)
+        let sender = MeshIdentity().publicIdentity.signingKey, other = MeshIdentity().publicIdentity.signingKey
+        let sealed = try MeshCrypto.sealGroup(Data("hello group".utf8), groupID: groupID, key: key, from: sender)
         #expect(MeshCrypto.groupID(ofSealed: sealed) == groupID)
-        #expect(try MeshCrypto.openGroup(sealed, key: key) == Data("hello group".utf8))
-        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openGroup(sealed, key: MeshCrypto.makeGroupKey()) }
+        #expect(try MeshCrypto.openGroup(sealed, key: key, from: sender) == Data("hello group".utf8))
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openGroup(sealed, key: MeshCrypto.makeGroupKey(), from: sender) }
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openGroup(sealed, key: key, from: other) }
 
         // Re-labelling the ciphertext with another group ID fails authentication.
         var relabelled = sealed
         relabelled[0] ^= 0x01
-        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openGroup(relabelled, key: key) }
+        #expect(throws: MeshCryptoError.decryptionFailed) { try MeshCrypto.openGroup(relabelled, key: key, from: sender) }
     }
 
     @Test func identityPersistsThroughRawKeys() throws {
@@ -158,6 +165,12 @@ struct CryptoTests {
         let restored = try MeshIdentity(signingKeyData: original.signingKeyData, agreementKeyData: original.agreementKeyData)
         #expect(restored.peerID == original.peerID)
         #expect(restored.publicIdentity == original.publicIdentity)
+    }
+
+    @Test func helloPayloadRoundTripsAndRejectsBadLengths() throws {
+        let hello = HelloPayload(nonce: Data(repeating: 1, count: 16), echoedNonce: Data(repeating: 2, count: 16))
+        #expect(try HelloPayload.decode(hello.encode()) == hello)
+        #expect(throws: (any Error).self) { try HelloPayload.decode(Data(count: 31)) }
     }
 }
 

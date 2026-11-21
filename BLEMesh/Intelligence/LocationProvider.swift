@@ -5,8 +5,9 @@ import MeshCore
 /// One-shot GPS fix for SOS reports (GPS works without any network).
 @MainActor
 enum LocationProvider {
+    private static let manager = CLLocationManager()
+
     static func currentLocation(timeout: TimeInterval = 8) async -> GeoPoint? {
-        let manager = CLLocationManager()
         if manager.authorizationStatus == .notDetermined {
             manager.requestWhenInUseAuthorization()
         }

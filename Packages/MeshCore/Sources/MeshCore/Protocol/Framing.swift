@@ -61,12 +61,17 @@ public final class Reassembler {
 
     private var pending: [Key: Pending] = [:]
     private let timeout: TimeInterval
-    private let maxPendingGroups: Int
+    /// Cap per link, so one neighbour can't evict another link's partial packets.
+    private let maxPendingPerLink: Int
+    /// Overall memory bound; when hit, the link with the most partials loses its oldest.
+    private let maxPendingTotal: Int
     private let maxPacketBytes: Int
 
-    public init(timeout: TimeInterval = 30, maxPendingGroups: Int = 128, maxPacketBytes: Int = Packet.maxPayloadSize + 512) {
+    public init(timeout: TimeInterval = 30, maxPendingPerLink: Int = 32, maxPendingTotal: Int = 512,
+                maxPacketBytes: Int = Packet.maxPayloadSize + 512) {
         self.timeout = timeout
-        self.maxPendingGroups = maxPendingGroups
+        self.maxPendingPerLink = maxPendingPerLink
+        self.maxPendingTotal = maxPendingTotal
         self.maxPacketBytes = maxPacketBytes
     }
 
@@ -104,8 +109,13 @@ public final class Reassembler {
                 for i in 0..<count { packet.append(entry.chunks[i]!) }
                 return packet
             }
-            if pending[key] == nil && pending.count >= maxPendingGroups {
-                evictOldest()
+            if pending[key] == nil {
+                if pending.keys.filter({ $0.link == link }).count >= maxPendingPerLink {
+                    evictOldest(on: link)
+                } else if pending.count >= maxPendingTotal {
+                    let busiest = Dictionary(grouping: pending.keys, by: \.link).max { $0.value.count < $1.value.count }?.key
+                    if let busiest { evictOldest(on: busiest) }
+                }
             }
             pending[key] = entry
             return nil
@@ -123,8 +133,8 @@ public final class Reassembler {
         pending = pending.filter { now.timeIntervalSince($0.value.startedAt) < timeout }
     }
 
-    private func evictOldest() {
-        if let oldest = pending.min(by: { $0.value.startedAt < $1.value.startedAt })?.key {
+    private func evictOldest(on link: LinkID) {
+        if let oldest = pending.filter({ $0.key.link == link }).min(by: { $0.value.startedAt < $1.value.startedAt })?.key {
             pending[oldest] = nil
         }
     }

@@ -11,6 +11,7 @@ struct Composer: View {
     var allowVoice = true
 
     @State private var text = ""
+    @State private var holding = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -60,24 +61,34 @@ struct Composer: View {
     private var micButton: some View {
         Image(systemName: recorder.state == .recording ? "mic.circle.fill" : "mic.circle")
             .font(.system(size: 30))
-            .foregroundStyle(recorder.state == .recording ? .red : .accentColor)
+            .foregroundStyle(recorder.state == .recording ? Color.red : Color.accentColor)
             .accessibilityLabel("Hold to record a voice note")
             .accessibilityIdentifier("composer.mic")
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
-                        guard recorder.state != .recording else { return }
+                        guard !holding else { return }
+                        holding = true
                         recorder.setLocale(Locale(identifier: settings.preferredLanguage))
-                        Task { await recorder.start() }
+                        Task {
+                            await recorder.start()
+                            // Released while permissions/audio were still starting up.
+                            if !holding { finishVoiceNote() }
+                        }
                     }
                     .onEnded { _ in
-                        guard recorder.state == .recording else { return }
-                        let (transcript, duration) = recorder.stop()
-                        guard !transcript.isEmpty else { return }
-                        mesh.send(.voice(VoiceNote(transcript: transcript, languageCode: recorder.languageCode,
-                                                   durationSeconds: duration)), to: conversationKey)
+                        holding = false
+                        finishVoiceNote()
                     }
             )
+    }
+
+    private func finishVoiceNote() {
+        guard recorder.state == .recording else { return }
+        let (transcript, duration) = recorder.stop()
+        guard !transcript.isEmpty else { return }
+        mesh.send(.voice(VoiceNote(transcript: transcript, languageCode: recorder.languageCode,
+                                   durationSeconds: duration)), to: conversationKey)
     }
 
     private func send() {

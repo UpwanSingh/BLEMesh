@@ -9,6 +9,8 @@ public enum PacketType: UInt8, Sendable {
     case message = 2
     /// End-to-end delivery / read acknowledgement, routed back to the message origin.
     case ack = 3
+    /// Link-local neighbour proof (nonce challenge/response). Never relayed.
+    case hello = 4
 }
 
 /// Packet flag bits.
@@ -196,6 +198,21 @@ public struct AnnouncePayload: Equatable, Sendable {
         let caps = PeerCapabilities(rawValue: try r.u8())
         let nickname = try r.string8()
         return AnnouncePayload(agreementKey: key, capabilities: caps, nickname: nickname)
+    }
+}
+
+/// Hello payload: nonce(16) | echoedNonce(16). A peer proves it is the direct neighbour on a
+/// link by signing a hello that echoes the nonce we sent on that same link.
+public struct HelloPayload: Equatable, Sendable {
+    public static let zeroNonce = Data(count: 16)
+    public var nonce: Data
+    public var echoedNonce: Data
+
+    public func encode() -> Data { nonce + echoedNonce }
+
+    public static func decode(_ data: Data) throws -> HelloPayload {
+        guard data.count == 32 else { throw WireError.invalidField("hello length") }
+        return HelloPayload(nonce: Data(data.prefix(16)), echoedNonce: Data(data.suffix(16)))
     }
 }
 
