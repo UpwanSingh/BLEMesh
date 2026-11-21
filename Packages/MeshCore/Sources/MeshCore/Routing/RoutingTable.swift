@@ -23,6 +23,8 @@ public struct RoutingTable {
     public struct Route: Equatable, Sendable {
         public var link: LinkID
         public var hops: Int
+        /// Selection metric: hops plus penalties (e.g. a low-battery next hop).
+        public var cost: Int
         public var updatedAt: Date
     }
 
@@ -35,15 +37,16 @@ public struct RoutingTable {
 
     /// Offer a route learned from an announce. Returns true if the table changed.
     @discardableResult
-    public mutating func offer(_ destination: PeerID, link: LinkID, hops: Int, now: Date) -> Bool {
+    public mutating func offer(_ destination: PeerID, link: LinkID, hops: Int, cost: Int? = nil, now: Date) -> Bool {
+        let cost = cost ?? hops
         if let existing = routes[destination], now.timeIntervalSince(existing.updatedAt) < expiry {
-            // Accept same-or-better paths (ties prefer the freshest), and any update from the
+            // Accept same-or-cheaper paths (ties prefer the freshest), and any update from the
             // current next hop (its path may have grown). Reject strictly worse alternatives.
-            guard hops <= existing.hops || link == existing.link else { return false }
-            routes[destination] = Route(link: link, hops: hops, updatedAt: now)
+            guard cost <= existing.cost || link == existing.link else { return false }
+            routes[destination] = Route(link: link, hops: hops, cost: cost, updatedAt: now)
             return existing.link != link || existing.hops != hops
         }
-        routes[destination] = Route(link: link, hops: hops, updatedAt: now)
+        routes[destination] = Route(link: link, hops: hops, cost: cost, updatedAt: now)
         return true
     }
 

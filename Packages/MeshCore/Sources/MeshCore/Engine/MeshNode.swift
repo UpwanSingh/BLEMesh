@@ -45,6 +45,25 @@ public struct MeshConfig: Sendable {
     public var maxKnownPeers: Int = 1000
     public var peerRetention: TimeInterval = 30 * 24 * 3600
 
+    // Congestion control (crowds)
+    /// Counter-based relay suppression for flooded traffic.
+    public var congestionControl: Bool = true
+    /// With at most this many links, flooded packets are relayed immediately (sparse area).
+    public var suppressionMinLinks: Int = 3
+    /// Random wait before relaying a flooded packet, while listening for other relays.
+    public var relayJitter: ClosedRange<TimeInterval> = 0.02...0.25
+    /// Cancel a pending relay after hearing this many other copies.
+    public var suppressionThreshold: Int = 2
+    /// Announce less often in dense areas: interval × max(1, links / 4), capped.
+    public var maxAnnounceInterval: TimeInterval = 45
+
+    // Urgent (SOS) traffic
+    /// Proof-of-work bits required on urgent packets (2^N hashes to create one).
+    public var urgentWorkBits: Int = 18
+    /// Per-origin budget of urgent relays; beyond it, urgent packets are relayed as normal traffic.
+    public var urgentBurst: Double = 4
+    public var urgentRefillPerSecond: Double = 1.0 / 120
+
     public init() {}
 }
 
@@ -59,6 +78,10 @@ public struct MeshStats: Equatable, Sendable {
     public var rateLimited = 0
     public var messagesDelivered = 0
     public var carried = 0
+    /// Relays skipped because enough neighbours already relayed the same packet.
+    public var suppressed = 0
+    /// Urgent packets from senders over their urgent budget, relayed as normal traffic.
+    public var urgentDowngraded = 0
 
     public init() {}
 }
@@ -154,6 +177,34 @@ public final class MeshNode {
     private var leftGroups: [UUID: Date] = [:]
     private var lastAnnounceAt: Date?
     private var lastHousekeepingAt: Date?
+    private var urgentLimiter: RateLimiter
+
+    /// Battery state; low/critical phones relay less and are avoided as next hops.
+    public enum PowerState: Int, Sendable { case normal, low, critical }
+    public var powerState: PowerState = .normal {
+        didSet { if oldValue != powerState && !links.isEmpty { announce() } }
+    }
+
+    /// Signature check (injectable so simulations can share a verification cache).
+    public var packetVerifier: (Packet) -> Bool = { $0.verify() }
+    /// Uniform random number in [0, 1) for jitter (injectable for reproducible simulations).
+    public var randomUnit: () -> Double = { Double.random(in: 0..<1) }
+
+    private struct PendingRelay {
+        var packet: Packet
+        var ingress: LinkID
+        var dueAt: Date
+        var duplicates: Int
+        var priority: TrafficPriority
+    }
+    /// Flooded packets waiting out their relay jitter (counter-based suppression).
+    private var pendingRelays: [UUID: PendingRelay] = [:]
+    /// Remaining TTL we relayed each flooded packet with, so a later copy that took a shorter
+    /// path (more TTL left) can be relayed once more instead of being lost to deduplication.
+    private var relayedTTL: [UUID: UInt8] = [:]
+    /// Highest TTL we've received for each flooded packet (to spot shorter-path copies).
+    private var bestTTL: [UUID: UInt8] = [:]
+    private var ttlUpgraded: Set<UUID> = []
 
     public init(
         identity: MeshIdentity,
@@ -172,6 +223,7 @@ public final class MeshNode {
         self.deliveredMessages = SeenCache(capacity: config.seenCapacity, lifetime: 7 * 24 * 3600)
         self.freshLimiter = RateLimiter(burst: config.relayBurst, refillPerSecond: config.relayRefillPerSecond)
         self.staleLimiter = RateLimiter(burst: config.staleRelayBurst, refillPerSecond: config.staleRelayRefillPerSecond)
+        self.urgentLimiter = RateLimiter(burst: config.urgentBurst, refillPerSecond: config.urgentRefillPerSecond)
     }
 
     // MARK: - Peers
@@ -213,8 +265,12 @@ public final class MeshNode {
     public func sendBroadcast(_ content: MeshContent) throws -> UUID {
         let now = clock()
         let envelope = MessageEnvelope(sentAt: now, senderName: nickname, content: content)
-        let packet = try Packet.make(type: .message, ttl: config.messageTTL, destination: .broadcast,
-                                     payload: try envelope.encode(), identity: identity, now: now)
+        let urgent = content.isUrgent
+        let timestampMs = UInt64(max(0, now.timeIntervalSince1970 * 1000))
+        let packetID = urgent ? Packet.mintWork(bits: config.urgentWorkBits, origin: peerID, timestampMs: timestampMs) : UUID()
+        let packet = try Packet.make(type: .message, flags: urgent ? .urgent : [], ttl: config.messageTTL,
+                                     destination: .broadcast, payload: try envelope.encode(), identity: identity,
+                                     now: Date(timeIntervalSince1970: TimeInterval(timestampMs) / 1000), packetID: packetID)
         originate(packet)
         return envelope.messageID
     }
@@ -293,9 +349,13 @@ public final class MeshNode {
     public func announce() {
         let now = clock()
         lastAnnounceAt = now
+        var advertised = capabilities
+        if powerState != .normal { advertised.insert(.lowPower) }
         let payload = AnnouncePayload(agreementKey: identity.publicIdentity.agreementKey,
-                                      capabilities: capabilities, nickname: nickname)
-        guard let packet = try? Packet.make(type: .announce, ttl: config.announceTTL, destination: .broadcast,
+                                      capabilities: advertised, nickname: nickname)
+        // In dense areas there are many paths; a smaller announce radius keeps presence traffic bounded.
+        let ttl = links.count >= 6 ? max(3, config.announceTTL - 2) : config.announceTTL
+        guard let packet = try? Packet.make(type: .announce, ttl: ttl, destination: .broadcast,
                                             payload: payload.encode(), identity: identity, now: now) else { return }
         originate(packet)
     }
@@ -343,7 +403,7 @@ public final class MeshNode {
         guard let bytes = try? reassembler.accept(frame, from: link, now: now) else {
             return
         }
-        guard var packet = try? Packet.decode(bytes), packet.verify() else {
+        guard var packet = try? Packet.decode(bytes), packetVerifier(packet) else {
             stats.invalidDropped += 1
             return
         }
@@ -358,6 +418,13 @@ public final class MeshNode {
         }
         guard seenPackets.insert(packet.packetID, now: now) else {
             stats.duplicatesDropped += 1
+            // Another neighbour relayed it too: count towards suppressing our own pending relay.
+            pendingRelays[packet.packetID]?.duplicates += 1
+            upgradeTTLIfShorterPath(packet, from: link, now: now)
+            return
+        }
+        if packet.flags.contains(.urgent), packet.workBits < config.urgentWorkBits {
+            stats.invalidDropped += 1
             return
         }
         // TTL is unsigned; never let a relay widen the flood radius beyond our own limits.
@@ -374,9 +441,10 @@ public final class MeshNode {
     /// Periodic maintenance: announces, retries, expiry. Call about once per second.
     public func tick() {
         let now = clock()
-        if !links.isEmpty, lastAnnounceAt.map({ now.timeIntervalSince($0) >= config.announceInterval }) ?? true {
+        if !links.isEmpty, lastAnnounceAt.map({ now.timeIntervalSince($0) >= currentAnnounceInterval }) ?? true {
             announce()
         }
+        poll()
         let expired = routing.purge(now: now)
         for id in expired { lastAnnounceByPeer[id] = nil }
         if !expired.isEmpty { delegate?.meshNodeDidUpdatePeers(self) }
@@ -461,7 +529,10 @@ public final class MeshNode {
             capabilities: payload.capabilities, lastSeen: now, hops: hops
         )
         if isNew { enforcePeerLimit(now: now) }
-        let routeChanged = routing.offer(origin, link: link, hops: hops, now: now)
+        // Prefer paths whose next hop isn't low on battery.
+        let viaLowPower = provenNeighbor[link].flatMap { directory[$0] }?.capabilities.contains(.lowPower) == true
+            || (packet.hops == 0 && payload.capabilities.contains(.lowPower))
+        let routeChanged = routing.offer(origin, link: link, hops: hops, cost: hops + (viaLowPower ? 2 : 0), now: now)
         lastAnnounceByPeer[origin] = packet
 
         if isNew || routeChanged {
@@ -663,8 +734,10 @@ public final class MeshNode {
         route(packet, excluding: nil)
     }
 
-    /// Forward someone else's packet (ttl/hops adjusted), subject to rate limits.
+    /// Forward someone else's packet (ttl/hops adjusted), subject to rate limits, priorities,
+    /// battery state and — for flooded traffic in dense areas — counter-based suppression.
     private func relay(_ packet: Packet, from link: LinkID, now: Date) {
+        bestTTL[packet.packetID] = max(bestTTL[packet.packetID] ?? 0, packet.ttl)
         guard packet.ttl > 1 else { return }
         // Old (carried or replayed) traffic draws on a separate budget so it can't starve live traffic.
         let isStale = now.timeIntervalSince(packet.timestamp) > config.staleThreshold
@@ -673,20 +746,115 @@ public final class MeshNode {
             stats.rateLimited += 1
             return
         }
+        var priority = Self.priority(of: packet)
+        if priority == .urgent && !urgentLimiter.allow(packet.origin, now: now) {
+            // Over its SOS budget (e.g. a flood of fake SOS): still relayed, but as ordinary traffic.
+            priority = .normal
+            stats.urgentDowngraded += 1
+        }
+        let routed = !packet.isBroadcast && routing.route(to: packet.destination, now: now).map { $0.link != link } == true
+        let flooded = !routed
+
+        // Battery: a critical phone only relays what matters most.
+        if powerState == .critical && flooded && priority >= .normal {
+            stats.suppressed += 1
+            return
+        }
+
         var copy = packet
         copy.ttl -= 1
         copy.hops = copy.hops &+ 1
+
+        let suppressible = config.congestionControl && flooded && priority >= .direct
+            && links.count > config.suppressionMinLinks
+        guard suppressible else {
+            stats.relayed += 1
+            if flooded { relayedTTL[packet.packetID] = copy.ttl }
+            route(copy, excluding: link, priority: priority)
+            return
+        }
+        // Wait a random moment; if enough neighbours relay it first, ours is redundant.
+        var jitter = config.relayJitter.lowerBound
+            + randomUnit() * (config.relayJitter.upperBound - config.relayJitter.lowerBound)
+        if powerState == .low { jitter *= 3 } // let healthier phones go first
+        pendingRelays[packet.packetID] = PendingRelay(packet: copy, ingress: link, dueAt: now.addingTimeInterval(jitter),
+                                                      duplicates: 0, priority: priority)
+    }
+
+    /// A duplicate that arrived over a shorter path carries more TTL than the copy we relayed.
+    /// Relay it once more (or upgrade our pending copy) so deduplication doesn't shrink the flood.
+    private func upgradeTTLIfShorterPath(_ packet: Packet, from link: LinkID, now: Date) {
+        guard packet.ttl > 1, packet.isBroadcast || routing.route(to: packet.destination, now: now) == nil,
+              packet.type != .hello else { return }
+        let best = bestTTL[packet.packetID] ?? 0
+        guard packet.ttl > best else { return }
+        bestTTL[packet.packetID] = packet.ttl
+        let improved = packet.ttl - 1
+        if var pending = pendingRelays[packet.packetID] {
+            if improved > pending.packet.ttl {
+                pending.packet.ttl = improved
+                pending.packet.hops = packet.hops &+ 1
+                pendingRelays[packet.packetID] = pending
+            }
+            return
+        }
+        // Either our first copy had no TTL left (we couldn't relay it at all), or we relayed it with
+        // clearly less reach than this copy allows. At most one upgrade per packet.
+        let couldNotRelay = best <= 1
+        let muchBetter = relayedTTL[packet.packetID].map { improved >= $0 &+ 2 } ?? false
+        guard couldNotRelay || muchBetter, ttlUpgraded.insert(packet.packetID).inserted else { return }
+        var copy = packet
+        copy.ttl = improved
+        copy.hops = packet.hops &+ 1
+        relayedTTL[packet.packetID] = improved
         stats.relayed += 1
         route(copy, excluding: link)
     }
 
-    /// Directed packets follow the routing table when possible; everything else floods.
-    private func route(_ packet: Packet, excluding ingress: LinkID?) {
+    /// Run sub-second timers (pending relays). Hosts should call this every ~50 ms; `tick()` also calls it.
+    public func poll() {
+        guard !pendingRelays.isEmpty else { return }
         let now = clock()
+        for (id, pending) in pendingRelays where pending.dueAt <= now {
+            pendingRelays[id] = nil
+            // Presence announces are refreshed constantly, so one duplicate is enough to skip ours.
+            let threshold = powerState != .normal || pending.priority == .background ? 1 : config.suppressionThreshold
+            if pending.duplicates >= threshold {
+                stats.suppressed += 1
+            } else {
+                stats.relayed += 1
+                relayedTTL[id] = pending.packet.ttl
+                route(pending.packet, excluding: pending.ingress, priority: pending.priority)
+            }
+        }
+    }
+
+    /// Announce interval, stretched in dense areas and on low battery (bounded so routes don't expire).
+    var currentAnnounceInterval: TimeInterval {
+        let density = max(1, Double(links.count) / 4)
+        let power: Double = powerState == .normal ? 1 : (powerState == .low ? 1.5 : 2)
+        return min(config.maxAnnounceInterval, config.announceInterval * density * power)
+    }
+
+    static func priority(of packet: Packet) -> TrafficPriority {
+        switch packet.type {
+        case .hello, .ack: return .control
+        case .announce: return .background
+        case .message:
+            if packet.flags.contains(.urgent) { return .urgent }
+            if !packet.isBroadcast || packet.flags.contains(.groupEncrypted) { return .direct }
+            return .normal
+        }
+    }
+
+    /// Directed packets follow the routing table when possible; everything else floods.
+    private func route(_ packet: Packet, excluding ingress: LinkID?, priority: TrafficPriority? = nil) {
+        let now = clock()
+        let priority = priority ?? Self.priority(of: packet)
         if !packet.isBroadcast, let route = routing.route(to: packet.destination, now: now), route.link != ingress {
-            send(packet, on: [route.link])
+            send(packet, on: [route.link], priority: priority)
         } else {
-            send(packet, on: links.filter { $0 != ingress })
+            send(packet, on: links.filter { $0 != ingress }, priority: priority)
         }
     }
 
@@ -696,20 +864,24 @@ public final class MeshNode {
         var copy = packet
         copy.ttl -= 1
         copy.hops = copy.hops &+ 1
-        send(copy, on: Set(targets))
+        send(copy, on: Set(targets), priority: .background)
     }
 
-    private func send(_ packet: Packet, on targets: Set<LinkID>) {
+    private func send(_ packet: Packet, on targets: Set<LinkID>, priority: TrafficPriority? = nil) {
         guard let transport, !targets.isEmpty else { return }
         let bytes = packet.encode()
+        let priority = priority ?? Self.priority(of: packet)
         for link in targets {
             let frames = Framing.frames(for: bytes, maxFrameSize: transport.maximumFrameSize(for: link))
-            if transport.send(frames: frames, over: link) { stats.packetsSent += 1 }
+            if transport.send(frames: frames, over: link, priority: priority) { stats.packetsSent += 1 }
         }
     }
 
     private func store(_ packet: Packet, now: Date) {
         guard packet.ttl > 1, !packet.isBroadcast, carry[packet.packetID] == nil else { return }
+        // Battery: a critical phone carries nothing; a low one carries a quarter as much.
+        guard powerState != .critical else { return }
+        let capacity = powerState == .low ? max(1, config.carryCapacity / 4) : config.carryCapacity
         purgeCarry(now: now)
         // Per-origin cap so one sender can't monopolise every carrier's storage.
         let fromOrigin = carry.filter { $0.value.packet.origin == packet.origin }
@@ -717,7 +889,7 @@ public final class MeshNode {
            let oldest = fromOrigin.min(by: { $0.value.storedAt < $1.value.storedAt })?.key {
             carry[oldest] = nil
         }
-        if carry.count >= config.carryCapacity,
+        if carry.count >= capacity,
            let oldest = carry.min(by: { $0.value.storedAt < $1.value.storedAt })?.key {
             carry[oldest] = nil
         }
@@ -751,6 +923,9 @@ public final class MeshNode {
             now.timeIntervalSince(info.lastSeen) < config.peerRetention || routing.route(to: id, now: now) != nil
         }
         leftGroups = leftGroups.filter { now.timeIntervalSince($0.value) < config.peerRetention }
+        if relayedTTL.count > config.seenCapacity { relayedTTL.removeAll(keepingCapacity: true) }
+        if bestTTL.count > config.seenCapacity { bestTTL.removeAll(keepingCapacity: true) }
+        if ttlUpgraded.count > config.seenCapacity { ttlUpgraded.removeAll(keepingCapacity: true) }
     }
 
     private func enforcePeerLimit(now: Date) {
@@ -773,6 +948,12 @@ public enum MeshNodeError: Error {
 }
 
 extension MeshContent {
+    /// Urgent content gets the urgent flag (priority relaying, proof-of-work required).
+    var isUrgent: Bool {
+        if case .sos = self { return true }
+        return false
+    }
+
     /// Content that may appear on public/group channels. Control and AI traffic is
     /// direct-only, so it can't be spoofed by broadcasting it.
     var isAllowedInSharedChannels: Bool {

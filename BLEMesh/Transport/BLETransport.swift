@@ -45,7 +45,7 @@ final class BLETransport: NSObject, MeshTransport {
     private struct CentralLink {
         let peripheral: CBPeripheral
         var characteristic: CBCharacteristic?
-        var queue: [Data] = []
+        var queue = FrameQueue()
         var isUp = false
     }
     private var centralLinks: [UUID: CentralLink] = [:]
@@ -60,7 +60,7 @@ final class BLETransport: NSObject, MeshTransport {
     /// Links where we are the peripheral (they subscribed to us).
     private struct PeripheralLink {
         let central: CBCentral
-        var queue: [Data] = []
+        var queue = FrameQueue()
     }
     private var peripheralLinks: [UUID: PeripheralLink] = [:]
     /// Notifications are sent through one shared transmit queue; this tracks fairness.
@@ -116,24 +116,24 @@ final class BLETransport: NSObject, MeshTransport {
 
     // MARK: - MeshTransport
 
-    nonisolated func send(frames: [Data], over link: LinkID) -> Bool {
-        MainActor.assumeIsolated { enqueue(frames: frames, over: link) }
+    nonisolated func send(frames: [Data], over link: LinkID, priority: TrafficPriority) -> Bool {
+        MainActor.assumeIsolated { enqueue(frames: frames, over: link, priority: priority) }
     }
 
     nonisolated func maximumFrameSize(for link: LinkID) -> Int {
         MainActor.assumeIsolated { frameSize(for: link) }
     }
 
-    private func enqueue(frames: [Data], over link: LinkID) -> Bool {
+    private func enqueue(frames: [Data], over link: LinkID, priority: TrafficPriority) -> Bool {
         switch Self.parse(link) {
         case .central(let id)?:
             guard centralLinks[id]?.isUp == true else { return false }
-            centralLinks[id]!.queue.append(contentsOf: frames)
+            centralLinks[id]!.queue.append(frames, priority: priority)
             pumpCentral(id)
             return true
         case .peripheral(let id)?:
             guard peripheralLinks[id] != nil else { return false }
-            peripheralLinks[id]!.queue.append(contentsOf: frames)
+            peripheralLinks[id]!.queue.append(frames, priority: priority)
             pumpPeripheral()
             return true
         case nil:
@@ -526,5 +526,36 @@ extension BLETransport: CBPeripheralManagerDelegate {
 
     nonisolated func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
         MainActor.assumeIsolated { pumpPeripheral() }
+    }
+}
+
+/// Per-link outbound frames: FIFO within a priority, higher priorities first, bounded so a
+/// congested link sheds announces and chatter before acks and SOS.
+struct FrameQueue {
+    static let capacity = 400
+    private var lanes: [[Data]] = Array(repeating: [], count: TrafficPriority.allCases.count)
+    private(set) var count = 0
+    private(set) var dropped = 0
+
+    var isEmpty: Bool { count == 0 }
+
+    var first: Data? { lanes.first { !$0.isEmpty }?.first }
+
+    mutating func append(_ frames: [Data], priority: TrafficPriority) {
+        lanes[priority.rawValue].append(contentsOf: frames)
+        count += frames.count
+        // Shed from the lowest-priority lane, newest first.
+        while count > Self.capacity, let lane = lanes.indices.last(where: { !lanes[$0].isEmpty }), lane > priority.rawValue || lanes[lane].count > frames.count {
+            lanes[lane].removeLast()
+            count -= 1
+            dropped += 1
+        }
+    }
+
+    @discardableResult
+    mutating func removeFirst() -> Data {
+        let lane = lanes.indices.first { !lanes[$0].isEmpty }!
+        count -= 1
+        return lanes[lane].removeFirst()
     }
 }

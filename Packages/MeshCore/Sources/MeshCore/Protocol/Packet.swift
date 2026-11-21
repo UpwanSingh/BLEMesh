@@ -22,6 +22,8 @@ public struct PacketFlags: OptionSet, Sendable, Hashable {
     public static let directEncrypted = PacketFlags(rawValue: 1 << 0)
     /// Payload is sealed with a group key.
     public static let groupEncrypted = PacketFlags(rawValue: 1 << 1)
+    /// Urgent (SOS) traffic: relayed first and without suppression. Requires proof-of-work.
+    public static let urgent = PacketFlags(rawValue: 1 << 2)
 }
 
 /// A signed mesh packet.
@@ -103,6 +105,35 @@ public struct Packet: Equatable, Sendable {
         return w.data
     }
 
+    // MARK: Proof of work (anti-flooding for urgent traffic)
+
+    /// Leading zero bits of SHA-256(packetID ‖ origin ‖ timestamp). Grinding the packet ID until
+    /// this reaches N bits costs ~2^N hashes, which makes mass-producing fake SOS calls expensive
+    /// while staying cheap to verify.
+    public var workBits: Int {
+        var w = ByteWriter()
+        w.uuid(packetID)
+        w.bytes(origin.bytes)
+        w.u64(timestampMs)
+        var bits = 0
+        for byte in SHA256.hash(data: w.data) {
+            if byte == 0 { bits += 8; continue }
+            bits += byte.leadingZeroBitCount
+            break
+        }
+        return bits
+    }
+
+    /// Find a packet ID with at least `bits` of work for the given origin and time.
+    public static func mintWork(bits: Int, origin: PeerID, timestampMs: UInt64) -> UUID {
+        guard bits > 0 else { return UUID() }
+        var probe = Packet(version: currentVersion, type: .message, flags: [], ttl: 0, hops: 0, packetID: UUID(),
+                           origin: origin, destination: .broadcast, timestampMs: timestampMs,
+                           originSigningKey: Data(), payload: Data(), signature: Data())
+        while probe.workBits < bits { probe.packetID = UUID() }
+        return probe.packetID
+    }
+
     /// Check origin/key binding and the Ed25519 signature.
     public func verify() -> Bool {
         guard originSigningKey.count == 32,
@@ -170,6 +201,8 @@ public struct PeerCapabilities: OptionSet, Sendable, Hashable {
     public static let onDeviceAI = PeerCapabilities(rawValue: 1 << 0)
     /// Device can translate text on-device.
     public static let translation = PeerCapabilities(rawValue: 1 << 1)
+    /// Device is low on battery: prefer other relays.
+    public static let lowPower = PeerCapabilities(rawValue: 1 << 2)
 }
 
 /// Announce payload: agreementKey(32) | capabilities u8 | nickname string8
