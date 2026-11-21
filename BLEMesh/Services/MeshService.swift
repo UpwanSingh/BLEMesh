@@ -46,7 +46,7 @@ final class MeshService: ObservableObject {
     var myFingerprint: String { node.identity.publicIdentity.fingerprint }
     var nickname: String { node.nickname }
 
-    init(mode: Mode, container: ModelContainer, settings: AppSettings = AppSettings(),
+    init(mode: Mode, container: ModelContainer, settings: AppSettings,
          ai: AIEngine? = nil, identity: MeshIdentity? = nil, persistSnapshot: Bool = true) {
         self.mode = mode
         self.container = container

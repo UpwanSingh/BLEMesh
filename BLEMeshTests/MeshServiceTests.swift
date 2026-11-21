@@ -196,7 +196,8 @@ struct MeshServiceTests {
         #expect(service.fetchConversation(key)?.unreadCount == 1)
         service.markRead(key: key)
         #expect(service.fetchConversation(key)?.unreadCount == 0)
-        #expect(messages(service, key).filter { !$0.isOutgoing }.allSatisfy(\.readReceiptSent))
+        let incoming = messages(service, key).filter { !$0.isOutgoing }
+        #expect(incoming.allSatisfy { $0.readReceiptSent })
     }
 
     @Test func panicWipeErasesEverythingAndRotatesIdentity() async throws {

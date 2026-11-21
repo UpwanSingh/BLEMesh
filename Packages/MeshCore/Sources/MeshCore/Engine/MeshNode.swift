@@ -59,6 +59,8 @@ public struct MeshStats: Equatable, Sendable {
     public var rateLimited = 0
     public var messagesDelivered = 0
     public var carried = 0
+
+    public init() {}
 }
 
 /// A group this device belongs to.
