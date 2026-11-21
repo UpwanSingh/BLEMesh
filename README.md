@@ -44,7 +44,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the wire format and the sec
 
 ## Requirements
 
-- Xcode 16 or later (the iOS 26 SDK enables the on-device model features). The app runs on iOS 17+.
+- Xcode 26 or later; tested with Xcode 27.2 and the iOS 27.2 simulator. The app runs on iOS 17+, and the on-device model features turn on with iOS 26+ on Apple Intelligence devices.
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - Real mesh testing needs two or more physical iPhones (the Simulator has no Bluetooth). Everything else, including multi-hop behaviour, is tested in the simulator and the demo mesh.
 
@@ -58,10 +58,15 @@ open BLEMesh.xcodeproj     # pick your team under Signing & Capabilities, then r
 ## Tests
 
 ```bash
-./scripts/test-core.sh     # MeshCore: protocol, crypto, framing, routing, multi-hop simulations
+./scripts/test-core.sh     # MeshCore: 72 tests — protocol, crypto, framing, routing, security, multi-hop simulations
+xcodegen generate
 xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMesh \
-  -destination 'platform=iOS Simulator,name=iPhone 17'   # app unit + UI tests
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 16 app unit tests + 8 end-to-end UI flows
 ```
+
+The UI tests drive the real app in demo-mesh mode. They cover onboarding, a direct chat with
+delivery and read receipts, a 3-hop chat, group creation, SOS triage and the SOS board, the
+public channel and area digest, Ask the Mesh, and panic wipe with identity rotation.
 
 CI (`.github/workflows/ci.yml`) runs both on every pull request.
 

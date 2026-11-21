@@ -27,6 +27,14 @@ final class BLEMeshUITests: XCTestCase {
         app.descendants(matching: .any)[id].firstMatch
     }
 
+    /// The keyboard covers the tab bar; hide it with the composer's keyboard button.
+    private func dismissKeyboard() {
+        guard app.keyboards.count > 0 else { return }
+        let hide = element("composer.hideKeyboard")
+        if hide.waitForExistence(timeout: 2) { hide.tap() }
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3), "keyboard didn't hide")
+    }
+
     private func waitForPeers() {
         app.tabBars.buttons["Network"].tap()
         XCTAssertTrue(element("network.peer.Meera").waitForExistence(timeout: 20), "mesh didn't converge")
@@ -155,6 +163,7 @@ final class BLEMeshUITests: XCTestCase {
         field.typeText("to be wiped")
         element("composer.send").tap()
         XCTAssertTrue(element("message.to be wiped").waitForExistence(timeout: 5))
+        dismissKeyboard()
 
         app.tabBars.buttons["Chats"].tap()
         element("chats.settings").tap()
@@ -164,10 +173,11 @@ final class BLEMeshUITests: XCTestCase {
         screenshot("12-settings")
         app.swipeUp()
         element("settings.panicWipe").tap()
-        app.buttons["Erase now"].tap()
+        app.buttons["Erase now"].firstMatch.tap()
 
         app.tabBars.buttons["Nearby"].tap()
         XCTAssertFalse(element("message.to be wiped").waitForExistence(timeout: 2))
+        dismissKeyboard()
         app.tabBars.buttons["Chats"].tap()
         element("chats.settings").tap()
         XCTAssertTrue(element("settings.safetyNumber").waitForExistence(timeout: 5))

@@ -57,7 +57,7 @@ public final class SimulatedMesh {
     public func addNode(_ name: String, capabilities: PeerCapabilities = [], config: MeshConfig = MeshConfig(),
                         identity: MeshIdentity = MeshIdentity()) -> MeshNode {
         let node = MeshNode(identity: identity, nickname: name, capabilities: capabilities, config: config,
-                            clock: { [unowned self] in self.now })
+                            clock: { [weak self] in self?.now ?? Date() })
         let transport = SimTransport(name: name, mesh: self)
         let recorder = MeshRecorder()
         node.transport = transport
@@ -190,7 +190,7 @@ public final class SimulatedMesh {
 /// Transport adapter that routes frames through the simulated network.
 final class SimTransport: MeshTransport {
     let name: String
-    unowned let mesh: SimulatedMesh
+    weak var mesh: SimulatedMesh?
 
     init(name: String, mesh: SimulatedMesh) {
         self.name = name
@@ -198,11 +198,11 @@ final class SimTransport: MeshTransport {
     }
 
     func send(frames: [Data], over link: LinkID) -> Bool {
-        mesh.transmit(frames: frames, from: name, over: link)
+        mesh?.transmit(frames: frames, from: name, over: link) ?? false
     }
 
     func maximumFrameSize(for link: LinkID) -> Int {
-        mesh.mtu(sender: name, link: link)
+        mesh?.mtu(sender: name, link: link) ?? 182
     }
 }
 

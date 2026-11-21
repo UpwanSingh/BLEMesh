@@ -33,6 +33,18 @@ struct Composer: View {
                 Text(reason).font(.caption).foregroundStyle(.red).padding(.horizontal)
             }
             HStack(spacing: 10) {
+                if focused {
+                    Button {
+                        focused = false
+                    } label: {
+                        Image(systemName: "keyboard.chevron.compact.down")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Hide keyboard")
+                    .accessibilityIdentifier("composer.hideKeyboard")
+                    .transition(.opacity)
+                }
                 TextField(placeholder, text: $text, axis: .vertical)
                     .lineLimit(1...5)
                     .textFieldStyle(.roundedBorder)

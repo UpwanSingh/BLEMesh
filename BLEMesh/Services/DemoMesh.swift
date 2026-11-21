@@ -107,7 +107,8 @@ final class DemoMesh {
                 ?? "I'm not sure about that one. Stay safe and check with local responders."
             reply = .aiResponse(AIResponse(queryID: query.queryID, text: answer, answeredBy: "\(bot.nickname)’s on-device AI"))
         case .groupInvite(let invite):
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak bot] in
+                guard self?.timer != nil, let bot else { return }
                 _ = try? bot.sendGroup(.text("Hi everyone, \(bot.nickname) here 👋"), groupID: invite.groupID)
             }
             reply = nil
@@ -116,12 +117,14 @@ final class DemoMesh {
         }
         // Read receipt shortly after "reading", then reply.
         if case .direct = message.scope {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self, weak bot] in
+                guard self?.timer != nil, let bot else { return }
                 bot.sendReadReceipt(for: message.envelope.messageID, to: sender)
             }
         }
         guard let reply else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak bot] in
+            guard self?.timer != nil, let bot else { return }
             if case .group(let groupID) = message.scope {
                 _ = try? bot.sendGroup(reply, groupID: groupID)
             } else {

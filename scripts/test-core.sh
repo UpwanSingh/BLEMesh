@@ -9,4 +9,4 @@ if ! xcode-select -p 2>/dev/null | grep -q "Xcode.*\.app"; then
   LIB=/Library/Developer/CommandLineTools/Library/Developer/usr/lib
   EXTRA=(-Xswiftc -F"$FW" -Xlinker -F"$FW" -Xlinker -rpath -Xlinker "$FW" -Xlinker -rpath -Xlinker "$LIB")
 fi
-swift test "${EXTRA[@]}" "$@"
+swift test ${EXTRA[@]+"${EXTRA[@]}"} "$@"
