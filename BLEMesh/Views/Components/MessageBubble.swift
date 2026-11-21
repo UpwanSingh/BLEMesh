@@ -36,7 +36,8 @@ struct MessageBubble: View {
         .contextMenu { menu }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("message.\(message.previewText)")
-        .modifier(TranslationModifier(text: bodyText, enabled: showTranslation, target: settings.preferredLanguage,
+        .modifier(TranslationModifier(text: bodyText, enabled: showTranslation && needsTranslation,
+                                      target: settings.preferredLanguage,
                                       translated: $translated, failed: $translationFailed))
         .onAppear {
             if settings.autoTranslate, !message.isOutgoing, needsTranslation { showTranslation = true }
@@ -73,7 +74,10 @@ struct MessageBubble: View {
             }
             if showTranslation {
                 Divider().opacity(0.4)
-                if let translated {
+                if !needsTranslation {
+                    Label("Already in your language", systemImage: "character.bubble")
+                        .font(.caption)
+                } else if let translated {
                     Label(translated, systemImage: "character.bubble")
                         .font(.callout)
                 } else if translationFailed {

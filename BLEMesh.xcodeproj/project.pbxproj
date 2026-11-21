@@ -13,6 +13,7 @@
 		2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */; };
 		3B17F632029C296E41DC60AB /* AskMeshView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776B256798972CE8FDE1ED6F /* AskMeshView.swift */; };
 		489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D01DA76685C068E3E3CCAB /* SettingsView.swift */; };
+		54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */; };
 		5A1B6416B2A434BD19E2D99D /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865A21D3A2FFA7FBF5F2FBD5 /* MessageBubble.swift */; };
 		5CD74CD51FA3476247315A71 /* MeshSimulator in Frameworks */ = {isa = PBXBuildFile; productRef = B24900C7F24D83663A74749E /* MeshSimulator */; };
 		613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17BF5E6499152D16A206CB67 /* StoredModels.swift */; };
@@ -68,6 +69,7 @@
 		3F7BFD1123719513BB6FE1BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4A6EE420663D7E2058EA2EEB /* VoiceServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceServices.swift; sourceTree = "<group>"; };
 		507CD7DBC28C06A30297FD74 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
+		5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlCoverageUITests.swift; sourceTree = "<group>"; };
 		60F7D9AFFE9F11B40BF0357E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		776B256798972CE8FDE1ED6F /* AskMeshView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskMeshView.swift; sourceTree = "<group>"; };
 		7F03CBF20CAF3DEB90A36474 /* Composer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Composer.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 			isa = PBXGroup;
 			children = (
 				9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */,
+				5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */,
 			);
 			path = BLEMeshUITests;
 			sourceTree = "<group>";
@@ -480,6 +483,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */,
+				54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

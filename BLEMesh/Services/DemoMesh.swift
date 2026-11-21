@@ -23,6 +23,8 @@ final class DemoMesh {
 
     /// (seconds after start, sender, content)
     private let script: [(TimeInterval, String, MeshContent)] = [
+        (3, "Asha", .voice(VoiceNote(transcript: "Road is blocked near the old bridge, take the east route",
+                                     languageCode: "en-US", durationSeconds: 4))),
         (6, "Kabir", .text("Is anyone else near the market? Power is out on our street.")),
         (14, "Meera", .sos(SOSReport(text: "Two children trapped under rubble behind the school, one is bleeding",
                                      location: GeoPoint(latitude: 28.6139, longitude: 77.2090, accuracyMeters: 25)))),

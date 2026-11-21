@@ -52,6 +52,8 @@ struct DigestCard: View {
                 } label: {
                     Image(systemName: expanded ? "chevron.up" : "chevron.down")
                 }
+                .accessibilityIdentifier("digest.toggle")
+                .accessibilityLabel(expanded ? "Collapse summary" : "Expand summary")
             }
             if expanded {
                 if let digest = mesh.digest {

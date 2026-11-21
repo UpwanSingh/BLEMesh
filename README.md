@@ -61,12 +61,16 @@ open BLEMesh.xcodeproj     # pick your team under Signing & Capabilities, then r
 ./scripts/test-core.sh     # MeshCore: 72 tests — protocol, crypto, framing, routing, security, multi-hop simulations
 xcodegen generate
 xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMesh \
-  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 16 app unit tests + 8 end-to-end UI flows
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 18 app unit tests + 20 UI tests
 ```
 
 The UI tests drive the real app in demo-mesh mode. They cover onboarding, a direct chat with
 delivery and read receipts, a 3-hop chat, group creation, SOS triage and the SOS board, the
-public channel and area digest, Ask the Mesh, and panic wipe with identity rotation.
+public channel and area digest, Ask the Mesh, and panic wipe with identity rotation. A further 12 UI tests tap every
+remaining control: swipe-to-delete, chat info and safety numbers, leave group, the long-press
+menu (copy, read aloud, translate), voice-note playback, the hold-to-record mic, the digest
+toggle, SOS quick picks, the GPS toggle and Reply, Ask suggestions, pull-to-refresh, onboarding
+Skip, and every Settings control.
 
 CI (`.github/workflows/ci.yml`) runs both on every pull request.
 

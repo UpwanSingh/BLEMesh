@@ -8,6 +8,7 @@ struct SOSView: View {
     @Query(filter: #Predicate<StoredMessage> { $0.conversationKey == "nearby" }, sort: \StoredMessage.sentAt, order: .reverse)
     private var nearbyMessages: [StoredMessage]
     @State private var showCompose = false
+    @State private var path: [String] = []
 
     private var reports: [(StoredMessage, SOSReport)] {
         nearbyMessages.compactMap { message in
@@ -21,7 +22,7 @@ struct SOSView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 Section {
                     Button {
@@ -48,7 +49,7 @@ struct SOSView: View {
                         Text("No SOS calls nearby.").foregroundStyle(.secondary)
                     }
                     ForEach(reports, id: \.0.id) { message, report in
-                        SOSRow(message: message, report: report)
+                        SOSRow(message: message, report: report) { key in path.append(key) }
                     }
                 } header: {
                     Text("SOS board (\(reports.count))")
@@ -57,6 +58,7 @@ struct SOSView: View {
                 }
             }
             .navigationTitle("SOS")
+            .navigationDestination(for: String.self) { key in ConversationView(conversationKey: key) }
             .sheet(isPresented: $showCompose) { SOSComposeView() }
         }
     }
@@ -66,6 +68,8 @@ struct SOSRow: View {
     @EnvironmentObject private var mesh: MeshService
     let message: StoredMessage
     let report: SOSReport
+    /// Opens a direct chat with the sender (conversation created on tap, not while rendering).
+    let onReply: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -93,11 +97,12 @@ struct SOSRow: View {
                 }
                 Spacer()
                 if !message.isOutgoing, let sender = message.sender {
-                    NavigationLink {
-                        ConversationView(conversationKey: mesh.startDirectConversation(with: sender, name: message.senderName))
+                    Button {
+                        onReply(mesh.startDirectConversation(with: sender, name: message.senderName))
                     } label: {
                         Text("Reply").font(.caption.weight(.semibold))
                     }
+                    .buttonStyle(.borderless)
                     .fixedSize()
                 }
             }
