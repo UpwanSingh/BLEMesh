@@ -167,10 +167,12 @@ struct BatteryTests {
         #expect(route?.hops == 1)
         #expect(a.peer(mesh.node("B").peerID)?.capabilities.contains(.lowPower) == true)
         // Delivery goes through C, not B.
-        let relayedByB = mesh.node("B").stats.relayed
+        let routedByB = mesh.node("B").stats.relayedRouted, routedByC = mesh.node("C").stats.relayedRouted
         let id = try? a.sendDirect(.text("via healthy relay"), to: mesh.node("D").peerID)
         #expect(mesh.run(until: { id.map { a.outgoingStatus($0) == .delivered } ?? false }, timeout: 10))
-        #expect(mesh.node("B").stats.relayed - relayedByB <= 1) // at most an announce/ack, not the message path
+        // B may still relay flooded announces, but the message and its ack take the healthy path.
+        #expect(mesh.node("B").stats.relayedRouted == routedByB)
+        #expect(mesh.node("C").stats.relayedRouted > routedByC)
     }
 
     @Test func criticalBatteryStillRelaysSOSButNotChatter() throws {

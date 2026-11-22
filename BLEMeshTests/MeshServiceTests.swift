@@ -13,13 +13,17 @@ final class MockAI: AIEngine {
 
     init(generative: Bool) { hasGenerativeModel = generative }
 
-    func answer(_ question: String) async -> String {
+    func answer(_ question: String, local: [LocalMessage]) async -> SafeAnswer {
         questions.append(question)
-        return "MOCK ANSWER: \(question)"
+        guard hasGenerativeModel else { return OfflineKnowledgeEngine.offlineAnswer(question, local: local) }
+        return AnswerSafety.compose(question: question, generated: "MOCK ANSWER: \(question)",
+                                    references: EmergencyKnowledge.search(question))
     }
 
     func triage(_ text: String) async -> SOSTriage { HeuristicTriage.triage(text) }
     func overview(for digest: AreaDigest, recentTexts: [String]) async -> String { "MOCK OVERVIEW (\(digest.items.count))" }
+    func translate(_ text: String, to language: String) async -> String? { hasGenerativeModel ? "[\(language)] \(text)" : nil }
+    func summarize(_ transcript: String) async -> String { "MOCK SUMMARY" }
 }
 
 /// Integration tests of the app service against the simulated demo neighbourhood

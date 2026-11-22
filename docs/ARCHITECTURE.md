@@ -160,3 +160,48 @@ originSigningKey 32 | payloadLen u16 | payload | signature 64
   verified contact's name is flagged.
 - Blocking hides a device everywhere on this phone; its traffic is still relayed for others.
   Reporting also blocks it.
+
+## Local intelligence (Phase 2)
+
+Everything runs on the phone; nothing leaves the mesh.
+
+- **Answers (`AnswerSafety`, `LocalRetriever`).** Every answer is a `SafeAnswer`: text,
+  confidence (high/medium/low/refused), sources, an optional safety note, and whether a model
+  wrote it. The pipeline:
+  1. Dosing and self-harm questions are refused, with crisis guidance for self-harm.
+  2. Local questions are answered from recent messages (BM25 over the last 6 h, newer messages
+     preferred) and marked unverified.
+  3. Otherwise the model writes an answer grounded in the matching guide entries.
+  4. Model text that recommends a known-dangerous practice (negations such as "do not" are
+     understood) is replaced with the guide entry.
+  The app labels each answer by what actually produced it.
+- **Triage (`HeuristicTriage`, `EmbeddingTriage`, `HybridTriage`).**
+  - Weighted concept rules are combined with k-nearest-neighbour search over Apple's on-device
+    sentence embeddings.
+  - SOS calls are floored at "high".
+  - `TriageBenchmark` keeps the tuning set separate from two held-out sets.
+  - `TriageComparisonTests` guards the measured accuracy on the blind set: category at least 75%,
+    priority at least 70%, critical recall at least 50%.
+- **Catch-up (`CatchUpBuilder`).**
+  - Ranking: SOS first, then need-help check-ins, then messages to you, then safety checks, then
+    other emergencies, then chat.
+  - Near-duplicates (60% shared words) are merged.
+  - The window starts at the previous visit, not the current one.
+- **Credibility (`RumourAnalyzer`).**
+  - "Corroborated" means 2 or more distinct reporters, or 1 verified contact.
+  - "Disputed" means a later message about the same place or topic contains a denial ("false
+    alarm", "not true", …).
+- **Spam (`SpamFilter`).**
+  - Only the public channel is filtered. Signals: repeats in 10 minutes, more than 6 messages a
+    minute, links, scam phrases, all caps, and reported devices.
+  - Urgent texts skip the repeat and flood rules. SOS packets are never filtered.
+- **Roles and shared AI.**
+  - Roles: `PeerCapabilities.medic` / `.rescuer` are announced, and `ResponderMatcher` suggests
+    the nearest matching reachable peers.
+  - Shared AI: `AIQuery.task` (answer / triage / translate / summarize) lets phones without a
+    model use a nearby one. Older queries without a task decode as `answer`.
+- **Routing fix found by these tests.** Only the first copy of each announce was processed. When
+  a costlier copy (for example via a low-battery relay) arrived first, the cheaper path was never
+  refreshed and expired. Duplicate announces, which have already been signature-checked, now
+  offer their path too.
+

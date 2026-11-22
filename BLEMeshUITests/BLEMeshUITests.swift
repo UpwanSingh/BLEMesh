@@ -171,8 +171,9 @@ final class BLEMeshUITests: XCTestCase {
         XCTAssertTrue(safety.waitForExistence(timeout: 5))
         let before = safety.label
         screenshot("12-settings")
-        app.swipeUp()
-        element("settings.panicWipe").tap()
+        let wipe = element("settings.panicWipe")
+        for _ in 0..<6 where !wipe.exists { app.swipeUp() } // the form loads rows lazily
+        wipe.tap()
         app.buttons["Erase now"].firstMatch.tap()
 
         app.tabBars.buttons["Nearby"].tap()

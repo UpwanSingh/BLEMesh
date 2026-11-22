@@ -7,6 +7,7 @@ struct ConversationView: View {
     @EnvironmentObject private var mesh: MeshService
     let conversationKey: String
     @State private var showInfo = false
+    @State private var showCatchUp = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,11 +24,17 @@ struct ConversationView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
+                Button { showCatchUp = true } label: { Image(systemName: "text.badge.star") }
+                    .accessibilityIdentifier("conversation.catchUp")
+                    .accessibilityLabel("Catch me up")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button { showInfo = true } label: { Image(systemName: "info.circle") }
                     .accessibilityIdentifier("conversation.info")
             }
         }
         .sheet(isPresented: $showInfo) { ConversationInfoView(conversationKey: conversationKey) }
+        .sheet(isPresented: $showCatchUp) { CatchUpView(conversationKey: conversationKey) }
         .onAppear {
             mesh.openConversationKey = conversationKey
             mesh.markRead(key: conversationKey)
@@ -59,9 +66,14 @@ struct MessageList: View {
     @Query private var messages: [StoredMessage]
     let showSenders: Bool
 
-    init(conversationKey: String, showSenders: Bool) {
-        _messages = Query(filter: #Predicate<StoredMessage> { $0.conversationKey == conversationKey },
-                          sort: \StoredMessage.sentAt)
+    init(conversationKey: String, showSenders: Bool, includeSpam: Bool = false) {
+        if includeSpam {
+            _messages = Query(filter: #Predicate<StoredMessage> { $0.conversationKey == conversationKey },
+                              sort: \StoredMessage.sentAt)
+        } else {
+            _messages = Query(filter: #Predicate<StoredMessage> { $0.conversationKey == conversationKey && $0.isSpam == false },
+                              sort: \StoredMessage.sentAt)
+        }
         self.showSenders = showSenders
     }
 
@@ -205,6 +217,51 @@ struct ConversationInfoView: View {
                     dismiss()
                 }
             }
+        }
+    }
+}
+
+
+/// #10: "what did I miss?" — the important messages since you last opened this chat, plus a
+/// short summary written on this phone (or by a nearby AI phone).
+struct CatchUpView: View {
+    @EnvironmentObject private var mesh: MeshService
+    @Environment(\.dismiss) private var dismiss
+    let conversationKey: String
+    @State private var result: (summary: CatchUpSummary, abstract: String?)?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if let result {
+                    Section {
+                        Text(result.summary.overview).font(.headline)
+                            .accessibilityIdentifier("catchup.overview")
+                        if let abstract = result.abstract {
+                            Text(abstract).font(.callout).accessibilityIdentifier("catchup.abstract")
+                        }
+                    }
+                    if !result.summary.highlights.isEmpty {
+                        Section("Most important") {
+                            ForEach(result.summary.highlights, id: \.id) { message in
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(message.senderName).font(.caption.weight(.semibold))
+                                    Text(message.text)
+                                    Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary)
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("catchup.highlight")
+                            }
+                        }
+                    }
+                } else {
+                    HStack { ProgressView(); Text("Reading what you missed…") }
+                }
+            }
+            .navigationTitle("Catch me up")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .task { result = await mesh.catchUp(key: conversationKey) }
         }
     }
 }

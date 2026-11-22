@@ -8,6 +8,7 @@ public struct AreaDigest: Equatable, Sendable {
         public var priority: SOSTriage.Priority
         /// Distinct senders reporting this.
         public var reporters: Int
+        public var reporterIDs: Set<PeerID> = []
         public var headline: String
         public var locations: [String]
         public var latest: Date
@@ -76,7 +77,8 @@ public enum DigestBuilder {
 
         let items = clusters
             .map { AreaDigest.Item(category: $0.category, priority: $0.priority, reporters: $0.reporters.count,
-                                   headline: $0.headline, locations: Array($0.locations.prefix(3)), latest: $0.latest) }
+                                   reporterIDs: $0.reporters, headline: $0.headline,
+                                   locations: Array($0.locations.prefix(3)), latest: $0.latest) }
             .sorted { ($0.priority, $0.reporters, $0.latest) > ($1.priority, $1.reporters, $1.latest) }
 
         return AreaDigest(items: items, messageCount: recent.count,

@@ -12,15 +12,30 @@ public enum EmergencyKnowledge {
         public let title: String
         public let keywords: [String]
         public let steps: [String]
+        /// "first-aid" or "disaster".
+        public var category: String = "first-aid"
+        /// Signs that mean "get professional help now" for this topic.
+        public var redFlags: [String] = []
+
+        /// Where the guidance comes from. These are paraphrases of widely published general
+        /// guidance and still need review by a clinician before shipping.
+        public var source: String {
+            category == "disaster" ? "General disaster-preparedness guidance (summary; not official advice)"
+                                   : "General first-aid guidance (summary; not reviewed by a clinician)"
+        }
 
         public var text: String {
-            "\(title):\n" + steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
+            var lines = "\(title):\n" + steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
+            if !redFlags.isEmpty { lines += "\nGet help immediately if: " + redFlags.joined(separator: "; ") + "." }
+            return lines
         }
     }
 
     public static let disclaimer = "General guidance only — get professional medical help as soon as you can."
 
-    public static let entries: [Entry] = [
+    public static let entries: [Entry] = coreEntries + EmergencyLibrary.extended
+
+    static let coreEntries: [Entry] = [
         Entry(id: "bleeding", title: "Severe bleeding",
               keywords: ["bleed", "bleeding", "blood", "cut", "wound", "laceration"],
               steps: ["Press firmly on the wound with a clean cloth or your hand and keep pressing.",
@@ -74,19 +89,19 @@ public enum EmergencyKnowledge {
               steps: ["Drop, cover and hold on under sturdy furniture during shaking.",
                       "Stay away from windows and outside walls; don't run outside while shaking.",
                       "After shaking stops, leave damaged buildings carefully and expect aftershocks.",
-                      "If trapped, tap on pipes or walls and use a whistle instead of shouting to save energy."]),
+                      "If trapped, tap on pipes or walls and use a whistle instead of shouting to save energy."], category: "disaster"),
         Entry(id: "flood", title: "Flood",
               keywords: ["flood", "flooding", "water rising", "river", "drowning"],
               steps: ["Move to higher ground immediately.",
                       "Never walk or drive through moving water — 15 cm can knock you down.",
                       "Avoid touching electrical equipment if you are wet or standing in water.",
-                      "Signal from a high point if trapped and conserve phone battery."]),
+                      "Signal from a high point if trapped and conserve phone battery."], category: "disaster"),
         Entry(id: "fire", title: "Fire / smoke",
               keywords: ["fire", "smoke", "flames", "burning building"],
               steps: ["Get out and stay out; alert others on the way.",
                       "Stay low under smoke and cover your nose and mouth.",
                       "Feel doors with the back of your hand — don't open hot doors.",
-                      "If clothes catch fire: stop, drop and roll."]),
+                      "If clothes catch fire: stop, drop and roll."], category: "disaster"),
         Entry(id: "shock", title: "Shock",
               keywords: ["shock", "pale", "clammy", "faint", "fainted", "dizzy"],
               steps: ["Lay the person down and raise their legs if no injury prevents it.",

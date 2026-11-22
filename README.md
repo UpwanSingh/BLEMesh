@@ -18,7 +18,14 @@ AI keeps working offline: voice notes, translation, SOS triage, an area summary 
 | **On-device translation** | Translate any message, or auto-translate incoming ones (iOS 18+). |
 | **SOS** | One-tap SOS with GPS (GPS needs no network), triaged on the phone (critical/high/medium/low, category, people affected, landmarks). An SOS board ranks requests by urgency. |
 | **Area summary** | Clusters the last hour of public reports into a ranked digest ("Fire near the market, 2 reports…"). |
-| **Ask the Mesh** | Questions are answered by this phone's on-device model (iOS 26 Apple Intelligence). If this phone has no model, the nearest phone that has one answers over an encrypted link. If none is reachable, a vetted offline first-aid guide answers. |
+| **Ask the Mesh** | Questions are answered by this phone's on-device model (iOS 26 Apple Intelligence). If this phone has no model, the nearest phone that has one answers over an encrypted link. If none is reachable, an offline first-aid and safety guide (46 topics) answers. Local questions ("where is water being given out?") are answered from messages this phone has heard. Every answer is labelled with what actually produced it, its sources and a confidence. |
+| **Medical-answer safeguards** | No medicine doses (refers to a pharmacist or doctor), crisis guidance for self-harm, and dangerous myths (butter on burns, cutting snake bites, inducing vomiting…) removed from model output and replaced with the vetted guide. Covered by adversarial tests. |
+| **SOS triage** | Keyword rules plus on-device sentence-embedding neighbours (English), with an SOS never ranked below "high". Measured on a held-out benchmark (see Known limitations). |
+| **Catch me up** | "What did I miss?" for any chat: SOS calls and questions to you first, duplicates merged, plus a short summary (by this phone's model or a nearby AI phone). |
+| **Rumour checks** | Area-summary items are labelled "corroborated" (2+ independent reporters or a verified contact), "single report" or "disputed" (someone nearby called it a false alarm). |
+| **Spam filter** | Scam phrases, links, floods and repeats on the public channel are hidden, with a one-tap "show". Repeated pleas for help are never hidden. |
+| **Responder matching & auto-reply** | Declare yourself a medic or rescuer. SOS calls show the nearest matching responders. An unanswered "are you safe?" gets a facts-only auto-reply after 5 minutes: not answered yet, battery and last activity. It never claims you're safe. |
+| **Shared AI** | Phones without a model can ask a nearby AI phone to translate, summarise or triage. |
 | **Crowd-ready** | Traffic priorities (SOS first), relay suppression and adaptive announcements. In a simulated 100-phone crowd: about 38% less radio traffic with the same reach, and SOS in under 1 s while chat is saturated. |
 | **Battery-aware** | Low-battery phones relay and carry less, and routes avoid them. |
 | **Forward secrecy** | Rotating short-lived keys: captured messages become permanently unreadable after 7 days, even if the phone is later stolen. |
@@ -65,10 +72,10 @@ open BLEMesh.xcodeproj     # pick your team under Signing & Capabilities, then r
 ## Tests
 
 ```bash
-./scripts/test-core.sh     # MeshCore: 72 tests — protocol, crypto, framing, routing, security, multi-hop simulations
+./scripts/test-core.sh     # MeshCore: 122 tests: protocol, crypto, routing, security, crowds, AI safety, triage benchmark
 xcodegen generate
 xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMesh \
-  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 18 app unit tests + 20 UI tests
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 41 app unit tests + 34 UI tests
 ```
 
 The UI tests drive the real app in demo-mesh mode. They cover onboarding, a direct chat with
@@ -77,14 +84,19 @@ public channel and area digest, Ask the Mesh, and panic wipe with identity rotat
 remaining control: swipe-to-delete, chat info and safety numbers, leave group, the long-press
 menu (copy, read aloud, translate), voice-note playback, the hold-to-record mic, the digest
 toggle, SOS quick picks, the GPS toggle and Reply, Ask suggestions, pull-to-refresh, onboarding
-Skip, and every Settings control.
+Skip, and every Settings control. Phase 1 and Phase 2 UI tests cover SOS status, check-ins, the
+family locator, the medical ID, verification and blocking, answers from nearby messages, refused
+dosing questions, catch-up, rumour labels, the spam filter, suggested responders and roles.
 
 CI (`.github/workflows/ci.yml`) runs both on every pull request.
 
 ## Known limitations
 
-- **No forward secrecy for direct messages yet.** Each message uses a fresh ephemeral key, but anyone who later steals the recipient's long-term key could decrypt captured traffic. A double-ratchet session is the next security step.
+- **Not yet tested on real phones.** Every result here comes from the simulator and the simulated mesh. Bluetooth range, background behaviour and battery use need testing on physical devices.
+- **Offline triage is imperfect.** On a held-out set written after tuning, the offline triage gets the category right 80% of the time and the priority 77% of the time, but catches only 57% of critical cases. An SOS is never ranked below "high". The on-device language-model path couldn't be measured: the iOS simulator reports the model as available, but its model assets are missing, so every generation fails. The app detects this and labels answers by their real source.
+- **Medical content needs clinical review** before real-world use. The guide follows public first-aid guidance (sources are listed per entry) but hasn't been reviewed by a clinician.
+- **Forward secrecy is coarse:** prekeys rotate daily and are deleted after 7 days, so the exposure window is up to a week (no per-message ratchet).
+- **Proof-of-work slows fake SOS floods** but doesn't stop an attacker with many devices.
 - **Metadata:** relays can see sender and recipient mesh IDs, which they need for routing, though not the content.
 - **iOS background limits:** iOS restricts Bluetooth advertising in the background, so two phones that are both in the background discover each other slowly. Existing connections stay up and state restoration is enabled.
-- **Group membership:** the creator distributes the group key. When a member leaves, the key isn't rotated yet.
 - **App Store:** before submitting, declare encryption export compliance (the app uses standard encryption algorithms) and justify the Bluetooth background modes.

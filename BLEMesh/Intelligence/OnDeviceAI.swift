@@ -12,9 +12,27 @@ protocol AIEngine: AnyObject {
     var hasGenerativeModel: Bool { get }
     /// Human-readable engine status for Settings / diagnostics.
     var statusDescription: String { get }
-    func answer(_ question: String) async -> String
+    /// Answer with provenance. `local` are recent mesh messages for "what's happening here" questions.
+    func answer(_ question: String, local: [LocalMessage]) async -> SafeAnswer
     func triage(_ text: String) async -> SOSTriage
     func overview(for digest: AreaDigest, recentTexts: [String]) async -> String
+    /// Translate with the generative model (nil when this phone can't).
+    func translate(_ text: String, to language: String) async -> String?
+    /// Summarise a transcript (generative when possible, extractive otherwise).
+    func summarize(_ transcript: String) async -> String
+}
+
+extension AIEngine {
+    /// Extractive fallback: the most informative lines, by the catch-up scorer.
+    static func extractiveSummary(_ transcript: String) -> String {
+        let lines = transcript.split(separator: "\n").map(String.init)
+        let messages = lines.map { line -> LocalMessage in
+            let parts = line.split(separator: ":", maxSplits: 1).map(String.init)
+            return LocalMessage(sender: .broadcast, senderName: parts.first ?? "", text: parts.count > 1 ? parts[1] : line, date: Date())
+        }
+        let picked = CatchUpBuilder.build(messages, since: .distantPast, limit: 3).highlights
+        return picked.map { "• \($0.senderName): \($0.text.trimmingCharacters(in: .whitespaces))" }.joined(separator: "\n")
+    }
 }
 
 /// Picks the best available engine at runtime.
@@ -36,14 +54,33 @@ final class OfflineKnowledgeEngine: AIEngine {
     var hasGenerativeModel: Bool { false }
     var statusDescription: String { "Offline guidance library (no on-device model on this phone)" }
 
-    func answer(_ question: String) async -> String {
-        EmergencyKnowledge.answer(question)
-            ?? "I don't have offline guidance for that. Try asking someone nearby with an AI-capable phone, or describe the emergency (bleeding, burn, fracture, fire, flood…)."
+    func answer(_ question: String, local: [LocalMessage]) async -> SafeAnswer {
+        Self.offlineAnswer(question, local: local)
     }
 
-    func triage(_ text: String) async -> SOSTriage { HeuristicTriage.triage(text) }
+    /// Safety checks first, then local messages (for local questions), then the offline library.
+    static func offlineAnswer(_ question: String, local: [LocalMessage]) -> SafeAnswer {
+        if AnswerSafety.concern(in: question) != nil {
+            return AnswerSafety.compose(question: question, generated: nil, references: EmergencyKnowledge.search(question))
+        }
+        if LocalRetriever.isLocalQuestion(question) {
+            let hits = LocalRetriever.search(question, in: local, now: Date())
+            if let text = LocalRetriever.answer(question, hits: hits, now: Date()) {
+                return SafeAnswer(text: text, confidence: .medium,
+                                  sources: hits.map { "\($0.message.senderName)'s message" })
+            }
+        }
+        return AnswerSafety.compose(question: question, generated: nil, references: EmergencyKnowledge.search(question))
+    }
+
+    /// Keyword rules + on-device sentence-embedding neighbours, with the SOS "never below high" floor.
+    func triage(_ text: String) async -> SOSTriage { HybridTriage.triageSOS(text, embedding: HybridTriage.shared) }
 
     func overview(for digest: AreaDigest, recentTexts: [String]) async -> String { digest.overview }
+
+    func translate(_ text: String, to language: String) async -> String? { nil }
+
+    func summarize(_ transcript: String) async -> String { Self.extractiveSummary(transcript) }
 }
 
 #if canImport(FoundationModels)
@@ -58,12 +95,22 @@ final class FoundationModelsEngine: AIEngine {
     }
 
     private let fallback = OfflineKnowledgeEngine()
+    /// After a generation failure (e.g. model assets missing) we stop claiming the capability for a
+    /// while, so this phone doesn't advertise itself as an AI helper it can't be.
+    private var unavailableUntil: Date?
 
-    var hasGenerativeModel: Bool { Self.isSupported }
+    var hasGenerativeModel: Bool { Self.isSupported && (unavailableUntil.map { Date() >= $0 } ?? true) }
+
+    private func noteFailure(_ error: Error) {
+        unavailableUntil = Date().addingTimeInterval(600)
+        MeshLogger.app.error("On-device model failed, using offline fallback for 10 min: \(error.localizedDescription, privacy: .public)")
+    }
 
     var statusDescription: String {
         switch SystemLanguageModel.default.availability {
-        case .available: return "Apple on-device model (private, offline)"
+        case .available:
+            return hasGenerativeModel ? "Apple on-device model (private, offline)"
+                                      : "On-device model failed to run — using the offline guide for now"
         case .unavailable(let reason): return "On-device model unavailable: \(String(describing: reason))"
         }
     }
@@ -75,21 +122,28 @@ final class FoundationModelsEngine: AIEngine {
     dosages or procedures, and end by recommending professional help. If unsure, say so.
     """
 
-    func answer(_ question: String) async -> String {
-        guard Self.isSupported else { return await fallback.answer(question) }
-        let references = EmergencyKnowledge.search(question).map(\.text).joined(separator: "\n\n")
-        let prompt = references.isEmpty
-            ? question
-            : "Reference guidance:\n\(references)\n\nQuestion: \(question)"
+    func answer(_ question: String, local: [LocalMessage]) async -> SafeAnswer {
+        // Safety-sensitive questions are answered by fixed, vetted text — never generated.
+        guard hasGenerativeModel, AnswerSafety.concern(in: question) == nil else {
+            return OfflineKnowledgeEngine.offlineAnswer(question, local: local)
+        }
+        let references = EmergencyKnowledge.search(question)
+        let hits = LocalRetriever.isLocalQuestion(question) ? LocalRetriever.search(question, in: local, now: Date()) : []
+        var prompt = ""
+        if !references.isEmpty { prompt += "Reference guidance:\n" + references.map(\.text).joined(separator: "\n\n") + "\n\n" }
+        if !hits.isEmpty {
+            prompt += "Recent messages from people nearby (unverified):\n"
+                + hits.map { "- \($0.message.senderName): \($0.message.text)" }.joined(separator: "\n") + "\n\n"
+        }
+        prompt += "Question: \(question)"
         do {
             let session = LanguageModelSession(instructions: Self.answerInstructions)
             let response = try await session.respond(to: prompt)
-            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            if text.isEmpty { return await fallback.answer(question) }
-            return references.isEmpty ? text : text + "\n\n" + EmergencyKnowledge.disclaimer
+            return AnswerSafety.compose(question: question, generated: response.content, references: references,
+                                        localSources: hits.map { "\($0.message.senderName)'s message" })
         } catch {
-            MeshLogger.app.error("On-device answer failed: \(error.localizedDescription, privacy: .public)")
-            return await fallback.answer(question)
+            noteFailure(error)
+            return OfflineKnowledgeEngine.offlineAnswer(question, local: local)
         }
     }
 
@@ -107,14 +161,33 @@ final class FoundationModelsEngine: AIEngine {
         var locations: [String]
     }
 
-    func triage(_ text: String) async -> SOSTriage {
-        let heuristic = HeuristicTriage.triage(text)
-        guard Self.isSupported else { return heuristic }
+    /// The model's own assessment, without the offline floor (used for benchmarking).
+    func modelTriage(_ text: String) async -> SOSTriage? {
+        guard Self.isSupported else { return nil }
         do {
-            let session = LanguageModelSession(instructions: """
-            Classify emergency messages for rescuers. Life-threatening situations (not breathing, \
-            unconscious, heavy bleeding, fire, drowning, trapped, weapons) are critical.
-            """)
+            let session = LanguageModelSession(instructions: Self.triageInstructions)
+            let result = try await session.respond(to: text, generating: TriageOutput.self).content
+            guard let priority = SOSTriage.Priority.allCases.first(where: { $0.label.lowercased() == result.priority }),
+                  let category = SOSTriage.Category(rawValue: result.category) else { return nil }
+            return SOSTriage(priority: priority, category: category,
+                             peopleAffected: result.peopleAffected > 0 ? result.peopleAffected : nil,
+                             summary: result.summary, locationHints: Array(result.locations.prefix(3)), source: "llm")
+        } catch {
+            noteFailure(error)
+            return nil
+        }
+    }
+
+    static let triageInstructions = """
+    Classify emergency messages for rescuers. Life-threatening situations (not breathing, \
+    unconscious, heavy bleeding, fire, drowning, trapped, weapons, overdose, falls from height) are critical.
+    """
+
+    func triage(_ text: String) async -> SOSTriage {
+        let heuristic = HybridTriage.triageSOS(text, embedding: HybridTriage.shared)
+        guard hasGenerativeModel else { return heuristic }
+        do {
+            let session = LanguageModelSession(instructions: Self.triageInstructions)
             let result = try await session.respond(to: text, generating: TriageOutput.self).content
             let priority = SOSTriage.Priority.allCases.first { $0.label.lowercased() == result.priority } ?? heuristic.priority
             let category = SOSTriage.Category(rawValue: result.category) ?? heuristic.category
@@ -128,13 +201,41 @@ final class FoundationModelsEngine: AIEngine {
                 source: "llm"
             )
         } catch {
-            MeshLogger.app.error("On-device triage failed: \(error.localizedDescription, privacy: .public)")
+            noteFailure(error)
             return heuristic
         }
     }
 
+    func translate(_ text: String, to language: String) async -> String? {
+        guard hasGenerativeModel else { return nil }
+        let name = Locale(identifier: "en").localizedString(forLanguageCode: language) ?? language
+        do {
+            let session = LanguageModelSession(instructions: "Translate the user's text into \(name). Reply with the translation only.")
+            let text = try await session.respond(to: text).content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? nil : text
+        } catch {
+            noteFailure(error)
+            return nil
+        }
+    }
+
+    func summarize(_ transcript: String) async -> String {
+        guard hasGenerativeModel else { return Self.extractiveSummary(transcript) }
+        do {
+            let session = LanguageModelSession(instructions: """
+            Summarise these chat messages in at most 3 short bullet points: urgent needs first, then \
+            questions addressed to the reader, then other news. Use only what's in the messages.
+            """)
+            let text = try await session.respond(to: transcript).content.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? Self.extractiveSummary(transcript) : text
+        } catch {
+            noteFailure(error)
+            return Self.extractiveSummary(transcript)
+        }
+    }
+
     func overview(for digest: AreaDigest, recentTexts: [String]) async -> String {
-        guard Self.isSupported, !digest.items.isEmpty else { return digest.overview }
+        guard hasGenerativeModel, !digest.items.isEmpty else { return digest.overview }
         let facts = digest.items.prefix(6).map { item in
             "- \(item.priority.label) \(item.category.label): \(item.headline) (\(item.reporters) reporter(s))"
                 + (item.locations.isEmpty ? "" : " at \(item.locations.joined(separator: ", "))")

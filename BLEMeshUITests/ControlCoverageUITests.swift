@@ -300,33 +300,29 @@ final class ControlCoverageUITests: XCTestCase {
         name.press(forDuration: 1.0)
         if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
         name.typeText(XCUIKeyboardKey.delete.rawValue)
-        name.typeText("Field Medic")
+        name.typeText("Field Medic\n") // submit: renames and dismisses the keyboard
 
         // Toggles flip.
         for label in ["Auto-translate incoming messages", "Read voice notes aloud on arrival", "Message & SOS alerts"] {
-            let toggle = app.switches[label]
-            XCTAssertTrue(toggle.waitForExistence(timeout: 3), label)
+            let toggle = reveal(app.switches[label])
             let before = toggle.value as? String
             toggle.switches.firstMatch.tap()
             XCTAssertNotEqual(toggle.value as? String, before, "\(label) didn't change")
         }
 
         // Pickers open and select (picker buttons are labelled "Title, current value").
-        app.swipeDown()
         let language = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'My language'")).firstMatch
+        for _ in 0..<6 where !(language.exists && language.isHittable) { app.swipeDown() }
         XCTAssertTrue(language.waitForExistence(timeout: 3))
         language.tap()
         XCTAssertTrue(app.buttons["Español"].waitForExistence(timeout: 3))
         app.buttons["Español"].tap()
-        app.swipeUp()
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Keep messages'")).firstMatch.tap()
+        reveal(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Keep messages'")).firstMatch).tap()
         XCTAssertTrue(app.buttons["7 days"].waitForExistence(timeout: 3))
         app.buttons["7 days"].tap()
 
         // Demo range buttons (scroll: the form loads rows lazily).
-        app.swipeUp()
-        XCTAssertTrue(el("demo.leave").waitForExistence(timeout: 3))
-        el("demo.leave").tap()
+        reveal(el("demo.leave")).tap()
         XCTAssertTrue(el("demo.return").waitForExistence(timeout: 3))
         el("demo.return").tap()
 

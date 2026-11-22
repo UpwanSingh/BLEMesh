@@ -94,6 +94,8 @@ public struct MeshStats: Equatable, Sendable {
     public var suppressed = 0
     /// Urgent packets from senders over their urgent budget, relayed as normal traffic.
     public var urgentDowngraded = 0
+    /// Relays of routed (unicast) packets: the share of `relayed` that was on someone's chosen path.
+    public var relayedRouted = 0
 
     public init() {}
 }
@@ -500,6 +502,7 @@ public final class MeshNode {
             // Another neighbour relayed it too: count towards suppressing our own pending relay.
             pendingRelays[packet.packetID]?.duplicates += 1
             upgradeTTLIfShorterPath(packet, from: link, now: now)
+            offerDuplicateAnnounce(packet, from: link, now: now)
             return
         }
         if packet.flags.contains(.urgent), packet.workBits < config.urgentWorkBits {
@@ -631,6 +634,26 @@ public final class MeshNode {
         }
     }
 
+    /// Offer the path an announce arrived on. Prefer paths whose next hop isn't low on battery.
+    @discardableResult
+    private func offerRoute(to origin: PeerID, via link: LinkID, hops: Int, originLowPower: Bool, now: Date) -> Bool {
+        let viaLowPower = provenNeighbor[link].flatMap { directory[$0] }?.capabilities.contains(.lowPower) == true
+            || (hops == 0 && originLowPower)
+        return routing.offer(origin, link: link, hops: hops, cost: hops + (viaLowPower ? 2 : 0), now: now)
+    }
+
+    /// A copy of an announce we already handled arrived over another link. Only the first copy is
+    /// processed, so without this the cheaper path is never refreshed whenever a costlier copy wins
+    /// the race, and routes drift onto low-battery relays as the good path expires.
+    private func offerDuplicateAnnounce(_ packet: Packet, from link: LinkID, now: Date) {
+        guard packet.type == .announce, let known = directory[packet.origin] else { return }
+        let hops = packet.hops == 0 && provenNeighbor[link] != packet.origin ? 1 : Int(packet.hops)
+        if offerRoute(to: packet.origin, via: link, hops: hops, originLowPower: known.capabilities.contains(.lowPower), now: now) {
+            routeAppeared(for: packet.origin, now: now)
+            delegate?.meshNodeDidUpdatePeers(self)
+        }
+    }
+
     private func handleAnnounce(_ packet: Packet, from link: LinkID, now: Date) {
         guard let payload = try? AnnouncePayload.decode(packet.payload), payload.agreementKey.count == 32 else {
             stats.invalidDropped += 1
@@ -649,10 +672,7 @@ public final class MeshNode {
             firstSeen: previous?.firstSeen ?? now
         )
         if isNew { enforcePeerLimit(now: now) }
-        // Prefer paths whose next hop isn't low on battery.
-        let viaLowPower = provenNeighbor[link].flatMap { directory[$0] }?.capabilities.contains(.lowPower) == true
-            || (packet.hops == 0 && payload.capabilities.contains(.lowPower))
-        let routeChanged = routing.offer(origin, link: link, hops: hops, cost: hops + (viaLowPower ? 2 : 0), now: now)
+        let routeChanged = offerRoute(to: origin, via: link, hops: hops, originLowPower: payload.capabilities.contains(.lowPower), now: now)
         lastAnnounceByPeer[origin] = packet
 
         if isNew || routeChanged {
@@ -908,6 +928,7 @@ public final class MeshNode {
             && links.count > config.suppressionMinLinks
         guard suppressible else {
             stats.relayed += 1
+            if !flooded { stats.relayedRouted += 1 }
             if flooded { relayedTTL[packet.packetID] = copy.ttl }
             route(copy, excluding: link, priority: priority)
             return
