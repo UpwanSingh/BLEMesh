@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// Tunables for a mesh node. Defaults target small phone meshes (≤ ~50 devices).
 public struct MeshConfig: Sendable {
@@ -52,10 +53,18 @@ public struct MeshConfig: Sendable {
     public var suppressionMinLinks: Int = 3
     /// Random wait before relaying a flooded packet, while listening for other relays.
     public var relayJitter: ClosedRange<TimeInterval> = 0.02...0.25
-    /// Cancel a pending relay after hearing this many other copies.
-    public var suppressionThreshold: Int = 2
+    /// Cancel a pending relay after hearing this many other copies. 3 keeps ~98% of plain
+    /// flooding's reach in simulated crowds (2 saved more airtime but lost ~7% reach).
+    public var suppressionThreshold: Int = 3
     /// Announce less often in dense areas: interval × max(1, links / 4), capped.
     public var maxAnnounceInterval: TimeInterval = 45
+
+    // Forward secrecy
+    /// A new short-lived key is generated this often and announced.
+    public var prekeyRotation: TimeInterval = 24 * 3600
+    /// Old short-lived keys are deleted after this long; messages to them become unreadable forever.
+    /// Must exceed `carryLifetime` so carried messages can still be opened.
+    public var prekeyRetention: TimeInterval = 7 * 24 * 3600
 
     // Urgent (SOS) traffic
     /// Proof-of-work bits required on urgent packets (2^N hashes to create one).
@@ -125,12 +134,22 @@ public struct MeshNodeSnapshot: Codable, Sendable {
         public var nickname: String
         public var capabilities: UInt8
         public var lastSeen: Date
+        public var prekey: PublicPrekey? = nil
+        public var firstSeen: Date? = nil
+    }
+
+    /// One of our own short-lived keys. Private: the snapshot must be stored with data protection.
+    public struct OwnPrekey: Codable, Sendable {
+        public var id: UInt32
+        public var privateKey: Data
+        public var createdAt: Date
     }
 
     public var outgoing: [OutgoingMessage]
     public var groups: [GroupInfo]
     public var peers: [KnownPeer]
     public var leftGroups: [UUID: Date]?
+    public var ownPrekeys: [OwnPrekey]? = nil
 }
 
 /// The mesh protocol engine.
@@ -178,6 +197,8 @@ public final class MeshNode {
     private var lastAnnounceAt: Date?
     private var lastHousekeepingAt: Date?
     private var urgentLimiter: RateLimiter
+    /// Our short-lived keys, newest last.
+    private var ownPrekeys: [(id: UInt32, key: Curve25519.KeyAgreement.PrivateKey, createdAt: Date)] = []
 
     /// Battery state; low/critical phones relay less and are avoided as next hops.
     public enum PowerState: Int, Sendable { case normal, low, critical }
@@ -224,6 +245,7 @@ public final class MeshNode {
         self.freshLimiter = RateLimiter(burst: config.relayBurst, refillPerSecond: config.relayRefillPerSecond)
         self.staleLimiter = RateLimiter(burst: config.staleRelayBurst, refillPerSecond: config.staleRelayRefillPerSecond)
         self.urgentLimiter = RateLimiter(burst: config.urgentBurst, refillPerSecond: config.urgentRefillPerSecond)
+        rotatePrekeyIfNeeded(now: clock())
     }
 
     // MARK: - Peers
@@ -352,7 +374,7 @@ public final class MeshNode {
         var advertised = capabilities
         if powerState != .normal { advertised.insert(.lowPower) }
         let payload = AnnouncePayload(agreementKey: identity.publicIdentity.agreementKey,
-                                      capabilities: advertised, nickname: nickname)
+                                      capabilities: advertised, nickname: nickname, prekey: currentPrekey)
         // In dense areas there are many paths; a smaller announce radius keeps presence traffic bounded.
         let ttl = links.count >= 6 ? max(3, config.announceTTL - 2) : config.announceTTL
         guard let packet = try? Packet.make(type: .announce, ttl: ttl, destination: .broadcast,
@@ -450,6 +472,7 @@ public final class MeshNode {
         if !expired.isEmpty { delegate?.meshNodeDidUpdatePeers(self) }
         reassembler.purge(now: now)
         purgeCarry(now: now)
+        if rotatePrekeyIfNeeded(now: now) && !links.isEmpty { announce() }
         processOutgoing(now: now)
         if lastHousekeepingAt.map({ now.timeIntervalSince($0) >= 60 }) ?? true {
             lastHousekeepingAt = now
@@ -465,9 +488,11 @@ public final class MeshNode {
             groups: Array(groups.values),
             peers: directory.values.map {
                 .init(signingKey: $0.identity.signingKey, agreementKey: $0.identity.agreementKey,
-                      nickname: $0.nickname, capabilities: $0.capabilities.rawValue, lastSeen: $0.lastSeen)
+                      nickname: $0.nickname, capabilities: $0.capabilities.rawValue, lastSeen: $0.lastSeen,
+                      prekey: $0.prekey, firstSeen: $0.firstSeen)
             },
-            leftGroups: leftGroups
+            leftGroups: leftGroups,
+            ownPrekeys: ownPrekeys.map { MeshNodeSnapshot.OwnPrekey(id: $0.id, privateKey: $0.key.rawRepresentation, createdAt: $0.createdAt) }
         )
     }
 
@@ -480,9 +505,44 @@ public final class MeshNode {
             guard identity.peerID != peerID else { continue }
             directory[identity.peerID] = PeerInfo(
                 peerID: identity.peerID, identity: identity, nickname: known.nickname,
-                capabilities: PeerCapabilities(rawValue: known.capabilities), lastSeen: known.lastSeen, hops: nil
+                capabilities: PeerCapabilities(rawValue: known.capabilities), lastSeen: known.lastSeen, hops: nil,
+                prekey: known.prekey, firstSeen: known.firstSeen
             )
         }
+        if let saved = snapshot.ownPrekeys, !saved.isEmpty {
+            let restored = saved.compactMap { record -> (id: UInt32, key: Curve25519.KeyAgreement.PrivateKey, createdAt: Date)? in
+                guard let key = try? Curve25519.KeyAgreement.PrivateKey(rawRepresentation: record.privateKey) else { return nil }
+                return (record.id, key, record.createdAt)
+            }
+            // Keep any key generated since launch too, so announces already sent stay valid.
+            let known = Set(restored.map(\.id))
+            ownPrekeys = (restored + ownPrekeys.filter { !known.contains($0.id) }).sorted { $0.createdAt < $1.createdAt }
+            rotatePrekeyIfNeeded(now: clock())
+        }
+    }
+
+    // MARK: - Forward secrecy (short-lived prekeys)
+
+    var currentPrekey: PublicPrekey? {
+        ownPrekeys.last.map { PublicPrekey(id: $0.id, key: $0.key.publicKey.rawRepresentation) }
+    }
+
+    /// IDs of short-lived keys we can still decrypt with (for tests/diagnostics).
+    public var livePrekeyIDs: [UInt32] { ownPrekeys.map(\.id) }
+
+    /// Create a new prekey when due and permanently delete expired ones. Returns true if a new key was made.
+    @discardableResult
+    private func rotatePrekeyIfNeeded(now: Date) -> Bool {
+        ownPrekeys.removeAll { now.timeIntervalSince($0.createdAt) >= config.prekeyRetention }
+        guard ownPrekeys.last.map({ now.timeIntervalSince($0.createdAt) >= config.prekeyRotation }) ?? true else { return false }
+        var id = UInt32.random(in: 1...UInt32.max)
+        while ownPrekeys.contains(where: { $0.id == id }) { id = UInt32.random(in: 1...UInt32.max) }
+        ownPrekeys.append((id, Curve25519.KeyAgreement.PrivateKey(), now))
+        return true
+    }
+
+    private func prekeyPrivate(_ id: UInt32) -> Curve25519.KeyAgreement.PrivateKey? {
+        ownPrekeys.first { $0.id == id }?.key
     }
 
     /// Drop all stored state (used by "panic wipe" together with discarding the node).
@@ -524,9 +584,12 @@ public final class MeshNode {
         let hops = packet.hops == 0 && provenNeighbor[link] != origin ? 1 : Int(packet.hops)
         let isNew = directory[origin] == nil
         let identity = PublicIdentity(signingKey: packet.originSigningKey, agreementKey: payload.agreementKey)
+        let previous = directory[origin]
         directory[origin] = PeerInfo(
             peerID: origin, identity: identity, nickname: payload.nickname,
-            capabilities: payload.capabilities, lastSeen: now, hops: hops
+            capabilities: payload.capabilities, lastSeen: now, hops: hops,
+            prekey: payload.prekey?.key.count == 32 ? payload.prekey : previous?.prekey,
+            firstSeen: previous?.firstSeen ?? now
         )
         if isNew { enforcePeerLimit(now: now) }
         // Prefer paths whose next hop isn't low on battery.
@@ -545,8 +608,9 @@ public final class MeshNode {
     private func handleMessage(_ packet: Packet, from link: LinkID, now: Date) {
         if packet.destination == peerID {
             guard packet.flags.contains(.directEncrypted),
-                  let plaintext = try? MeshCrypto.openDirect(packet.payload, with: identity.agreementKey,
-                                                              from: packet.originSigningKey),
+                  let plaintext = try? MeshCrypto.openDirectMessage(packet.payload, staticKey: identity.agreementKey,
+                                                                     prekeyFor: prekeyPrivate,
+                                                                     from: packet.originSigningKey),
                   let envelope = try? MessageEnvelope.decode(plaintext) else {
                 stats.invalidDropped += 1
                 return
@@ -684,8 +748,10 @@ public final class MeshNode {
             outgoing[id] = message
             return
         }
-        guard let sealed = try? MeshCrypto.sealDirect(message.envelope, to: recipient.identity.agreementKey,
-                                                     from: identity.publicIdentity.signingKey),
+        // Forward-secret when we know the recipient's current prekey; static-key fallback otherwise.
+        guard let sealed = try? MeshCrypto.sealDirectMessage(message.envelope, to: recipient.identity.agreementKey,
+                                                            prekey: recipient.prekey,
+                                                            from: identity.publicIdentity.signingKey),
               let packet = try? Packet.make(type: .message, flags: .directEncrypted, ttl: config.messageTTL,
                                             destination: message.destination, payload: sealed,
                                             identity: identity, now: now) else {

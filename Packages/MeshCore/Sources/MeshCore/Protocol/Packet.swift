@@ -206,15 +206,20 @@ public struct PeerCapabilities: OptionSet, Sendable, Hashable {
 }
 
 /// Announce payload: agreementKey(32) | capabilities u8 | nickname string8
+/// Announce payload: agreementKey(32) | capabilities u8 | nickname string8 | [prekeyID u32 | prekey(32)]
+/// The optional trailing prekey is the device's current short-lived X25519 key (forward secrecy).
+/// It is authenticated by the announce's signature.
 public struct AnnouncePayload: Equatable, Sendable {
     public var agreementKey: Data
     public var capabilities: PeerCapabilities
     public var nickname: String
+    public var prekey: PublicPrekey?
 
-    public init(agreementKey: Data, capabilities: PeerCapabilities, nickname: String) {
+    public init(agreementKey: Data, capabilities: PeerCapabilities, nickname: String, prekey: PublicPrekey? = nil) {
         self.agreementKey = agreementKey
         self.capabilities = capabilities
         self.nickname = nickname
+        self.prekey = prekey
     }
 
     public func encode() -> Data {
@@ -222,6 +227,10 @@ public struct AnnouncePayload: Equatable, Sendable {
         w.bytes(agreementKey)
         w.u8(capabilities.rawValue)
         w.string8(nickname)
+        if let prekey {
+            w.u32(prekey.id)
+            w.bytes(prekey.key)
+        }
         return w.data
     }
 
@@ -230,7 +239,22 @@ public struct AnnouncePayload: Equatable, Sendable {
         let key = try r.bytes(32)
         let caps = PeerCapabilities(rawValue: try r.u8())
         let nickname = try r.string8()
-        return AnnouncePayload(agreementKey: key, capabilities: caps, nickname: nickname)
+        var prekey: PublicPrekey?
+        if r.remaining >= 36 {
+            prekey = PublicPrekey(id: try r.u32(), key: try r.bytes(32))
+        }
+        return AnnouncePayload(agreementKey: key, capabilities: caps, nickname: nickname, prekey: prekey)
+    }
+}
+
+/// A peer's current short-lived key-agreement key.
+public struct PublicPrekey: Codable, Equatable, Hashable, Sendable {
+    public var id: UInt32
+    public var key: Data
+
+    public init(id: UInt32, key: Data) {
+        self.id = id
+        self.key = key
     }
 }
 

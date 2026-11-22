@@ -80,6 +80,81 @@ public enum MeshCrypto {
         }
     }
 
+    // MARK: - Forward-secret direct messages
+
+    /// Direct-message wire modes (first payload byte).
+    enum DirectMode: UInt8 {
+        /// Ephemeral ↔ recipient static key only (fallback when no prekey is known).
+        case staticOnly = 1
+        /// Ephemeral ↔ recipient prekey AND ephemeral ↔ recipient static key. Once the recipient
+        /// deletes the prekey, nobody — including someone who later steals the device — can
+        /// recompute the key: forward secrecy with a window equal to the prekey lifetime.
+        case prekeyed = 2
+    }
+
+    static let prekeyedInfo = Data("BLEMesh-DM-PK-v1".utf8)
+
+    /// Seal a direct message, using the recipient's prekey when one is known.
+    /// Output: mode u8 | (prekeyed: prekeyID u32) | ephemeralPublicKey(32) | nonce | ciphertext | tag
+    public static func sealDirectMessage(_ plaintext: Data, to recipientStaticKey: Data, prekey: PublicPrekey?,
+                                         from senderSigningKey: Data) throws -> Data {
+        guard let prekey else {
+            return Data([DirectMode.staticOnly.rawValue]) + (try sealDirect(plaintext, to: recipientStaticKey, from: senderSigningKey))
+        }
+        guard let recipientStatic = try? Curve25519.KeyAgreement.PublicKey(rawRepresentation: recipientStaticKey),
+              let recipientPrekey = try? Curve25519.KeyAgreement.PublicKey(rawRepresentation: prekey.key) else {
+            throw MeshCryptoError.invalidKey
+        }
+        let ephemeral = Curve25519.KeyAgreement.PrivateKey()
+        let dh1 = try ephemeral.sharedSecretFromKeyAgreement(with: recipientPrekey)
+        let dh2 = try ephemeral.sharedSecretFromKeyAgreement(with: recipientStatic)
+        let key = prekeyedKey(dh1, dh2, ephemeral: ephemeral.publicKey.rawRepresentation,
+                              prekey: prekey.key, recipientStatic: recipientStaticKey, sender: senderSigningKey)
+        var w = ByteWriter()
+        w.u8(DirectMode.prekeyed.rawValue)
+        w.u32(prekey.id)
+        return w.data + ephemeral.publicKey.rawRepresentation + (try ChaChaPoly.seal(plaintext, using: key)).combined
+    }
+
+    /// Open a direct message. `prekeyFor` returns our private prekey for an ID, or nil if it has
+    /// been deleted (then the message is permanently unreadable — by design).
+    public static func openDirectMessage(_ sealed: Data, staticKey: Curve25519.KeyAgreement.PrivateKey,
+                                         prekeyFor: (UInt32) -> Curve25519.KeyAgreement.PrivateKey?,
+                                         from senderSigningKey: Data) throws -> Data {
+        guard let rawMode = sealed.first, let mode = DirectMode(rawValue: rawMode) else {
+            throw MeshCryptoError.malformedCiphertext
+        }
+        let body = Data(sealed.dropFirst())
+        switch mode {
+        case .staticOnly:
+            return try openDirect(body, with: staticKey, from: senderSigningKey)
+        case .prekeyed:
+            var r = ByteReader(body)
+            guard let prekeyID = try? r.u32(), let ephemeralData = try? r.bytes(32), r.remaining > 12 + 16,
+                  let ephemeral = try? Curve25519.KeyAgreement.PublicKey(rawRepresentation: ephemeralData) else {
+                throw MeshCryptoError.malformedCiphertext
+            }
+            guard let prekey = prekeyFor(prekeyID) else { throw MeshCryptoError.decryptionFailed }
+            let dh1 = try prekey.sharedSecretFromKeyAgreement(with: ephemeral)
+            let dh2 = try staticKey.sharedSecretFromKeyAgreement(with: ephemeral)
+            let key = prekeyedKey(dh1, dh2, ephemeral: ephemeralData, prekey: prekey.publicKey.rawRepresentation,
+                                  recipientStatic: staticKey.publicKey.rawRepresentation, sender: senderSigningKey)
+            do {
+                return try ChaChaPoly.open(try ChaChaPoly.SealedBox(combined: r.rest()), using: key)
+            } catch {
+                throw MeshCryptoError.decryptionFailed
+            }
+        }
+    }
+
+    private static func prekeyedKey(_ dh1: SharedSecret, _ dh2: SharedSecret, ephemeral: Data, prekey: Data,
+                                    recipientStatic: Data, sender: Data) -> SymmetricKey {
+        let ikm = dh1.withUnsafeBytes { Data($0) } + dh2.withUnsafeBytes { Data($0) }
+        return HKDF<SHA256>.deriveKey(inputKeyMaterial: SymmetricKey(data: ikm),
+                                      salt: ephemeral + prekey + recipientStatic,
+                                      info: prekeyedInfo + sender, outputByteCount: 32)
+    }
+
     public static func makeGroupKey() -> Data {
         SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
     }

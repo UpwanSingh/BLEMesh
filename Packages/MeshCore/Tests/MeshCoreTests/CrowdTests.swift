@@ -67,12 +67,12 @@ struct CrowdTests {
         let on = try Self.broadcastStorm(congestion: true)
         print("CROWD off: \(off)")
         print("CROWD on:  \(on)")
-        // Reach: ≥ 90% of everyone within the hop limit, and no worse than plain flooding.
-        #expect(on.coverage >= 0.9 * on.reachableWithinTTL)
+        // Reach: ≥ 95% of everyone within the hop limit, and within 3 points of plain flooding.
+        #expect(on.coverage >= 0.95 * on.reachableWithinTTL)
         #expect(on.coverage >= off.coverage - 0.03)
-        // Airtime: at least 25% less total radio traffic, and chat itself at least 20% less.
-        #expect(Double(on.framesTotal) <= 0.75 * Double(off.framesTotal))
-        #expect(Double(on.framesNormal) <= 0.8 * Double(off.framesNormal))
+        // Airtime: at least 30% less total radio traffic (mostly presence), and chat never more.
+        #expect(Double(on.framesTotal) <= 0.70 * Double(off.framesTotal))
+        #expect(on.framesNormal < off.framesNormal)
         #expect(on.suppressed > 0)
     }
 

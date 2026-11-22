@@ -10,6 +10,10 @@ public struct PeerInfo: Equatable, Sendable, Identifiable {
     public var lastSeen: Date
     /// Hops to reach the peer (0 = direct neighbor). nil = currently unreachable.
     public var hops: Int?
+    /// The peer's current short-lived key (forward secrecy), when known.
+    public var prekey: PublicPrekey? = nil
+    /// When we first learned of this identity (new identities' SOS calls are flagged in the UI).
+    public var firstSeen: Date? = nil
 
     public var isReachable: Bool { hops != nil }
     public var isNeighbor: Bool { hops == 0 }
