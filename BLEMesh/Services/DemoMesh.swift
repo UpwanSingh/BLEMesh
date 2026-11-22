@@ -17,6 +17,7 @@ final class DemoMesh {
     private var timer: Timer?
     private var lastRealTime = Date()
     private var scriptIndex = 0
+    private var greetedGroups: Set<String> = []
     private let startedAt = Date()
 
     static let localName = "Me"
@@ -91,8 +92,22 @@ final class DemoMesh {
         let node = mesh.node(name)
         let recorder = mesh.recorder(name)
         recorder.onReceive = { [weak self] message in
-            guard message.scope != .broadcast else { return }
+            if message.scope == .broadcast {
+                self?.respondToBroadcast(as: node, message: message)
+                return
+            }
             self?.respond(as: node, to: message)
+        }
+    }
+
+    /// Asha (nearest to you) answers your SOS calls the way a nearby responder would.
+    private func respondToBroadcast(as bot: MeshNode, message: ReceivedMessage) {
+        guard bot.nickname == "Asha", case .sos = message.envelope.content,
+              message.sender == localNode.peerID else { return }
+        let sosID = message.envelope.messageID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self, weak bot] in
+            guard self?.timer != nil, let bot else { return }
+            _ = try? bot.sendBroadcast(.sosUpdate(SOSUpdate(sosID: sosID, status: .enRoute, note: "Coming from the market")))
         }
     }
 
@@ -108,10 +123,34 @@ final class DemoMesh {
             let answer = EmergencyKnowledge.answer(query.prompt)
                 ?? "I'm not sure about that one. Stay safe and check with local responders."
             reply = .aiResponse(AIResponse(queryID: query.queryID, text: answer, answeredBy: "\(bot.nickname)’s on-device AI"))
+        case .safetyCheck(let check):
+            if case .group(let groupID) = message.scope {
+                // Meera is hurt; everyone else is fine.
+                let status: CheckIn.Status = bot.nickname == "Meera" ? .needHelp : .safe
+                let answer = CheckIn(status: status, location: GeoPoint(latitude: 28.61, longitude: 77.21),
+                                     batteryPercent: bot.nickname == "Meera" ? 12 : 64,
+                                     note: status == .needHelp ? "Twisted ankle near the school" : nil,
+                                     inReplyTo: check.requestID)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self, weak bot] in
+                    guard self?.timer != nil, let bot else { return }
+                    _ = try? bot.sendGroup(.checkIn(answer), groupID: groupID)
+                }
+            }
+            reply = nil
         case .groupInvite(let invite):
+            let isNewGroup = (bot.groups[invite.groupID]?.key == invite.key) && !greetedGroups.contains("\(bot.nickname):\(invite.groupID)")
+            guard isNewGroup else { reply = nil; break } // re-key, not a new group
+            greetedGroups.insert("\(bot.nickname):\(invite.groupID)")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak bot] in
                 guard self?.timer != nil, let bot else { return }
                 _ = try? bot.sendGroup(.text("Hi everyone, \(bot.nickname) here 👋"), groupID: invite.groupID)
+            }
+            if bot.nickname == "Kabir" {
+                // Kabir is the worrier: he asks the new group whether everyone is safe.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self, weak bot] in
+                    guard self?.timer != nil, let bot else { return }
+                    _ = try? bot.sendGroup(.safetyCheck(SafetyCheck(note: "aftershock just now")), groupID: invite.groupID)
+                }
             }
             reply = nil
         default:

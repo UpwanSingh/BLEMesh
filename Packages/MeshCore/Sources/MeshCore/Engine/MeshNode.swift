@@ -149,6 +149,17 @@ public struct MeshNodeSnapshot: Codable, Sendable {
         public var lastSeen: Date
         public var prekey: PublicPrekey? = nil
         public var firstSeen: Date? = nil
+
+        public init(signingKey: Data, agreementKey: Data, nickname: String, capabilities: UInt8, lastSeen: Date,
+                    prekey: PublicPrekey? = nil, firstSeen: Date? = nil) {
+            self.signingKey = signingKey
+            self.agreementKey = agreementKey
+            self.nickname = nickname
+            self.capabilities = capabilities
+            self.lastSeen = lastSeen
+            self.prekey = prekey
+            self.firstSeen = firstSeen
+        }
     }
 
     /// One of our own short-lived keys. Private: the snapshot must be stored with data protection.
@@ -163,6 +174,15 @@ public struct MeshNodeSnapshot: Codable, Sendable {
     public var peers: [KnownPeer]
     public var leftGroups: [UUID: Date]?
     public var ownPrekeys: [OwnPrekey]? = nil
+
+    public init(outgoing: [OutgoingMessage], groups: [GroupInfo], peers: [KnownPeer],
+                leftGroups: [UUID: Date]? = nil, ownPrekeys: [OwnPrekey]? = nil) {
+        self.outgoing = outgoing
+        self.groups = groups
+        self.peers = peers
+        self.leftGroups = leftGroups
+        self.ownPrekeys = ownPrekeys
+    }
 }
 
 /// The mesh protocol engine.

@@ -167,7 +167,15 @@ struct PeerPickerView: View {
             HStack {
                 PeerAvatar(name: peer.nickname)
                 VStack(alignment: .leading) {
-                    Text(peer.nickname).foregroundStyle(.primary)
+                    HStack(spacing: 4) {
+                        Text(mesh.uniqueName(for: peer.peerID)).foregroundStyle(.primary)
+                        if mesh.trust.isVerified(peer.peerID) {
+                            Image(systemName: "checkmark.seal.fill").foregroundStyle(.green).accessibilityLabel("Verified")
+                        }
+                    }
+                    if mesh.impersonatesVerifiedContact(peer.peerID) {
+                        Text("Same name as a verified contact — not them").font(.caption2).foregroundStyle(.red)
+                    }
                     Text(peer.hops.map { $0 == 0 ? "Direct connection" : "\($0 + 1) hops away" } ?? "Out of range")
                         .font(.caption).foregroundStyle(.secondary)
                 }

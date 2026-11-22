@@ -7,6 +7,7 @@ struct BLEMeshApp: App {
     @StateObject private var settings: AppSettings
     @StateObject private var mesh: MeshService
     @StateObject private var speaker = Speaker()
+    @StateObject private var trust: TrustStore
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -22,9 +23,14 @@ struct BLEMeshApp: App {
         // Demo mode never touches the real store, snapshot (outbox/group keys) or identity.
         let container = PersistenceController.makeContainer(inMemory: demo)
         let settings = AppSettings()
+        // Demo/test runs keep trust state (and the medical ID) separate from the real ones.
+        let trust = demo ? TrustStore(defaults: UserDefaults(suiteName: "demo.trust") ?? .standard, medicalAccount: "medical.demo")
+                         : TrustStore()
+        if isUITest { trust.wipe() }
         _settings = StateObject(wrappedValue: settings)
+        _trust = StateObject(wrappedValue: trust)
         _mesh = StateObject(wrappedValue: MeshService(mode: demo ? .demo : .bluetooth, container: container,
-                                                      settings: settings, persistSnapshot: !demo))
+                                                      settings: settings, trust: trust, persistSnapshot: !demo))
     }
 
     var body: some Scene {
@@ -33,6 +39,7 @@ struct BLEMeshApp: App {
                 .environmentObject(mesh)
                 .environmentObject(settings)
                 .environmentObject(speaker)
+                .environmentObject(trust)
                 .modelContainer(mesh.container)
         }
         .onChange(of: scenePhase) { _, phase in
