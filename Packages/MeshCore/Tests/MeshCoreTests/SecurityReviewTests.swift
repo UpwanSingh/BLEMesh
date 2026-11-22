@@ -13,7 +13,7 @@ struct SecurityReviewTests {
     /// Transport that records every frame a node sends.
     final class CaptureTransport: MeshTransport {
         var sent: [(link: LinkID, frames: [Data])] = []
-        func send(frames: [Data], over link: LinkID) -> Bool {
+        func send(frames: [Data], over link: LinkID, priority: TrafficPriority) -> Bool {
             sent.append((link, frames))
             return true
         }

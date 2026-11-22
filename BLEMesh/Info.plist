@@ -26,12 +26,14 @@
 	<string>BLE Mesh uses Bluetooth to connect directly to nearby phones and relay messages, even with no internet or cell service.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>BLE Mesh uses Bluetooth so nearby phones can reach you and pass messages along.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan a contact's BLE Mesh code to verify it's really them. The camera is used only while scanning.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your GPS location is attached to an SOS only when you choose to send one, so responders can find you.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Hold the mic to record a voice note. Speech is turned into text on your phone; audio is never sent.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Voice notes are transcribed on your phone so they can travel over Bluetooth as small text messages.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Your GPS location is attached to an SOS only when you choose to send one, so responders can find you.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

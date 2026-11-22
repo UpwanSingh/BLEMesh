@@ -87,3 +87,76 @@ originSigningKey 32 | payloadLen u16 | payload | signature 64
 - Auto-connect is capped at 8 links. The advertised name is "M" plus the short PeerID; when two
   phones see each other, only the one with the smaller ID connects.
 - State restoration identifiers are set for both managers.
+
+
+## Crowds and congestion (Phase 1)
+
+- **Priorities:** every packet has a scheduling class, `control` (hello, acks) > `urgent` (SOS) >
+  `direct` (DMs, groups) > `normal` (public chat) > `background` (announces, store-and-forward).
+  Transports send higher classes first. When a queue is full, the lowest class is dropped first.
+- **Relay suppression:** a phone with more than 3 links that receives a flooded packet waits a
+  random 20–250 ms before relaying it. If it hears 3 copies in that time (1 for announces), it
+  skips its own relay. Urgent packets are never suppressed.
+- **Shorter-path copies:** if a copy arrives with more hops left than the one this phone relayed,
+  or this phone couldn't relay the first copy at all, it relays once more. Without this,
+  deduplication would shrink a flood's reach.
+- **Announces:** the interval stretches with density (×links/4, capped at 45 s) and with low
+  battery. With 6 or more links, announces travel 3 hops instead of 5.
+- **Results in the simulated 100-phone crowd** (`CrowdTests`: shared ~120 kbit/s radio, ≤8 links):
+  - about 38% less total airtime than plain flooding;
+  - reach of at least 95% of phones within the hop limit, equal to or better than plain flooding;
+  - SOS: 90th-percentile latency under 1 s while chat under saturation takes 30 s or more;
+  - all direct messages to known contacts 4–7 hops away are delivered and acknowledged.
+
+## Battery
+
+- Low battery (<20%, unplugged): announces less often, relays later with stricter suppression,
+  carries a quarter as many store-and-forward packets, and advertises `lowPower`, which makes
+  routes through it cost 2 extra.
+- Critical battery (<10%, unplugged): relays only SOS, direct and control traffic, and carries
+  nothing.
+
+## Fake-SOS resistance
+
+- Urgent packets need proof-of-work: SHA-256(packetID ‖ origin ‖ timestamp) must have at least
+  18 leading zero bits, which takes about 0.5 s on a phone per SOS. Verifying is a single hash.
+- Each relay gives every sender a budget of 4 urgent relays, refilled at 1 per 2 minutes.
+  Anything over budget is still delivered, but as ordinary traffic.
+- The app marks SOS calls from identities first seen less than 10 minutes ago as "New device".
+
+## Forward secrecy
+
+- Every phone rotates a short-lived X25519 prekey every 24 hours. It's announced, and the
+  announce signature authenticates it. Old prekeys are deleted after 7 days.
+- Direct messages use ECDH(ephemeral, prekey) and ECDH(ephemeral, static key), combined with
+  HKDF that includes the sender's key. Once the prekey is deleted, a captured message can't be
+  decrypted even with every key the phone still holds.
+- If a contact's prekey isn't known (for example an old contact record), messages fall back to
+  static-key encryption. Prekeys are persisted in the node snapshot (data-protected file).
+
+## Groups
+
+- The admin is the creator while they're a member, otherwise the remaining member with the
+  lowest ID, so every member agrees without coordinating.
+- When a member leaves or is removed, the admin generates a new key and sends it to the
+  remaining members. The old key keeps working for 10 minutes for messages already in flight.
+
+## Emergency features
+
+- `sosUpdate` (acknowledged / on the way / resolved / cancelled), with these rules
+  (`SOSTracker`):
+  - only the SOS sender can close it on their own;
+  - two other people saying "resolved" also closes it.
+- `checkIn` (safe / need help, plus optional location and battery) and `safetyCheck` ("are you
+  safe?") go to groups. `FamilyLocator` shows each member's latest check-in, needs-help first.
+- A medical ID (blood type, allergies, conditions, medications, emergency contact) is stored in
+  the Keychain and attached to an SOS only on request.
+
+## Trust (app)
+
+- QR verification code: `blemesh:v1:<peerID hex>:<safety number>`. Scanning it, or pasting it,
+  marks the contact verified. An ID with the wrong keys is reported as a possible impostor.
+- Names that appear more than once get a short-ID suffix, and an unverified device using a
+  verified contact's name is flagged.
+- Blocking hides a device everywhere on this phone; its traffic is still relayed for others.
+  Reporting also blocks it.

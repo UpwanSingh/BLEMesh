@@ -44,6 +44,7 @@ struct SOSView: View {
                     .listRowInsets(EdgeInsets())
                     .accessibilityIdentifier("sos.compose")
                 }
+                CheckInSection(path: $path)
                 Section {
                     if reports.isEmpty {
                         Text("No SOS calls nearby.").foregroundStyle(.secondary)
@@ -58,7 +59,13 @@ struct SOSView: View {
                 }
             }
             .navigationTitle("SOS")
-            .navigationDestination(for: String.self) { key in ConversationView(conversationKey: key) }
+            .navigationDestination(for: String.self) { key in
+                if key.hasPrefix("family:") {
+                    FamilyLocatorView(groupKey: String(key.dropFirst("family:".count)))
+                } else {
+                    ConversationView(conversationKey: key)
+                }
+            }
             .sheet(isPresented: $showCompose) { SOSComposeView() }
         }
     }
@@ -66,12 +73,22 @@ struct SOSView: View {
 
 struct SOSRow: View {
     @EnvironmentObject private var mesh: MeshService
+    @Query private var updates: [StoredMessage] // refreshes the row when new SOS updates arrive
     let message: StoredMessage
     let report: SOSReport
     /// Opens a direct chat with the sender (conversation created on tap, not while rendering).
     let onReply: (String) -> Void
 
+    init(message: StoredMessage, report: SOSReport, onReply: @escaping (String) -> Void) {
+        self.message = message
+        self.report = report
+        self.onReply = onReply
+        let since = message.sentAt
+        _updates = Query(filter: #Predicate<StoredMessage> { $0.conversationKey == "nearby" && $0.sentAt >= since })
+    }
+
     var body: some View {
+        let state = mesh.sosState(for: message)
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 if let triage = report.triage {
@@ -82,9 +99,37 @@ struct SOSRow: View {
                 Spacer()
                 Text(message.sentAt, style: .relative).font(.caption2).foregroundStyle(.secondary)
             }
+            HStack(spacing: 6) {
+                StatusPill(status: state.status)
+                if !state.responders.isEmpty {
+                    Text("\(state.responders.count) responding").font(.caption).foregroundStyle(.secondary)
+                }
+                if state.resolvedClaims == 1 && state.status != .resolved {
+                    Text("1 says resolved").font(.caption).foregroundStyle(.secondary)
+                }
+                if !message.isOutgoing, let sender = message.sender, mesh.isNewDevice(sender) {
+                    Label("New device", systemImage: "exclamationmark.shield").font(.caption2).foregroundStyle(.orange)
+                        .accessibilityIdentifier("sos.newDevice")
+                }
+            }
             Text(report.triage?.summary ?? report.text).font(.body)
             if report.triage?.summary != nil {
                 Text("“\(report.text)”").font(.caption).foregroundStyle(.secondary)
+            }
+            if let medical = report.medical, !medical.isEmpty {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(medical.summaryLines, id: \.self) { Text($0) }
+                }
+                .font(.caption)
+                .padding(6)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.08)))
+                .accessibilityIdentifier("sos.medical")
+            }
+            ForEach(state.responders, id: \.peer) { responder in
+                Label("\(mesh.uniqueName(for: responder.peer)): \(responder.status.label)" + (responder.note.map { " — \($0)" } ?? ""),
+                      systemImage: "figure.run")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             HStack(spacing: 10) {
                 Text(message.isOutgoing ? "You" : message.senderName).font(.caption.weight(.medium))
@@ -107,10 +152,115 @@ struct SOSRow: View {
                 }
             }
             .foregroundStyle(.secondary)
+            if state.status < .resolved {
+                actions
+            }
         }
         .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("sos.row")
+    }
+
+    @ViewBuilder private var actions: some View {
+        HStack(spacing: 8) {
+            if message.isOutgoing {
+                Button("I'm safe now") { mesh.sendSOSUpdate(sosID: message.id, status: .resolved) }
+                    .accessibilityIdentifier("sos.action.resolve")
+                Button("Cancel SOS", role: .destructive) { mesh.sendSOSUpdate(sosID: message.id, status: .cancelled) }
+                    .accessibilityIdentifier("sos.action.cancel")
+            } else {
+                Button("I'm responding") { mesh.sendSOSUpdate(sosID: message.id, status: .acknowledged) }
+                    .accessibilityIdentifier("sos.action.ack")
+                Button("On my way") { mesh.sendSOSUpdate(sosID: message.id, status: .enRoute) }
+                    .accessibilityIdentifier("sos.action.enRoute")
+                Button("Resolved") { mesh.sendSOSUpdate(sosID: message.id, status: .resolved) }
+                    .accessibilityIdentifier("sos.action.resolved")
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .font(.caption.weight(.semibold))
+    }
+}
+
+struct StatusPill: View {
+    let status: SOSStatus
+
+    var body: some View {
+        Text(status.label)
+            .font(.caption2.weight(.bold))
+            .padding(.horizontal, 7).padding(.vertical, 2)
+            .background(Capsule().fill(color.opacity(0.18)))
+            .foregroundStyle(color)
+            .accessibilityIdentifier("sos.status.\(status.label)")
+    }
+
+    private var color: Color {
+        switch status {
+        case .open: return .red
+        case .acknowledged: return .orange
+        case .enRoute: return .blue
+        case .resolved: return .green
+        case .cancelled: return .gray
+        }
+    }
+}
+
+/// "I'm safe" / "I need help" to all your groups, plus each group's family locator.
+struct CheckInSection: View {
+    @EnvironmentObject private var mesh: MeshService
+    @Binding var path: [String]
+    @State private var confirmation: String?
+
+    var body: some View {
+        Section {
+            HStack(spacing: 10) {
+                Button {
+                    report(.safe)
+                } label: {
+                    Label("I'm safe", systemImage: "checkmark.shield.fill").frame(maxWidth: .infinity)
+                }
+                .tint(.green)
+                .accessibilityIdentifier("checkin.safe")
+                Button {
+                    report(.needHelp)
+                } label: {
+                    Label("I need help", systemImage: "exclamationmark.triangle.fill").frame(maxWidth: .infinity)
+                }
+                .tint(.orange)
+                .accessibilityIdentifier("checkin.needHelp")
+            }
+            .buttonStyle(.borderedProminent)
+            if let confirmation {
+                Text(confirmation).font(.caption).foregroundStyle(.secondary)
+                    .accessibilityIdentifier("checkin.confirmation")
+            }
+            ForEach(mesh.groups) { group in
+                Button {
+                    path.append("family:" + ConversationKey.group(group.id))
+                } label: {
+                    Label("\(group.name) — who's safe?", systemImage: "person.3.sequence.fill")
+                }
+                .accessibilityIdentifier("checkin.locator.\(group.name)")
+            }
+        } header: {
+            Text("Check in")
+        } footer: {
+            Text(mesh.groups.isEmpty ? "Create a group (e.g. Family) in Chats to share check-ins privately."
+                                     : "Sent end-to-end encrypted to your groups, with your battery level.")
+        }
+    }
+
+    private func report(_ status: CheckIn.Status) {
+        guard !mesh.groups.isEmpty else {
+            confirmation = "You're not in any group yet."
+            return
+        }
+        Task {
+            let location = mesh.mode == .bluetooth ? await LocationProvider.currentLocation() : nil
+            let sent = mesh.sendCheckIn(status, location: location)
+            confirmation = sent > 0 ? "Sent to \(sent) group\(sent == 1 ? "" : "s")." : "Nobody is in range yet — try again soon."
+        }
     }
 }
 
@@ -119,6 +269,7 @@ struct SOSComposeView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
     @State private var includeLocation = true
+    @State private var includeMedical = false
     @State private var preview: SOSTriage?
     @State private var sending = false
     @State private var sentTriage: SOSTriage?
@@ -152,8 +303,12 @@ struct SOSComposeView: View {
                     }
                     Section {
                         Toggle("Include my GPS location", isOn: $includeLocation)
+                        if !mesh.trust.medical.isEmpty {
+                            Toggle("Attach my medical ID", isOn: $includeMedical)
+                                .accessibilityIdentifier("sos.includeMedical")
+                        }
                     } footer: {
-                        Text("GPS works without internet. Your SOS is signed but not encrypted, so anyone nearby can help.")
+                        Text("GPS works without internet. Your SOS is signed but not encrypted, so anyone nearby can help — including reading your medical ID if you attach it.")
                     }
                     if let preview {
                         Section("On-device triage") {
@@ -193,7 +348,8 @@ struct SOSComposeView: View {
     private func send() async {
         sending = true
         let location = includeLocation && mesh.mode == .bluetooth ? await LocationProvider.currentLocation() : nil
-        sentTriage = await mesh.sendSOS(text: text.trimmingCharacters(in: .whitespacesAndNewlines), location: location)
+        sentTriage = await mesh.sendSOS(text: text.trimmingCharacters(in: .whitespacesAndNewlines), location: location,
+                                        includeMedical: includeMedical)
         sending = false
     }
 }

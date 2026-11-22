@@ -14,6 +14,7 @@ struct MessageBubble: View {
     var showSender: Bool
 
     @State private var showTranslation = false
+    @State private var answered = false
     @State private var translated: String?
     @State private var translationFailed = false
 
@@ -69,6 +70,39 @@ struct MessageBubble: View {
                 }
             case .sos(let report):
                 SOSCardContent(report: report)
+            case .safetyCheck(let check):
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Are you safe?" + (check.note.map { " — \($0)" } ?? ""), systemImage: "questionmark.bubble.fill")
+                        .font(.body.weight(.semibold))
+                    if !message.isOutgoing {
+                        if answered {
+                            Text("You answered").font(.caption).opacity(0.8)
+                        } else {
+                            HStack {
+                                Button("I'm safe") { answer(.safe, check) }
+                                    .tint(.green)
+                                    .accessibilityIdentifier("safety.answer.safe")
+                                Button("I need help") { answer(.needHelp, check) }
+                                    .tint(.orange)
+                                    .accessibilityIdentifier("safety.answer.help")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                    }
+                }
+            case .checkIn(let checkIn):
+                Label(checkIn.status == .safe ? "I'm safe" : "I need help",
+                      systemImage: checkIn.status == .safe ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
+                    .font(.body.weight(.semibold))
+                if let note = checkIn.note { Text(note) }
+                HStack(spacing: 8) {
+                    if let battery = checkIn.batteryPercent { Text("🔋 \(battery)%").font(.caption) }
+                    if let url = checkIn.location?.mapsURL { Link("Location", destination: url).font(.caption) }
+                }
+            case .sosUpdate(let update):
+                Label(update.status.label + (update.note.map { ": \($0)" } ?? ""), systemImage: "figure.run")
+                    .font(.callout)
             default:
                 Text(bodyText)
             }
@@ -126,6 +160,14 @@ struct MessageBubble: View {
             Button {
                 showTranslation.toggle()
             } label: { Label(showTranslation ? "Hide translation" : "Translate", systemImage: "translate") }
+        }
+    }
+
+    private func answer(_ status: CheckIn.Status, _ check: SafetyCheck) {
+        guard let groupID = ConversationKey.groupID(from: message.conversationKey) else { return }
+        Task {
+            let location = mesh.mode == .bluetooth ? await LocationProvider.currentLocation() : nil
+            answered = mesh.sendCheckIn(status, location: location, inReplyTo: check.requestID, groups: [groupID]) > 0
         }
     }
 

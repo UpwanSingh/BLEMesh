@@ -34,6 +34,7 @@ final class MeshService: ObservableObject {
 
     let mode: Mode
     let settings: AppSettings
+    let trust: TrustStore
     let container: ModelContainer
     private(set) var ai: AIEngine
     private(set) var node: MeshNode
@@ -50,11 +51,12 @@ final class MeshService: ObservableObject {
     var myFingerprint: String { node.identity.publicIdentity.fingerprint }
     var nickname: String { node.nickname }
 
-    init(mode: Mode, container: ModelContainer, settings: AppSettings,
+    init(mode: Mode, container: ModelContainer, settings: AppSettings, trust: TrustStore? = nil,
          ai: AIEngine? = nil, identity: MeshIdentity? = nil, persistSnapshot: Bool = true) {
         self.mode = mode
         self.container = container
         self.settings = settings
+        self.trust = trust ?? TrustStore()
         self.ai = ai ?? AIEngineFactory.make()
         self.snapshotURL = persistSnapshot ? Self.defaultSnapshotURL : nil
         let identity = identity ?? (mode == .demo ? MeshIdentity() : IdentityStore.loadOrCreate())
@@ -62,6 +64,7 @@ final class MeshService: ObservableObject {
         configureNode()
         restoreSnapshot()
         start()
+        startBatteryMonitoring()
         purgeExpiredMessages()
         ensureConversation(ConversationKey.nearby, kind: .nearby, title: "Nearby")
         ensureConversation(ConversationKey.askMesh, kind: .askMesh, title: "Ask the Mesh")
@@ -220,12 +223,98 @@ final class MeshService: ObservableObject {
         }
     }
 
-    /// Triage (on-device), attach location if allowed, and broadcast an SOS to everyone nearby.
-    func sendSOS(text: String, location: GeoPoint?) async -> SOSTriage {
+    /// Triage (on-device), attach location (and, if chosen, the medical ID), and broadcast an SOS.
+    func sendSOS(text: String, location: GeoPoint?, includeMedical: Bool = false) async -> SOSTriage {
         let triage = await ai.triage(text)
-        let report = SOSReport(text: text, location: location, triage: triage)
+        let medical = includeMedical && !trust.medical.isEmpty ? trust.medical : nil
+        let report = SOSReport(text: text, location: location, triage: triage, medical: medical)
         send(.sos(report), to: ConversationKey.nearby)
         return triage
+    }
+
+    /// Respond to (or, for your own SOS, close) an SOS. Broadcast so every board updates.
+    @discardableResult
+    func sendSOSUpdate(sosID: UUID, status: SOSStatus, note: String? = nil) -> Bool {
+        send(.sosUpdate(SOSUpdate(sosID: sosID, status: status, note: note)), to: ConversationKey.nearby) != nil
+    }
+
+    /// Live status of an SOS from the updates stored in the Nearby channel.
+    func sosState(for sos: StoredMessage) -> SOSState {
+        let key = ConversationKey.nearby
+        let since = sos.sentAt.addingTimeInterval(-1)
+        let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate { $0.conversationKey == key && $0.sentAt >= since })
+        let updates: [SOSTracker.Update] = ((try? context.fetch(descriptor)) ?? []).compactMap { message in
+            guard case .sosUpdate(let update)? = message.content, let from = message.sender else { return nil }
+            return SOSTracker.Update(from: from, update: update, at: message.sentAt)
+        }
+        return SOSTracker.state(sosID: sos.id, sender: sos.sender ?? myPeerID, sentAt: sos.sentAt, updates: updates)
+    }
+
+    /// "I'm safe" / "I need help" to the given groups (defaults to every group you're in).
+    func sendCheckIn(_ status: CheckIn.Status, note: String? = nil, location: GeoPoint? = nil,
+                     inReplyTo: UUID? = nil, groups groupIDs: [UUID]? = nil) -> Int {
+        let targets = groupIDs ?? Array(node.groups.keys)
+        let checkIn = CheckIn(status: status, location: location, batteryPercent: batteryPercent, note: note, inReplyTo: inReplyTo)
+        return targets.reduce(0) { $0 + (send(.checkIn(checkIn), to: ConversationKey.group($1)) != nil ? 1 : 0) }
+    }
+
+    /// Ask everyone in a group "Are you safe?".
+    @discardableResult
+    func askAreYouSafe(groupKey: String, note: String? = nil) -> Bool {
+        send(.safetyCheck(SafetyCheck(note: note)), to: groupKey) != nil
+    }
+
+    /// Latest check-in per member of a group, for the family locator.
+    func familyEntries(groupKey: String) -> [FamilyLocator.Entry] {
+        guard let group = group(for: groupKey) else { return [] }
+        let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate { $0.conversationKey == groupKey })
+        let checkIns: [(PeerID, CheckIn, Date)] = ((try? context.fetch(descriptor)) ?? []).compactMap { message in
+            guard case .checkIn(let checkIn)? = message.content, let from = message.sender else { return nil }
+            return (from, checkIn, message.sentAt)
+        }
+        return FamilyLocator.entries(members: group.members, checkIns: checkIns, now: Date())
+    }
+
+    /// Admin only: remove a member from a group (re-keys so they can't read anything newer).
+    func removeMember(_ peer: PeerID, groupKey: String) {
+        guard let groupID = ConversationKey.groupID(from: groupKey) else { return }
+        do {
+            try node.removeMember(peer, from: groupID)
+            storeLocal(id: UUID(), content: .text("You removed \(displayName(for: peer)) and changed the group key"),
+                       key: groupKey, outgoing: true, senderName: nickname)
+            refreshPeers()
+            saveSnapshot()
+        } catch {
+            lastError = "Only the group admin can remove members."
+        }
+    }
+
+    func isGroupAdmin(groupKey: String) -> Bool { group(for: groupKey)?.admin == myPeerID }
+
+    // MARK: - Battery
+
+    private(set) var batteryPercent: Int?
+
+    private func startBatteryMonitoring() {
+        guard mode == .bluetooth else { return }
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        for name in [UIDevice.batteryLevelDidChangeNotification, UIDevice.batteryStateDidChangeNotification] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updatePowerState() }
+            }
+        }
+        updatePowerState()
+    }
+
+    /// Low (<20%) and critical (<10%) batteries relay and carry less; plugged in is always normal.
+    func updatePowerState(level: Float? = nil, state: UIDevice.BatteryState? = nil) {
+        let level = level ?? UIDevice.current.batteryLevel
+        let state = state ?? UIDevice.current.batteryState
+        batteryPercent = level >= 0 ? Int((level * 100).rounded()) : nil
+        let charging = state == .charging || state == .full
+        let power: MeshNode.PowerState
+        if charging || level < 0 { power = .normal } else if level < 0.10 { power = .critical } else if level < 0.20 { power = .low } else { power = .normal }
+        if node.powerState != power { node.powerState = power }
     }
 
     /// Answer locally when this phone has a model; otherwise ask the nearest capable peer;
@@ -404,6 +493,7 @@ final class MeshService: ObservableObject {
         try? context.save()
         if let snapshotURL { try? FileManager.default.removeItem(at: snapshotURL) }
         IdentityStore.wipe()
+        trust.wipe()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
         node = MeshNode(identity: mode == .demo ? MeshIdentity() : IdentityStore.loadOrCreate(), nickname: IdentityStore.nickname)
         configureNode()
@@ -496,6 +586,8 @@ final class MeshService: ObservableObject {
         let envelope = message.envelope
         let sender = message.sender
         let senderName = node.peer(sender)?.nickname ?? envelope.senderName
+        // Blocked devices are invisible on this phone (their traffic is still relayed for others).
+        guard !trust.isBlocked(sender) else { return }
 
         switch envelope.content {
         case .aiQuery(let query):
@@ -514,8 +606,10 @@ final class MeshService: ObservableObject {
             return
         case .groupInvite(let invite):
             let key = ConversationKey.group(invite.groupID)
+            let isRekey = fetchConversation(key) != nil
             ensureConversation(key, kind: .group, title: invite.name)
-            storeLocal(id: envelope.messageID, content: .text("\(senderName) added you to “\(invite.name)”"), key: key,
+            let note = isRekey ? "🔑 \(senderName) changed the group key (membership changed)" : "\(senderName) added you to “\(invite.name)”"
+            storeLocal(id: envelope.messageID, content: .text(note), key: key,
                        outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
             refreshPeers()
             saveSnapshot()
@@ -551,10 +645,18 @@ final class MeshService: ObservableObject {
             fetchMessage(envelope.messageID)?.readReceiptSent = true
         }
 
-        if case .sos(let report) = envelope.content {
+        switch envelope.content {
+        case .sos(let report):
             let priority = report.triage?.priority.label ?? "SOS"
             notify(title: "🆘 \(priority) SOS from \(senderName)", body: report.triage?.summary ?? report.text, key: key, critical: true)
-        } else if message.scope != .broadcast {
+        case .safetyCheck:
+            notify(title: "\(senderName) asks: are you safe?", body: "Tap to answer “I'm safe” or “I need help”.", key: key, critical: true)
+        case .checkIn(let checkIn) where checkIn.status == .needHelp:
+            notify(title: "⚠️ \(senderName) needs help", body: checkIn.note ?? "Open the family locator.", key: key, critical: true)
+        case .sosUpdate:
+            break // shown on the SOS board; no alert
+        default:
+            guard message.scope != .broadcast else { break }
             notify(title: senderName, body: envelope.content.previewText, key: key)
         }
     }

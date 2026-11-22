@@ -19,6 +19,13 @@ AI keeps working offline: voice notes, translation, SOS triage, an area summary 
 | **SOS** | One-tap SOS with GPS (GPS needs no network), triaged on the phone (critical/high/medium/low, category, people affected, landmarks). An SOS board ranks requests by urgency. |
 | **Area summary** | Clusters the last hour of public reports into a ranked digest ("Fire near the market, 2 reports…"). |
 | **Ask the Mesh** | Questions are answered by this phone's on-device model (iOS 26 Apple Intelligence). If this phone has no model, the nearest phone that has one answers over an encrypted link. If none is reachable, a vetted offline first-aid guide answers. |
+| **Crowd-ready** | Traffic priorities (SOS first), relay suppression and adaptive announcements. In a simulated 100-phone crowd: about 38% less radio traffic with the same reach, and SOS in under 1 s while chat is saturated. |
+| **Battery-aware** | Low-battery phones relay and carry less, and routes avoid them. |
+| **Forward secrecy** | Rotating short-lived keys: captured messages become permanently unreadable after 7 days, even if the phone is later stolen. |
+| **SOS status** | Responders mark SOS calls "responding" or "on my way"; only the sender (or two responders) can close one. Fake-SOS floods are resisted with proof-of-work and per-sender limits. |
+| **Check-ins & family locator** | "I'm safe" / "I need help" to your groups, "Are you safe?" requests, and each member's latest status, location and battery. |
+| **Medical ID** | Blood type, allergies, conditions and more, kept in the Keychain and attached to an SOS only when you choose. |
+| **Trust** | QR verification, warnings about look-alike names, block and report, and group re-keying when members leave or are removed. |
 | **Safety** | Panic wipe erases messages, groups, contacts and keys, then creates a new identity. Message retention is configurable. |
 | **Demo mesh** | Simulated neighbours, for trying the app or UI-testing it with no other phones (`-demoMesh` launch argument). |
 

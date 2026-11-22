@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01DC0F256853F4788CBAB7C1 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */; };
+		09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9181EC87D7992C670AEC8834 /* TrustStore.swift */; };
 		1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D01F697E706885E4168E385 /* MeshServiceTests.swift */; };
 		2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245963C629043F211DA896AA /* OnboardingView.swift */; };
 		2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */; };
@@ -18,7 +19,9 @@
 		5CD74CD51FA3476247315A71 /* MeshSimulator in Frameworks */ = {isa = PBXBuildFile; productRef = B24900C7F24D83663A74749E /* MeshSimulator */; };
 		613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17BF5E6499152D16A206CB67 /* StoredModels.swift */; };
 		649C531C764317C52D57ED3A /* MeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = 27DA8003345648711A03527D /* MeshCore */; };
+		6648C6D316C447F2EE55CF3B /* TrustViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D3B0596E02F5169FFBB62DB /* TrustViews.swift */; };
 		6A83F42FB30C94455A139D0A /* BLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1EE8E63F3D8B4C3FAF1618B /* BLETransport.swift */; };
+		6B0CA84A9BBCAA28C09326CE /* Phase1UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300D552A4B042F1960516AC7 /* Phase1UITests.swift */; };
 		6E8153F8E061928B7E046ABD /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1204DDFE6456C497463939DB /* Logger.swift */; };
 		6F9BE5F64CA78A03A4BE953B /* ChatsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 283F0A3FE85E0394414E8CBA /* ChatsListView.swift */; };
 		73A38E34272DB02B13218C9C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F33A0E7F9B10DF36655FCDA /* MainTabView.swift */; };
@@ -26,6 +29,7 @@
 		92A81262FC7794B36CF6C79D /* LocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8D968F43CA4E10BB6C1A2 /* LocationProvider.swift */; };
 		936F34B9D55CD429BDE209AE /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8F8694D1A12A8676798F86 /* Theme.swift */; };
 		97F09356B174ADAE139D5101 /* OnDeviceAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F19E92193E1EA4632DA441E /* OnDeviceAI.swift */; };
+		9966BEA1257FC8D88A6D7B48 /* Phase1ServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */; };
 		9B9BED95E4EA88D9AF061343 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 60F7D9AFFE9F11B40BF0357E /* Assets.xcassets */; };
 		A5481EF44AA924180FE83BC3 /* NearbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDFB77DDA7156028E65F5340 /* NearbyView.swift */; };
 		A745748777B88AC511B4D6B7 /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD20DD6A619E75D585B36641 /* MeshService.swift */; };
@@ -63,6 +67,7 @@
 		217685A035074ED6C3F129B8 /* MeshCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MeshCore; path = Packages/MeshCore; sourceTree = SOURCE_ROOT; };
 		245963C629043F211DA896AA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		283F0A3FE85E0394414E8CBA /* ChatsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsListView.swift; sourceTree = "<group>"; };
+		300D552A4B042F1960516AC7 /* Phase1UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase1UITests.swift; sourceTree = "<group>"; };
 		35D01DA76685C068E3E3CCAB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		3D01F697E706885E4168E385 /* MeshServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshServiceTests.swift; sourceTree = "<group>"; };
 		3F19E92193E1EA4632DA441E /* OnDeviceAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAI.swift; sourceTree = "<group>"; };
@@ -71,12 +76,15 @@
 		507CD7DBC28C06A30297FD74 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
 		5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlCoverageUITests.swift; sourceTree = "<group>"; };
 		60F7D9AFFE9F11B40BF0357E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6D3B0596E02F5169FFBB62DB /* TrustViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustViews.swift; sourceTree = "<group>"; };
 		776B256798972CE8FDE1ED6F /* AskMeshView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskMeshView.swift; sourceTree = "<group>"; };
 		7F03CBF20CAF3DEB90A36474 /* Composer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Composer.swift; sourceTree = "<group>"; };
 		865A21D3A2FFA7FBF5F2FBD5 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
 		87839F445AC8F08EB4BEA0B5 /* DemoMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMesh.swift; sourceTree = "<group>"; };
 		8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
+		9181EC87D7992C670AEC8834 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
 		9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshUITests.swift; sourceTree = "<group>"; };
+		AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase1ServiceTests.swift; sourceTree = "<group>"; };
 		AA8F8694D1A12A8676798F86 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshApp.swift; sourceTree = "<group>"; };
 		B6B62383E3F0EAD97A6F6184 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -246,8 +254,17 @@
 			children = (
 				9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */,
 				5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */,
+				300D552A4B042F1960516AC7 /* Phase1UITests.swift */,
 			);
 			path = BLEMeshUITests;
+			sourceTree = "<group>";
+		};
+		AC0DD20AAFD25FC8764409BA /* Trust */ = {
+			isa = PBXGroup;
+			children = (
+				6D3B0596E02F5169FFBB62DB /* TrustViews.swift */,
+			);
+			path = Trust;
 			sourceTree = "<group>";
 		};
 		AF16280E94C2B49AB61FC7B8 /* Services */ = {
@@ -257,6 +274,7 @@
 				87839F445AC8F08EB4BEA0B5 /* DemoMesh.swift */,
 				C7F3C96971785D920D7AD480 /* IdentityStore.swift */,
 				CD20DD6A619E75D585B36641 /* MeshService.swift */,
+				9181EC87D7992C670AEC8834 /* TrustStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -274,6 +292,7 @@
 				081E3D025CFA869B11F1A771 /* Settings */,
 				5380C927D95085D5467D887C /* SOS */,
 				D41508D0A59E97FA5AA56BD8 /* Theme */,
+				AC0DD20AAFD25FC8764409BA /* Trust */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -306,6 +325,7 @@
 			isa = PBXGroup;
 			children = (
 				3D01F697E706885E4168E385 /* MeshServiceTests.swift */,
+				AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */,
 			);
 			path = BLEMeshTests;
 			sourceTree = "<group>";
@@ -445,6 +465,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */,
+				9966BEA1257FC8D88A6D7B48 /* Phase1ServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,6 +495,8 @@
 				489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */,
 				613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */,
 				936F34B9D55CD429BDE209AE /* Theme.swift in Sources */,
+				09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */,
+				6648C6D316C447F2EE55CF3B /* TrustViews.swift in Sources */,
 				B07A43D55586B357F8ED8356 /* VoiceServices.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -484,6 +507,7 @@
 			files = (
 				2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */,
 				54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */,
+				6B0CA84A9BBCAA28C09326CE /* Phase1UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

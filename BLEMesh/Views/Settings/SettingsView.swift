@@ -41,6 +41,23 @@ struct SettingsView: View {
                     Text(mesh.ai.statusDescription + ". Voice, translation, triage and answers never leave your phone.")
                 }
 
+                Section {
+                    NavigationLink {
+                        MedicalIDView()
+                    } label: {
+                        Label("Medical ID", systemImage: "cross.case")
+                    }
+                    .accessibilityIdentifier("settings.medicalID")
+                    NavigationLink {
+                        BlockedDevicesView()
+                    } label: {
+                        Label("Blocked devices", systemImage: "hand.raised")
+                    }
+                    .accessibilityIdentifier("settings.blocked")
+                } header: {
+                    Text("Safety & privacy")
+                }
+
                 Section("Notifications") {
                     Toggle("Message & SOS alerts", isOn: $settings.notificationsEnabled)
                         .onChange(of: settings.notificationsEnabled) { _, enabled in

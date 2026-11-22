@@ -10,6 +10,10 @@ public struct PeerInfo: Equatable, Sendable, Identifiable {
     public var lastSeen: Date
     /// Hops to reach the peer (0 = direct neighbor). nil = currently unreachable.
     public var hops: Int?
+    /// The peer's current short-lived key (forward secrecy), when known.
+    public var prekey: PublicPrekey? = nil
+    /// When we first learned of this identity (new identities' SOS calls are flagged in the UI).
+    public var firstSeen: Date? = nil
 
     public var isReachable: Bool { hops != nil }
     public var isNeighbor: Bool { hops == 0 }
@@ -23,6 +27,8 @@ public struct RoutingTable {
     public struct Route: Equatable, Sendable {
         public var link: LinkID
         public var hops: Int
+        /// Selection metric: hops plus penalties (e.g. a low-battery next hop).
+        public var cost: Int
         public var updatedAt: Date
     }
 
@@ -35,15 +41,16 @@ public struct RoutingTable {
 
     /// Offer a route learned from an announce. Returns true if the table changed.
     @discardableResult
-    public mutating func offer(_ destination: PeerID, link: LinkID, hops: Int, now: Date) -> Bool {
+    public mutating func offer(_ destination: PeerID, link: LinkID, hops: Int, cost: Int? = nil, now: Date) -> Bool {
+        let cost = cost ?? hops
         if let existing = routes[destination], now.timeIntervalSince(existing.updatedAt) < expiry {
-            // Accept same-or-better paths (ties prefer the freshest), and any update from the
+            // Accept same-or-cheaper paths (ties prefer the freshest), and any update from the
             // current next hop (its path may have grown). Reject strictly worse alternatives.
-            guard hops <= existing.hops || link == existing.link else { return false }
-            routes[destination] = Route(link: link, hops: hops, updatedAt: now)
+            guard cost <= existing.cost || link == existing.link else { return false }
+            routes[destination] = Route(link: link, hops: hops, cost: cost, updatedAt: now)
             return existing.link != link || existing.hops != hops
         }
-        routes[destination] = Route(link: link, hops: hops, updatedAt: now)
+        routes[destination] = Route(link: link, hops: hops, cost: cost, updatedAt: now)
         return true
     }
 

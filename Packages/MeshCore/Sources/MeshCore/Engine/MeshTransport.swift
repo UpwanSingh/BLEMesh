@@ -1,5 +1,22 @@
 import Foundation
 
+/// Scheduling class for outbound traffic. When a radio is congested, transports send higher
+/// priorities first and drop the lowest priorities first.
+public enum TrafficPriority: Int, Comparable, Sendable, CaseIterable {
+    /// Link control and end-to-end acks — tiny, and everything else depends on them.
+    case control = 0
+    /// SOS and other urgent traffic.
+    case urgent = 1
+    /// Direct and group messages.
+    case direct = 2
+    /// Public channel chat.
+    case normal = 3
+    /// Presence announces and store-and-forward hand-offs.
+    case background = 4
+
+    public static func < (lhs: TrafficPriority, rhs: TrafficPriority) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
 /// A link-layer transport (BLE, Wi-Fi Aware, simulator...).
 ///
 /// The transport owns flow control: `send` must queue frames and deliver them in order,
@@ -8,8 +25,9 @@ import Foundation
 /// and `receive(frame:from:)`.
 public protocol MeshTransport: AnyObject {
     /// Queue frames for in-order delivery over `link`. Returns false if the link is gone.
+    /// Frames of one call must stay in order; transports may reorder across priorities.
     @discardableResult
-    func send(frames: [Data], over link: LinkID) -> Bool
+    func send(frames: [Data], over link: LinkID, priority: TrafficPriority) -> Bool
 
     /// Largest frame the link can carry in one write/notification.
     func maximumFrameSize(for link: LinkID) -> Int

@@ -22,6 +22,8 @@ public struct PacketFlags: OptionSet, Sendable, Hashable {
     public static let directEncrypted = PacketFlags(rawValue: 1 << 0)
     /// Payload is sealed with a group key.
     public static let groupEncrypted = PacketFlags(rawValue: 1 << 1)
+    /// Urgent (SOS) traffic: relayed first and without suppression. Requires proof-of-work.
+    public static let urgent = PacketFlags(rawValue: 1 << 2)
 }
 
 /// A signed mesh packet.
@@ -103,6 +105,35 @@ public struct Packet: Equatable, Sendable {
         return w.data
     }
 
+    // MARK: Proof of work (anti-flooding for urgent traffic)
+
+    /// Leading zero bits of SHA-256(packetID ‖ origin ‖ timestamp). Grinding the packet ID until
+    /// this reaches N bits costs ~2^N hashes, which makes mass-producing fake SOS calls expensive
+    /// while staying cheap to verify.
+    public var workBits: Int {
+        var w = ByteWriter()
+        w.uuid(packetID)
+        w.bytes(origin.bytes)
+        w.u64(timestampMs)
+        var bits = 0
+        for byte in SHA256.hash(data: w.data) {
+            if byte == 0 { bits += 8; continue }
+            bits += byte.leadingZeroBitCount
+            break
+        }
+        return bits
+    }
+
+    /// Find a packet ID with at least `bits` of work for the given origin and time.
+    public static func mintWork(bits: Int, origin: PeerID, timestampMs: UInt64) -> UUID {
+        guard bits > 0 else { return UUID() }
+        var probe = Packet(version: currentVersion, type: .message, flags: [], ttl: 0, hops: 0, packetID: UUID(),
+                           origin: origin, destination: .broadcast, timestampMs: timestampMs,
+                           originSigningKey: Data(), payload: Data(), signature: Data())
+        while probe.workBits < bits { probe.packetID = UUID() }
+        return probe.packetID
+    }
+
     /// Check origin/key binding and the Ed25519 signature.
     public func verify() -> Bool {
         guard originSigningKey.count == 32,
@@ -170,18 +201,25 @@ public struct PeerCapabilities: OptionSet, Sendable, Hashable {
     public static let onDeviceAI = PeerCapabilities(rawValue: 1 << 0)
     /// Device can translate text on-device.
     public static let translation = PeerCapabilities(rawValue: 1 << 1)
+    /// Device is low on battery: prefer other relays.
+    public static let lowPower = PeerCapabilities(rawValue: 1 << 2)
 }
 
 /// Announce payload: agreementKey(32) | capabilities u8 | nickname string8
+/// Announce payload: agreementKey(32) | capabilities u8 | nickname string8 | [prekeyID u32 | prekey(32)]
+/// The optional trailing prekey is the device's current short-lived X25519 key (forward secrecy).
+/// It is authenticated by the announce's signature.
 public struct AnnouncePayload: Equatable, Sendable {
     public var agreementKey: Data
     public var capabilities: PeerCapabilities
     public var nickname: String
+    public var prekey: PublicPrekey?
 
-    public init(agreementKey: Data, capabilities: PeerCapabilities, nickname: String) {
+    public init(agreementKey: Data, capabilities: PeerCapabilities, nickname: String, prekey: PublicPrekey? = nil) {
         self.agreementKey = agreementKey
         self.capabilities = capabilities
         self.nickname = nickname
+        self.prekey = prekey
     }
 
     public func encode() -> Data {
@@ -189,6 +227,10 @@ public struct AnnouncePayload: Equatable, Sendable {
         w.bytes(agreementKey)
         w.u8(capabilities.rawValue)
         w.string8(nickname)
+        if let prekey {
+            w.u32(prekey.id)
+            w.bytes(prekey.key)
+        }
         return w.data
     }
 
@@ -197,7 +239,22 @@ public struct AnnouncePayload: Equatable, Sendable {
         let key = try r.bytes(32)
         let caps = PeerCapabilities(rawValue: try r.u8())
         let nickname = try r.string8()
-        return AnnouncePayload(agreementKey: key, capabilities: caps, nickname: nickname)
+        var prekey: PublicPrekey?
+        if r.remaining >= 36 {
+            prekey = PublicPrekey(id: try r.u32(), key: try r.bytes(32))
+        }
+        return AnnouncePayload(agreementKey: key, capabilities: caps, nickname: nickname, prekey: prekey)
+    }
+}
+
+/// A peer's current short-lived key-agreement key.
+public struct PublicPrekey: Codable, Equatable, Hashable, Sendable {
+    public var id: UInt32
+    public var key: Data
+
+    public init(id: UInt32, key: Data) {
+        self.id = id
+        self.key = key
     }
 }
 

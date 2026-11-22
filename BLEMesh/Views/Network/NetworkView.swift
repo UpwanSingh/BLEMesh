@@ -25,7 +25,16 @@ struct NetworkView: View {
                         HStack {
                             Circle().fill(peer.isNeighbor ? Color.green : (peer.isReachable ? Color.purple : Color.gray)).frame(width: 8, height: 8)
                             VStack(alignment: .leading) {
-                                Text(peer.nickname)
+                                HStack(spacing: 4) {
+                                    Text(mesh.uniqueName(for: peer.peerID))
+                                    if mesh.trust.isVerified(peer.peerID) {
+                                        Image(systemName: "checkmark.seal.fill").foregroundStyle(.green).font(.caption)
+                                    }
+                                    if peer.capabilities.contains(.lowPower) {
+                                        Image(systemName: "battery.25").foregroundStyle(.orange).font(.caption)
+                                            .accessibilityLabel("Low battery")
+                                    }
+                                }
                                 Text(peer.peerID.short).font(.caption2.monospaced()).foregroundStyle(.secondary)
                             }
                             Spacer()
