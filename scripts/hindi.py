@@ -8,7 +8,7 @@ Runtime labels from MeshCore (priority, category, SOS status, credibility) are a
 import json
 import sys
 
-CATALOG = "BLEMesh/Resources/Localizable.xcstrings"
+CATALOGS = ["BLEMesh/Resources/Localizable.xcstrings", "BLEMeshWatch/Localizable.xcstrings"]
 
 HI = {
     "%@ asks: are you safe?": "%@ पूछ रहे हैं: क्या आप सुरक्षित हैं?",
@@ -285,6 +285,21 @@ HI = {
     "“%@”": "“%@”",
     "": "",
     "List": "सूची",
+    # Apple Watch
+    "%lld people in reach of your iPhone": "आपके iPhone की पहुँच में %lld लोग",
+    "Couldn't send.": "नहीं भेज पाए।",
+    "Couldn't send. Use your iPhone.": "नहीं भेज पाए। अपना iPhone इस्तेमाल करें।",
+    "Hold SOS for 2 seconds": "SOS को 2 सेकंड दबाए रखें",
+    "Hold for two seconds": "दो सेकंड दबाए रखें",
+    "Keep holding…": "दबाए रखें…",
+    "SOS sent by your iPhone.%@": "आपके iPhone ने SOS भेज दिया।%@",
+    "Sending…": "भेज रहे हैं…",
+    "Sent to your groups.": "आपके समूहों को भेजा गया।",
+    "Will be sent when your iPhone is reachable.": "iPhone पहुँच में आते ही भेजा जाएगा।",
+    "You're not in any group yet.": "आप अभी किसी समूह में नहीं हैं।",
+    "Your SOS: %@": "आपका SOS: %@",
+    "iPhone not reachable. Your SOS will be sent as soon as it is.": "iPhone पहुँच में नहीं है। पहुँच में आते ही आपका SOS भेजा जाएगा।",
+    "SOS from my Apple Watch — I need help": "मेरी Apple Watch से SOS — मुझे मदद चाहिए",
     "%@ joined with the invite code": "%@ निमंत्रण कोड से जुड़ गए",
     "Invite code for %@": "%@ के लिए निमंत्रण कोड",
     "Invite with QR code": "QR कोड से निमंत्रण दें",
@@ -339,30 +354,31 @@ MANUAL = {
 
 
 def main() -> int:
-    with open(CATALOG, encoding="utf-8") as f:
-        catalog = json.load(f)
-    strings = catalog["strings"]
-    for key in MANUAL:
-        strings.setdefault(key, {"extractionState": "manual"})
     table = {**HI, **MANUAL}
-    missing = []
-    for key, entry in strings.items():
-        value = table.get(key)
-        if value is None:
-            missing.append(key)
-            continue
-        entry.setdefault("localizations", {})["hi"] = {"stringUnit": {"state": "translated", "value": value}}
-    if "--check" in sys.argv:
+    total_missing = 0
+    for path in CATALOGS:
+        with open(path, encoding="utf-8") as f:
+            catalog = json.load(f)
+        strings = catalog["strings"]
+        if path.startswith("BLEMesh/"):
+            for key in MANUAL:
+                strings.setdefault(key, {"extractionState": "manual"})
+        missing = []
+        for key, entry in strings.items():
+            value = table.get(key)
+            if value is None:
+                missing.append(key)
+                continue
+            entry.setdefault("localizations", {})["hi"] = {"stringUnit": {"state": "translated", "value": value}}
         for key in missing:
-            print("missing Hindi:", repr(key))
-        return 1 if missing else 0
-    with open(CATALOG, "w", encoding="utf-8") as f:
-        json.dump(catalog, f, ensure_ascii=False, indent=2, sort_keys=True)
-        f.write("\n")
-    for key in missing:
-        print("missing Hindi:", repr(key))
-    print(f"{len(strings) - len(missing)}/{len(strings)} translated")
-    return 0
+            print(f"{path}: missing Hindi:", repr(key))
+        total_missing += len(missing)
+        if "--check" not in sys.argv:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(catalog, f, ensure_ascii=False, indent=2, sort_keys=True)
+                f.write("\n")
+            print(f"{path}: {len(strings) - len(missing)}/{len(strings)} translated")
+    return 1 if (total_missing and "--check" in sys.argv) else 0
 
 
 if __name__ == "__main__":

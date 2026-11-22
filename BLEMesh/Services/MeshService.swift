@@ -246,6 +246,21 @@ final class MeshService: ObservableObject {
     }
 
     /// Live status of an SOS from the updates stored in the Nearby channel.
+    /// Your most recent SOS from the last 24 hours, if any, and its state.
+    func latestOwnSOS() -> (StoredMessage, SOSState)? {
+        let key = ConversationKey.nearby
+        let since = Date().addingTimeInterval(-24 * 3600)
+        var descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate {
+            $0.conversationKey == key && $0.isOutgoing == true && $0.sentAt >= since
+        }, sortBy: [SortDescriptor(\.sentAt, order: .reverse)])
+        descriptor.fetchLimit = 50
+        guard let sos = ((try? context.fetch(descriptor)) ?? []).first(where: {
+            if case .sos? = $0.content { return true }
+            return false
+        }) else { return nil }
+        return (sos, sosState(for: sos))
+    }
+
     func sosState(for sos: StoredMessage) -> SOSState {
         let key = ConversationKey.nearby
         let since = sos.sentAt.addingTimeInterval(-1)

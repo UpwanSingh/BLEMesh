@@ -9,6 +9,7 @@ struct BLEMeshApp: App {
     @StateObject private var speaker = Speaker()
     @StateObject private var trust: TrustStore
     @Environment(\.scenePhase) private var scenePhase
+    private let watchBridge: WatchBridge?
 
     init() {
         let arguments = ProcessInfo.processInfo.arguments
@@ -39,6 +40,8 @@ struct BLEMeshApp: App {
             }
         }
         _mesh = StateObject(wrappedValue: service)
+        // Apple Watch SOS goes through this phone (not in unit tests, which drive the bridge directly).
+        watchBridge = isUnitTest ? nil : WatchBridge(mesh: service)
     }
 
     var body: some Scene {

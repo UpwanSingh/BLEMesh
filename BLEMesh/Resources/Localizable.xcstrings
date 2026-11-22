@@ -2232,6 +2232,16 @@
         }
       }
     },
+    "SOS from my Apple Watch — I need help": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरी Apple Watch से SOS — मुझे मदद चाहिए"
+          }
+        }
+      }
+    },
     "SOS sent to everyone in range": {
       "localizations": {
         "hi": {
