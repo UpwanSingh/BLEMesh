@@ -166,3 +166,54 @@ final class SOSMapUITests: XCTestCase {
         XCTAssertTrue(el("sos.directions").waitForExistence(timeout: 5))
     }
 }
+
+/// Phase 3: QR invite codes.
+final class GroupInviteUITests: XCTestCase {
+    var app: XCUIApplication!
+
+    override func setUp() {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-skipSplash"]
+    }
+
+    private func el(_ id: String) -> XCUIElement { app.descendants(matching: .any)[id].firstMatch }
+
+    func testAdminShowsInviteCodeAndSomeoneJoins() {
+        app.launch()
+        app.tabBars.buttons["Network"].tap()
+        XCTAssertTrue(el("network.peer.Meera").waitForExistence(timeout: 20))
+        app.tabBars.buttons["Chats"].tap()
+        el("chats.newGroup").tap()
+        el("group.name").tap()
+        el("group.name").typeText("Family")
+        el("groupMember.Asha").tap()
+        el("group.create").tap()
+        el("conversation.info").tap()
+        let invite = el("info.invite")
+        for _ in 0..<4 where !invite.exists { app.swipeUp() }
+        invite.tap()
+        let code = el("invite.code")
+        XCTAssertTrue(code.waitForExistence(timeout: 5))
+        XCTAssertTrue(code.label.hasPrefix("blemesh:join:v1:"), code.label)
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "p3-invite-qr"
+        shot.lifetime = .keepAlways
+        add(shot)
+        el("invite.demoScan").tap()
+        app.buttons["Done"].firstMatch.tap()
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Meera joined with the invite code'"))
+            .firstMatch.waitForExistence(timeout: 20))
+    }
+
+    func testJoinScreenRejectsGarbage() {
+        app.launch()
+        app.tabBars.buttons["Chats"].tap()
+        el("chats.join").tap()
+        el("join.code").tap()
+        el("join.code").typeText("not a code")
+        el("join.submit").tap()
+        XCTAssertTrue(el("join.invalid").waitForExistence(timeout: 5))
+    }
+}

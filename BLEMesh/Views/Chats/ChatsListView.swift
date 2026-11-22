@@ -9,6 +9,7 @@ struct ChatsListView: View {
     private var conversations: [StoredConversation]
 
     @State private var showPeerPicker = false
+    @State private var showJoin = false
     @State private var showNewGroup = false
     @State private var showSettings = false
     @State private var path: [String] = []
@@ -57,6 +58,9 @@ struct ChatsListView: View {
                         .accessibilityIdentifier("chats.settings")
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showJoin = true } label: { Image(systemName: "qrcode.viewfinder") }
+                        .accessibilityIdentifier("chats.join")
+                        .accessibilityLabel("Join a group with a code")
                     Button { showNewGroup = true } label: { Image(systemName: "person.3") }
                         .accessibilityIdentifier("chats.newGroup")
                         .accessibilityLabel("New group")
@@ -65,6 +69,7 @@ struct ChatsListView: View {
                         .accessibilityLabel("New chat")
                 }
             }
+            .sheet(isPresented: $showJoin) { JoinGroupView() }
             .sheet(isPresented: $showPeerPicker) {
                 PeerPickerView { peer in
                     let key = mesh.startDirectConversation(with: peer)

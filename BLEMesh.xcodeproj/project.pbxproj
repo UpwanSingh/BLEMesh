@@ -12,6 +12,7 @@
 		09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9181EC87D7992C670AEC8834 /* TrustStore.swift */; };
 		0E5FE6A8B7E9081005DA8E5D /* Phase2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03A7D00F1D604D003786A264 /* Phase2UITests.swift */; };
 		1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D01F697E706885E4168E385 /* MeshServiceTests.swift */; };
+		233741015DD279525883245D /* JoinCodeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */; };
 		26CE28331595205C75D8DB90 /* LLMTriageBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */; };
 		2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245963C629043F211DA896AA /* OnboardingView.swift */; };
 		2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */; };
@@ -20,6 +21,7 @@
 		489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D01DA76685C068E3E3CCAB /* SettingsView.swift */; };
 		4B5D23975DA5B6D9E434FC25 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 715B8F16B3AFB9EEEF883957 /* Localizable.xcstrings */; };
 		4B8C030D226F9BAECB976D1E /* ContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA3ADDD3A17858BE62793A2 /* ContrastTests.swift */; };
+		51730F8D6ECF35D39C6ECA01 /* GroupInviteViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */; };
 		54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */; };
 		5A1B6416B2A434BD19E2D99D /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865A21D3A2FFA7FBF5F2FBD5 /* MessageBubble.swift */; };
 		5CD74CD51FA3476247315A71 /* MeshSimulator in Frameworks */ = {isa = PBXBuildFile; productRef = B24900C7F24D83663A74749E /* MeshSimulator */; };
@@ -87,6 +89,7 @@
 		3F7BFD1123719513BB6FE1BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMTriageBenchmarkTests.swift; sourceTree = "<group>"; };
 		4A6EE420663D7E2058EA2EEB /* VoiceServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceServices.swift; sourceTree = "<group>"; };
+		4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinCodeServiceTests.swift; sourceTree = "<group>"; };
 		507CD7DBC28C06A30297FD74 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
 		5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlCoverageUITests.swift; sourceTree = "<group>"; };
 		60F7D9AFFE9F11B40BF0357E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -108,6 +111,7 @@
 		BC515D9BE23EFA3836D289CF /* BLEMesh.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BLEMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1EE8E63F3D8B4C3FAF1618B /* BLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLETransport.swift; sourceTree = "<group>"; };
 		C7F3C96971785D920D7AD480 /* IdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityStore.swift; sourceTree = "<group>"; };
+		CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupInviteViews.swift; sourceTree = "<group>"; };
 		CD20DD6A619E75D585B36641 /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
 		CDFB77DDA7156028E65F5340 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
 		D7F8D968F43CA4E10BB6C1A2 /* LocationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationProvider.swift; sourceTree = "<group>"; };
@@ -219,6 +223,7 @@
 			children = (
 				283F0A3FE85E0394414E8CBA /* ChatsListView.swift */,
 				8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */,
+				CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */,
 			);
 			path = Chats;
 			sourceTree = "<group>";
@@ -357,6 +362,7 @@
 			isa = PBXGroup;
 			children = (
 				2DA3ADDD3A17858BE62793A2 /* ContrastTests.swift */,
+				4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */,
 				3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */,
 				3D01F697E706885E4168E385 /* MeshServiceTests.swift */,
 				AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */,
@@ -502,6 +508,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B8C030D226F9BAECB976D1E /* ContrastTests.swift in Sources */,
+				233741015DD279525883245D /* JoinCodeServiceTests.swift in Sources */,
 				26CE28331595205C75D8DB90 /* LLMTriageBenchmarkTests.swift in Sources */,
 				1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */,
 				9966BEA1257FC8D88A6D7B48 /* Phase1ServiceTests.swift in Sources */,
@@ -521,6 +528,7 @@
 				D27A4ED21F3FC95DF559A416 /* Composer.swift in Sources */,
 				01DC0F256853F4788CBAB7C1 /* ConversationView.swift in Sources */,
 				E1FFC135CA0296FF219895D6 /* DemoMesh.swift in Sources */,
+				51730F8D6ECF35D39C6ECA01 /* GroupInviteViews.swift in Sources */,
 				B81FDE5DF1C7BBB4E6A13518 /* IdentityStore.swift in Sources */,
 				3DADB41554F4E3E2431551B7 /* Localization.swift in Sources */,
 				92A81262FC7794B36CF6C79D /* LocationProvider.swift in Sources */,

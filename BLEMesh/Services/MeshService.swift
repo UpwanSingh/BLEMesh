@@ -435,6 +435,43 @@ final class MeshService: ObservableObject {
         demo?.broadcast(content, from: name)
     }
 
+    // MARK: - Group invite codes
+
+    /// Admin only: a fresh invite code (QR) for this group, valid for 24 hours.
+    func makeJoinCode(groupKey: String) -> GroupJoinCode? {
+        guard let id = ConversationKey.groupID(from: groupKey) else { return nil }
+        return try? node.makeJoinCode(for: id)
+    }
+
+    enum JoinResult: Equatable {
+        case requested(adminName: String)
+        case invalid, expired, alreadyMember
+    }
+
+    /// Ask the group's admin to add us. We join when their phone accepts (it may be out of range for now).
+    func joinGroup(code text: String) -> JoinResult {
+        guard let code = GroupJoinCode(string: text) else { return .invalid }
+        do {
+            try node.requestToJoin(code)
+            lastUserActivity = Date()
+            return .requested(adminName: node.peer(code.admin)?.nickname ?? String(localized: "the group admin"))
+        } catch MeshNodeError.codeExpired {
+            return .expired
+        } catch {
+            return .alreadyMember
+        }
+    }
+
+    /// Demo mode only: a bot scans our invite code (shows the admin side without a second phone).
+    func demoScan(_ code: GroupJoinCode, by name: String) {
+        demo?.requestToJoin(code, as: name)
+    }
+
+    /// Demo mode only: a bot creates a group and returns its invite code (tests the joining side).
+    func demoBotGroupCode(admin: String, members: [String], name: String) -> GroupJoinCode? {
+        demo?.makeGroupCode(admin: admin, members: members, name: name)
+    }
+
     @discardableResult
     func createGroup(name: String, members: Set<PeerID>) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -670,6 +707,15 @@ final class MeshService: ObservableObject {
             ensureConversation(key, kind: .group, title: invite.name)
             let note = isRekey ? "🔑 \(senderName) changed the group key (membership changed)" : "\(senderName) added you to “\(invite.name)”"
             storeLocal(id: envelope.messageID, content: .text(note), key: key,
+                       outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
+            refreshPeers()
+            saveSnapshot()
+            return
+        case .groupJoinRequest(let request):
+            // Delivered only when our node accepted it (admin, valid code) and added the sender.
+            let key = ConversationKey.group(request.groupID)
+            guard fetchConversation(key) != nil else { return }
+            storeLocal(id: envelope.messageID, content: .text(String(localized: "\(senderName) joined with the invite code")), key: key,
                        outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
             refreshPeers()
             saveSnapshot()

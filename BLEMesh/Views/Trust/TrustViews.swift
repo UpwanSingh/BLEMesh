@@ -176,7 +176,11 @@ struct VerifyContactView: View {
         if case .verified = outcome { trust.setVerified(peer, true) }
     }
 
-    private func qrImage(_ string: String) -> UIImage? {
+    private func qrImage(_ string: String) -> UIImage? { QRCode.image(for: string) }
+}
+
+enum QRCode {
+    static func image(for string: String) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(string.utf8)
         filter.correctionLevel = "M"

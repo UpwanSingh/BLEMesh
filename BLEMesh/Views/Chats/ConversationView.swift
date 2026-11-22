@@ -108,6 +108,7 @@ struct ConversationInfoView: View {
     @Environment(\.dismiss) private var dismiss
     let conversationKey: String
     @State private var confirmLeave = false
+    @State private var showInvite = false
     @State private var confirmReport = false
     @State private var verifying = false
     @State private var showLocator = false
@@ -175,6 +176,14 @@ struct ConversationInfoView: View {
                                 }
                             }
                         }
+                        if mesh.isGroupAdmin(groupKey: conversationKey) {
+                            Button {
+                                showInvite = true
+                            } label: {
+                                Label("Invite with QR code", systemImage: "qrcode")
+                            }
+                            .accessibilityIdentifier("info.invite")
+                        }
                     } header: {
                         Text("Members").foregroundStyle(Theme.Colors.secondaryText)
                     } footer: {
@@ -202,6 +211,7 @@ struct ConversationInfoView: View {
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             // Presented from the list level: sheets attached to lazily-built rows may never appear.
+            .sheet(isPresented: $showInvite) { GroupInviteCodeView(groupKey: conversationKey) }
             .sheet(isPresented: $verifying) {
                 if let peer = ConversationKey.peer(from: conversationKey) { VerifyContactView(peer: peer) }
             }

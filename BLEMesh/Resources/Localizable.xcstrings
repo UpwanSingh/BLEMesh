@@ -31,6 +31,16 @@
         }
       }
     },
+    "%@ joined with the invite code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ निमंत्रण कोड से जुड़ गए"
+          }
+        }
+      }
+    },
     "%@ — who's safe?": {
       "localizations": {
         "hi": {
@@ -1141,6 +1151,56 @@
         }
       }
     },
+    "Invite code for %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ के लिए निमंत्रण कोड"
+          }
+        }
+      }
+    },
+    "Invite with QR code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR कोड से निमंत्रण दें"
+          }
+        }
+      }
+    },
+    "Join": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जुड़ें"
+          }
+        }
+      }
+    },
+    "Join a group": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "समूह से जुड़ें"
+          }
+        }
+      }
+    },
+    "Join a group with a code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कोड से समूह में जुड़ें"
+          }
+        }
+      }
+    },
     "Keep messages": {
       "localizations": {
         "hi": {
@@ -1187,6 +1247,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "यह समूह छोड़ें?"
+          }
+        }
+      }
+    },
+    "Let Meera scan it (demo)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मीरा को स्कैन करने दें (डेमो)"
           }
         }
       }
@@ -1242,6 +1312,16 @@
         }
       }
     },
+    "Make a new code (the old one stops working)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नया कोड बनाएँ (पुराना काम करना बंद कर देगा)"
+          }
+        }
+      }
+    },
     "Map": {
       "localizations": {
         "hi": {
@@ -1290,6 +1370,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "मध्यम"
+          }
+        }
+      }
+    },
+    "Meera scanned it": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मीरा ने स्कैन कर लिया"
           }
         }
       }
@@ -1688,6 +1778,16 @@
         }
       }
     },
+    "Only the group admin can invite with a code.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सिर्फ़ समूह का एडमिन कोड से निमंत्रण दे सकता है।"
+          }
+        }
+      }
+    },
     "Open": {
       "extractionState": "manual",
       "localizations": {
@@ -2020,6 +2120,16 @@
         }
       }
     },
+    "Request sent to %@. The group will appear in Chats when you're added.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ को अनुरोध भेजा गया। जुड़ते ही समूह चैट में दिखेगा।"
+          }
+        }
+      }
+    },
     "Reset": {
       "localizations": {
         "hi": {
@@ -2183,12 +2293,32 @@
         }
       }
     },
+    "Scan the invite QR code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निमंत्रण QR कोड स्कैन करें"
+          }
+        }
+      }
+    },
     "Scan their code": {
       "localizations": {
         "hi": {
           "stringUnit": {
             "state": "translated",
             "value": "उनका कोड स्कैन करें"
+          }
+        }
+      }
+    },
+    "Scan to join “%@”": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” से जुड़ने के लिए स्कैन करें"
           }
         }
       }
@@ -2444,6 +2574,26 @@
         }
       }
     },
+    "That isn't a BLE Mesh invite code.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह BLE Mesh निमंत्रण कोड नहीं है।"
+          }
+        }
+      }
+    },
+    "The code has no key in it. Whoever scans it asks your phone over the mesh, and you add them automatically. Share it only in person. The group gets a new key when someone joins.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस कोड में कोई कुंजी नहीं है। जो इसे स्कैन करता है, वह मेश से आपके फ़ोन से पूछता है और आप उसे अपने-आप जोड़ लेते हैं। इसे सिर्फ़ आमने-सामने साझा करें। किसी के जुड़ने पर समूह को नई कुंजी मिलती है।"
+          }
+        }
+      }
+    },
     "Their code": {
       "localizations": {
         "hi": {
@@ -2470,6 +2620,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "इसे वापस नहीं किया जा सकता।"
+          }
+        }
+      }
+    },
+    "This invite code has expired. Ask for a new one.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह निमंत्रण कोड पुराना हो गया है। नया माँगें।"
           }
         }
       }
@@ -2572,6 +2732,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "अपुष्ट — एक ही रिपोर्ट"
+          }
+        }
+      }
+    },
+    "Valid until %@.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ तक मान्य।"
           }
         }
       }
@@ -2788,6 +2958,16 @@
         }
       }
     },
+    "You're already in this group.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप पहले से इस समूह में हैं।"
+          }
+        }
+      }
+    },
     "Your SOS": {
       "localizations": {
         "hi": {
@@ -2814,6 +2994,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "आपका नाम"
+          }
+        }
+      }
+    },
+    "Your phone asks the group's admin over the mesh. You'll join as soon as their phone accepts, even if they're out of range right now.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका फ़ोन मेश से समूह के एडमिन से पूछता है। उनका फ़ोन स्वीकार करते ही आप जुड़ जाएँगे, भले वे अभी पहुँच से बाहर हों।"
           }
         }
       }
@@ -2889,6 +3079,16 @@
         }
       }
     },
+    "the group admin": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "समूह का एडमिन"
+          }
+        }
+      }
+    },
     "· %lld hops": {
       "localizations": {
         "hi": {
@@ -2915,6 +3115,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@”"
+          }
+        }
+      }
+    },
+    "…or paste the invite code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…या निमंत्रण कोड पेस्ट करें"
           }
         }
       }
