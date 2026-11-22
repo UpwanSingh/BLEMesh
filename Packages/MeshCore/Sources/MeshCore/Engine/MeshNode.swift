@@ -1078,7 +1078,7 @@ extension MeshContent {
     /// direct-only, so it can't be spoofed by broadcasting it.
     var isAllowedInSharedChannels: Bool {
         switch self {
-        case .text, .voice, .sos: return true
+        case .text, .voice, .sos, .sosUpdate, .checkIn, .safetyCheck: return true
         case .groupInvite, .groupLeave, .aiQuery, .aiResponse: return false
         }
     }
