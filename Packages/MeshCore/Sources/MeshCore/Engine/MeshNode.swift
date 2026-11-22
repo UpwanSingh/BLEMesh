@@ -66,6 +66,9 @@ public struct MeshConfig: Sendable {
     /// Must exceed `carryLifetime` so carried messages can still be opened.
     public var prekeyRetention: TimeInterval = 7 * 24 * 3600
 
+    /// After a group re-key, the old key is still accepted this long for messages already in flight.
+    public var groupKeyGrace: TimeInterval = 600
+
     // Urgent (SOS) traffic
     /// Proof-of-work bits required on urgent packets (2^N hashes to create one).
     public var urgentWorkBits: Int = 18
@@ -101,8 +104,11 @@ public struct GroupInfo: Codable, Equatable, Sendable, Identifiable {
     public var name: String
     public var members: Set<PeerID>
     public var key: Data
-    /// Who created the group; only they may re-key / change an existing group.
+    /// Who created (or last re-keyed) the group; only the current admin may change it.
     public var creator: PeerID?
+    /// The key before the last re-key, still accepted for in-flight messages until `previousKeyUntil`.
+    public var previousKey: Data?
+    public var previousKeyUntil: Date?
 
     public init(id: UUID, name: String, members: Set<PeerID>, key: Data, creator: PeerID? = nil) {
         self.id = id
@@ -110,6 +116,13 @@ public struct GroupInfo: Codable, Equatable, Sendable, Identifiable {
         self.members = members
         self.key = key
         self.creator = creator
+    }
+
+    /// The member allowed to re-key: the creator while they're in the group, otherwise the
+    /// remaining member with the lowest ID (deterministic, so every member agrees without talking).
+    public var admin: PeerID? {
+        if let creator, members.contains(creator) { return creator }
+        return members.min()
     }
 }
 
@@ -351,6 +364,30 @@ public final class MeshNode {
             try sendDirect(.groupInvite(invite), to: member)
         }
         return group
+    }
+
+    /// Admin only: remove a member and re-key so they can't read anything sent afterwards.
+    public func removeMember(_ member: PeerID, from groupID: UUID) throws {
+        guard var group = groups[groupID] else { throw MeshNodeError.unknownGroup }
+        guard group.admin == peerID else { throw MeshNodeError.notGroupAdmin }
+        guard member != peerID, group.members.remove(member) != nil else { return }
+        groups[groupID] = group
+        rekeyGroup(groupID)
+    }
+
+    /// Admin only: replace the group key and send it (encrypted, direct) to every current member.
+    /// The old key keeps working for a short grace period so messages already in flight still open.
+    public func rekeyGroup(_ groupID: UUID) {
+        guard var group = groups[groupID], group.admin == peerID else { return }
+        group.previousKey = group.key
+        group.previousKeyUntil = clock().addingTimeInterval(config.groupKeyGrace)
+        group.key = MeshCrypto.makeGroupKey()
+        group.creator = peerID
+        groups[groupID] = group
+        let invite = GroupInvite(groupID: groupID, name: group.name, members: group.members.sorted(), key: group.key)
+        for member in group.members where member != peerID {
+            _ = try? sendDirect(.groupInvite(invite), to: member)
+        }
     }
 
     /// Leave a group and tell the other members.
@@ -628,7 +665,7 @@ public final class MeshNode {
                 if let groupID = MeshCrypto.groupID(ofSealed: packet.payload),
                    let group = groups[groupID],
                    group.members.contains(packet.origin),
-                   let plaintext = try? MeshCrypto.openGroup(packet.payload, key: group.key, from: packet.originSigningKey),
+                   let plaintext = openGroupMessage(packet, group: group, now: now),
                    let envelope = try? MessageEnvelope.decode(plaintext),
                    envelope.groupID == groupID,
                    envelope.content.isAllowedInSharedChannels {
@@ -682,21 +719,37 @@ public final class MeshNode {
         case .groupInvite(let invite):
             guard invite.key.count == 32, invite.members.contains(peerID), invite.members.contains(sender) else { return false }
             if let leftAt = leftGroups[invite.groupID], sentAt <= leftAt { return false }
+            var updated = GroupInfo(id: invite.groupID, name: invite.name, members: Set(invite.members),
+                                    key: invite.key, creator: sender)
             if let existing = groups[invite.groupID] {
-                // Only the creator may change an existing group (re-key / membership).
-                guard existing.creator == sender else { return false }
+                // Only the current admin may change an existing group (re-key / membership).
+                guard existing.admin == sender else { return false }
+                if existing.key != invite.key {
+                    updated.previousKey = existing.key
+                    updated.previousKeyUntil = clock().addingTimeInterval(config.groupKeyGrace)
+                }
             }
-            groups[invite.groupID] = GroupInfo(id: invite.groupID, name: invite.name, members: Set(invite.members),
-                                               key: invite.key, creator: sender)
+            groups[invite.groupID] = updated
             leftGroups[invite.groupID] = nil
             return true
         case .groupLeave(let groupID):
             guard groups[groupID]?.members.contains(sender) == true else { return false }
             groups[groupID]?.members.remove(sender)
+            // Whoever is admin now (possibly us, if the creator left) re-keys so the leaver is locked out.
+            if groups[groupID]?.admin == peerID { rekeyGroup(groupID) }
             return true
         default:
             return true
         }
+    }
+
+    /// Current key first; the previous key only during the post-rekey grace period.
+    private func openGroupMessage(_ packet: Packet, group: GroupInfo, now: Date) -> Data? {
+        if let plaintext = try? MeshCrypto.openGroup(packet.payload, key: group.key, from: packet.originSigningKey) {
+            return plaintext
+        }
+        guard let previous = group.previousKey, let until = group.previousKeyUntil, now < until else { return nil }
+        return try? MeshCrypto.openGroup(packet.payload, key: previous, from: packet.originSigningKey)
     }
 
     /// Deliver an envelope once per (origin, messageID). `prepare` runs first (exactly once)
@@ -1011,6 +1064,7 @@ public final class MeshNode {
 
 public enum MeshNodeError: Error {
     case unknownGroup
+    case notGroupAdmin
 }
 
 extension MeshContent {
