@@ -45,7 +45,7 @@ final class DemoMesh {
         mesh.adopt(localNode, as: Self.localName)
         let names = ["Asha", "Kabir", "Ravi", "Meera"]
         for name in names {
-            mesh.addNode(name, capabilities: name == "Ravi" ? [.onDeviceAI] : [])
+            mesh.addNode(name, capabilities: name == "Ravi" ? [.onDeviceAI, .medic] : name == "Asha" ? [.rescuer] : [])
         }
         for name in names { installBot(name) }
         let profile = SimulatedMesh.LinkProfile(mtu: 182, latency: 0.03)
@@ -120,9 +120,21 @@ final class DemoMesh {
         case .voice(let note):
             reply = .text("Heard your voice note: “\(note.transcript)” 👍")
         case .aiQuery(let query):
-            let answer = EmergencyKnowledge.answer(query.prompt)
-                ?? "I'm not sure about that one. Stay safe and check with local responders."
-            reply = .aiResponse(AIResponse(queryID: query.queryID, text: answer, answeredBy: "\(bot.nickname)’s on-device AI"))
+            let label = "\(bot.nickname)’s on-device AI"
+            switch query.effectiveTask {
+            case .answer:
+                let answer = OfflineKnowledgeEngine.offlineAnswer(query.prompt, local: [])
+                reply = .aiResponse(AIResponse(queryID: query.queryID, text: answer.renderedText, answeredBy: label))
+            case .triage:
+                let triage = HybridTriage.triageSOS(query.prompt, embedding: HybridTriage.shared)
+                reply = .aiResponse(AIResponse(queryID: query.queryID, text: triage.summary, answeredBy: label, triage: triage))
+            case .translate:
+                reply = .aiResponse(AIResponse(queryID: query.queryID, text: Self.demoTranslate(query.prompt, to: query.targetLanguage ?? "en"),
+                                               answeredBy: label))
+            case .summarize:
+                let lines = query.prompt.split(separator: "\n").prefix(3).map { "• " + $0 }.joined(separator: "\n")
+                reply = .aiResponse(AIResponse(queryID: query.queryID, text: lines, answeredBy: label))
+            }
         case .safetyCheck(let check):
             if case .group(let groupID) = message.scope {
                 // Meera is hurt; everyone else is fine.
@@ -174,12 +186,29 @@ final class DemoMesh {
         }
     }
 
+    /// Tiny phrasebook standing in for Ravi's model in the demo.
+    static func demoTranslate(_ text: String, to language: String) -> String {
+        let phrasebook: [String: [String: String]] = [
+            "hi": ["help": "मदद", "water": "पानी", "i'm safe": "मैं सुरक्षित हूँ", "hello": "नमस्ते", "fire": "आग"],
+            "es": ["help": "ayuda", "water": "agua", "i'm safe": "estoy a salvo", "hello": "hola", "fire": "fuego"],
+        ]
+        let words = phrasebook[language] ?? [:]
+        let lower = text.lowercased()
+        if let exact = words[lower] { return exact }
+        return words.reduce(lower) { $0.replacingOccurrences(of: $1.key, with: $1.value) }
+    }
+
     static func reply(to text: String, from name: String) -> String {
         let lower = text.lowercased()
         if lower.contains("where") { return "I'm near the community hall. Signal is down but the mesh works!" }
         if lower.contains("ok") || lower.contains("safe") { return "Glad you're safe. Stay in touch here." }
         if lower.contains("hi") || lower.contains("hello") { return "Hi! \(name) here. Got your message over the mesh 🙌" }
         return "\(name) got it: “\(text.prefix(60))”"
+    }
+
+    /// Broadcast on the public channel as one of the bots (tests and the `-demoSpam` launch argument).
+    func broadcast(_ content: MeshContent, from name: String) {
+        _ = try? mesh.node(name).sendBroadcast(content)
     }
 
     /// Simulate the local device moving out of / back into range (used by UI tests and the demo toggle).

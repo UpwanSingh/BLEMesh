@@ -15,6 +15,18 @@ public struct PeerInfo: Equatable, Sendable, Identifiable {
     /// When we first learned of this identity (new identities' SOS calls are flagged in the UI).
     public var firstSeen: Date? = nil
 
+    public init(peerID: PeerID, identity: PublicIdentity, nickname: String, capabilities: PeerCapabilities,
+                lastSeen: Date, hops: Int?, prekey: PublicPrekey? = nil, firstSeen: Date? = nil) {
+        self.peerID = peerID
+        self.identity = identity
+        self.nickname = nickname
+        self.capabilities = capabilities
+        self.lastSeen = lastSeen
+        self.hops = hops
+        self.prekey = prekey
+        self.firstSeen = firstSeen
+    }
+
     public var isReachable: Bool { hops != nil }
     public var isNeighbor: Bool { hops == 0 }
 }

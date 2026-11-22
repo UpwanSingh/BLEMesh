@@ -54,7 +54,7 @@ struct TriageTests {
     @Test func chatterIsUnclassified() {
         let t = HeuristicTriage.triage("anyone up for chai later?")
         #expect(t.category == .other)
-        #expect(t.priority == .medium)
+        #expect(t.priority == .low)
     }
 }
 

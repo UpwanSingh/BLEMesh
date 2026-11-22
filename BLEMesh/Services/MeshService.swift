@@ -30,7 +30,9 @@ final class MeshService: ObservableObject {
     @Published private(set) var pendingQuestions: [UUID: PeerID] = [:]
     @Published var lastError: String?
     /// Conversation currently on screen (incoming messages there don't count as unread).
-    @Published var openConversationKey: String?
+    @Published var openConversationKey: String? {
+        didSet { if let key = openConversationKey, key != oldValue { beginVisit(key) } }
+    }
 
     let mode: Mode
     let settings: AppSettings
@@ -74,6 +76,8 @@ final class MeshService: ObservableObject {
         node.delegate = self
         var capabilities: PeerCapabilities = []
         if ai.hasGenerativeModel && settings.helpOthersWithAI { capabilities.insert(.onDeviceAI) }
+        if settings.isMedic { capabilities.insert(.medic) }
+        if settings.isRescuer { capabilities.insert(.rescuer) }
         if #available(iOS 18.0, *) { capabilities.insert(.translation) }
         node.capabilities = capabilities
     }
@@ -110,7 +114,7 @@ final class MeshService: ObservableObject {
     private var isVisible: Bool { mode == .demo || UIApplication.shared.applicationState == .active }
 
     func appDidBecomeActive() {
-        if let key = openConversationKey { markRead(key: key) }
+        if let key = openConversationKey { beginVisit(key); markRead(key: key) }
     }
 
     func appDidEnterBackground() {
@@ -207,6 +211,7 @@ final class MeshService: ObservableObject {
     /// Returns false when nothing was sent (so the composer can keep the text).
     @discardableResult
     func sendText(_ text: String, to key: String) -> Bool {
+        lastUserActivity = Date()
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
         guard trimmed.utf8.count <= 8_000 else {
@@ -253,6 +258,8 @@ final class MeshService: ObservableObject {
     /// "I'm safe" / "I need help" to the given groups (defaults to every group you're in).
     func sendCheckIn(_ status: CheckIn.Status, note: String? = nil, location: GeoPoint? = nil,
                      inReplyTo: UUID? = nil, groups groupIDs: [UUID]? = nil) -> Int {
+        if let inReplyTo { answeredSafetyChecks.insert(inReplyTo) }
+        lastUserActivity = Date()
         let targets = groupIDs ?? Array(node.groups.keys)
         let checkIn = CheckIn(status: status, location: location, batteryPercent: batteryPercent, note: note, inReplyTo: inReplyTo)
         return targets.reduce(0) { $0 + (send(.checkIn(checkIn), to: ConversationKey.group($1)) != nil ? 1 : 0) }
@@ -324,8 +331,13 @@ final class MeshService: ObservableObject {
         guard !trimmed.isEmpty else { return }
         let query = AIQuery(prompt: trimmed)
         let session = self.session
+        // Local questions ("where is water?") are best answered from what this phone has heard;
+        // a remote helper can't see our messages.
+        let local = localMessages()
+        let answerableLocally = LocalRetriever.isLocalQuestion(trimmed)
+            && !LocalRetriever.search(trimmed, in: local, now: Date()).isEmpty
 
-        if !ai.hasGenerativeModel, let helper = node.bestAIHelper() {
+        if !ai.hasGenerativeModel, !answerableLocally, let helper = node.bestAIHelper() {
             do {
                 // Stored under the mesh message ID so delivery updates / retry apply to it.
                 let messageID = try node.sendDirect(.aiQuery(query), to: helper.peerID)
@@ -343,17 +355,46 @@ final class MeshService: ObservableObject {
             }
         }
         storeLocal(id: UUID(), content: .aiQuery(query), key: ConversationKey.askMesh, outgoing: true, senderName: nickname)
-        let answer = await ai.answer(trimmed)
+        let answer = await ai.answer(trimmed, local: local)
         guard session == self.session else { return }
-        let source = ai.hasGenerativeModel ? "This phone (on-device AI)" : "Offline guide"
-        storeLocal(id: UUID(), content: .aiResponse(AIResponse(queryID: query.queryID, text: answer, answeredBy: source)),
+        // Label by what actually produced the text (a model that failed falls back silently).
+        let source = answer.generatedByModel ? "This phone (on-device AI)"
+            : (answer.sources.contains { $0.hasSuffix("'s message") } ? "Messages nearby" : "Offline guide")
+        storeLocal(id: UUID(), content: .aiResponse(AIResponse(queryID: query.queryID, text: answer.renderedText, answeredBy: source)),
                    key: ConversationKey.askMesh, outgoing: false, senderName: source)
+    }
+
+    /// Recent messages this phone has seen (public channel, groups, DMs) for local questions,
+    /// catch-ups and summaries. Spam and blocked senders are excluded.
+    func localMessages(hours: Double = 6) -> [LocalMessage] {
+        let since = Date().addingTimeInterval(-hours * 3600)
+        let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate { $0.sentAt >= since && $0.isSpam == false })
+        return ((try? context.fetch(descriptor)) ?? []).compactMap { message -> LocalMessage? in
+            guard message.conversationKey != ConversationKey.askMesh, let sender = message.sender,
+                  !trust.isBlocked(sender), let content = message.content else { return nil }
+            let kind: LocalMessage.Kind
+            var text = message.previewText
+            var triage: SOSTriage?
+            switch content {
+            case .text(let t): kind = .chat; text = t
+            case .voice(let note): kind = .voice; text = note.transcript
+            case .sos(let report): kind = .sos; text = report.text; triage = report.triage
+            case .checkIn: kind = .checkIn
+            case .safetyCheck: kind = .safetyCheck
+            case .sosUpdate: kind = .sosUpdate
+            default: return nil
+            }
+            let mentionsMe = !message.isOutgoing && (message.conversationKey.hasPrefix("dm:")
+                || text.localizedCaseInsensitiveContains(nickname) || kind == .safetyCheck)
+            return LocalMessage(id: message.id, sender: sender, senderName: message.isOutgoing ? "You" : message.senderName,
+                                text: text, date: message.sentAt, kind: kind, triage: triage, mentionsMe: mentionsMe)
+        }
     }
 
     private func fallbackIfUnanswered(_ query: AIQuery, session: UUID) async {
         guard session == self.session, pendingQuestions[query.queryID] != nil else { return }
         pendingQuestions[query.queryID] = nil
-        let answer = await OfflineKnowledgeEngine().answer(query.prompt)
+        let answer = OfflineKnowledgeEngine.offlineAnswer(query.prompt, local: localMessages()).renderedText
         guard session == self.session else { return }
         storeLocal(id: UUID(), content: .aiResponse(AIResponse(queryID: query.queryID, text: answer,
                                                                answeredBy: "Offline guide (no reply from mesh)")),
@@ -385,6 +426,11 @@ final class MeshService: ObservableObject {
     func setDemoLinks(enabled: Bool) {
         demo?.setLocalLinks(enabled: enabled)
         refreshPeers()
+    }
+
+    /// Demo mode only: make a bot broadcast something (used by tests).
+    func demoBroadcast(_ content: MeshContent, from name: String) {
+        demo?.broadcast(content, from: name)
     }
 
     @discardableResult
@@ -430,6 +476,7 @@ final class MeshService: ObservableObject {
     func markRead(key: String) {
         guard let conversation = fetchConversation(key) else { return }
         conversation.unreadCount = 0
+        conversation.lastOpenedAt = Date()
         guard let peer = ConversationKey.peer(from: key) else { return }
         let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate {
             $0.conversationKey == key && $0.isOutgoing == false && $0.readReceiptSent == false
@@ -474,6 +521,11 @@ final class MeshService: ObservableObject {
         let built = DigestBuilder.build(from: inputs, now: Date())
         digest = built
         digestOverview = built.overview
+        // #11: label each item's credibility (corroborated / single report / disputed).
+        let texts = inputs.map { (text: $0.text, date: $0.date) }
+        digestCredibility = Dictionary(uniqueKeysWithValues: built.items.map {
+            ($0.id, RumourAnalyzer.assess(item: $0, verified: trust.verified, nearbyTexts: texts))
+        })
         let overview = await ai.overview(for: built, recentTexts: inputs.map(\.text))
         guard session == self.session else { return }
         digestOverview = overview
@@ -594,6 +646,12 @@ final class MeshService: ObservableObject {
             answerQuery(query, from: sender)
             return
         case .aiResponse(let response):
+            if let pending = remoteTasks[response.queryID], pending.helper == sender {
+                var verified = response
+                verified.answeredBy = "\(senderName)’s on-device AI"
+                finishRemote(response.queryID, with: verified)
+                return
+            }
             // Only answers to questions we asked, from the phone we asked. The display name comes
             // from the verified mesh identity, not from the (sender-controlled) `answeredBy` text.
             guard pendingQuestions[response.queryID] == sender else { return }
@@ -640,6 +698,19 @@ final class MeshService: ObservableObject {
         storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
                    senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
 
+        // #12: the public channel is open to anyone, so it gets a spam filter (SOS calls are never hidden).
+        if message.scope == .broadcast, case .text(let text) = envelope.content {
+            spamFilter.reported = trust.reported
+            let verdict = spamFilter.evaluate(sender: sender, text: text, date: envelope.sentAt)
+            if verdict.isSpam, let stored = fetchMessage(envelope.messageID) {
+                stored.isSpam = true
+                spamHiddenCount += 1
+                if let conversation = fetchConversation(key), conversation.unreadCount > 0 { conversation.unreadCount -= 1 }
+                try? context.save()
+                return
+            }
+        }
+
         if openConversationKey == key, isVisible, message.scope == .direct {
             node.sendReadReceipt(for: envelope.messageID, to: sender)
             fetchMessage(envelope.messageID)?.readReceiptSent = true
@@ -648,9 +719,13 @@ final class MeshService: ObservableObject {
         switch envelope.content {
         case .sos(let report):
             let priority = report.triage?.priority.label ?? "SOS"
-            notify(title: "🆘 \(priority) SOS from \(senderName)", body: report.triage?.summary ?? report.text, key: key, critical: true)
-        case .safetyCheck:
+            // #13: responders get a role-specific alert for emergencies they can help with.
+            let role = ResponderMatcher.suggest(for: report.triage, among: [PeerInfo.selfStub(node)]).isEmpty ? "" :
+                (node.capabilities.contains(.medic) && report.triage?.category == .medical ? "🩺 You're a medic nearby — " : "🧰 You're a responder nearby — ")
+            notify(title: "🆘 \(role)\(priority) SOS from \(senderName)", body: report.triage?.summary ?? report.text, key: key, critical: true)
+        case .safetyCheck(let check):
             notify(title: "\(senderName) asks: are you safe?", body: "Tap to answer “I'm safe” or “I need help”.", key: key, critical: true)
+            if case .group(let groupID) = message.scope { scheduleAutoReply(for: check, groupID: groupID) }
         case .checkIn(let checkIn) where checkIn.status == .needHelp:
             notify(title: "⚠️ \(senderName) needs help", body: checkIn.note ?? "Open the family locator.", key: key, critical: true)
         case .sosUpdate:
@@ -661,18 +736,121 @@ final class MeshService: ObservableObject {
         }
     }
 
+    /// Serve another phone's AI request (#15): answer, triage, translate or summarise.
     private func answerQuery(_ query: AIQuery, from sender: PeerID) {
         guard settings.helpOthersWithAI, ai.hasGenerativeModel else { return }
         let node = self.node
         Task { [weak self] in
             guard let self else { return }
-            let answer = await self.ai.answer(query.prompt)
+            var response: AIResponse
+            let label = "\(self.nickname)’s on-device AI"
+            switch query.effectiveTask {
+            case .answer:
+                // Remote questions get no access to our private messages: local context is empty.
+                let answer = await self.ai.answer(query.prompt, local: [])
+                response = AIResponse(queryID: query.queryID, text: answer.renderedText, answeredBy: label)
+            case .triage:
+                let triage = await self.ai.triage(query.prompt)
+                response = AIResponse(queryID: query.queryID, text: triage.summary, answeredBy: label, triage: triage)
+            case .translate:
+                let translated = await self.ai.translate(query.prompt, to: query.targetLanguage ?? "en")
+                guard let translated else { return }
+                response = AIResponse(queryID: query.queryID, text: translated, answeredBy: label)
+            case .summarize:
+                let summary = await self.ai.summarize(query.prompt)
+                response = AIResponse(queryID: query.queryID, text: summary, answeredBy: label)
+            }
             // Never answer from a new identity after a panic wipe (would link old and new).
             guard self.node === node else { return }
-            let response = AIResponse(queryID: query.queryID, text: answer, answeredBy: "\(self.nickname)’s on-device AI")
             _ = try? node.sendDirect(.aiResponse(response), to: sender)
         }
     }
+
+    // MARK: - #15 Remote AI tasks
+
+    private var remoteTasks: [UUID: (helper: PeerID, continuation: CheckedContinuation<AIResponse?, Never>)] = [:]
+
+    /// Ask the nearest AI-capable phone to do a task; nil on timeout or when nobody can help.
+    func requestRemote(_ task: AITask, prompt: String, targetLanguage: String? = nil, timeout: TimeInterval = 30) async -> AIResponse? {
+        guard let helper = node.bestAIHelper() else { return nil }
+        let query = AIQuery(prompt: prompt, task: task, targetLanguage: targetLanguage)
+        guard (try? node.sendDirect(.aiQuery(query), to: helper.peerID)) != nil else { return nil }
+        return await withCheckedContinuation { continuation in
+            remoteTasks[query.queryID] = (helper.peerID, continuation)
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                self?.finishRemote(query.queryID, with: nil)
+            }
+        }
+    }
+
+    private func finishRemote(_ id: UUID, with response: AIResponse?) {
+        guard let pending = remoteTasks.removeValue(forKey: id) else { return }
+        pending.continuation.resume(returning: response)
+    }
+
+    // MARK: - #10 Catch-up
+
+    /// Where the current visit's catch-up starts: the last-opened time *before* this visit, since
+    /// opening a conversation immediately marks it read.
+    private var visitCatchUpStart: [String: Date] = [:]
+
+    private func beginVisit(_ key: String) {
+        visitCatchUpStart[key] = fetchConversation(key)?.lastOpenedAt ?? Date().addingTimeInterval(-24 * 3600)
+    }
+
+    /// What I missed in a conversation before this visit (or the last 24 h).
+    func catchUp(key: String) async -> (summary: CatchUpSummary, abstract: String?) {
+        let since = (openConversationKey == key ? visitCatchUpStart[key] : nil)
+            ?? fetchConversation(key)?.lastOpenedAt ?? Date().addingTimeInterval(-24 * 3600)
+        let pool = localMessages(hours: 48).filter { message in
+            fetchMessage(message.id)?.conversationKey == key && message.senderName != "You"
+        }
+        let summary = CatchUpBuilder.build(pool, since: since)
+        guard summary.messageCount >= 3 else { return (summary, nil) }
+        let transcript = pool.filter { $0.date >= since }.suffix(60)
+            .map { "\($0.senderName): \($0.text)" }.joined(separator: "\n")
+        if ai.hasGenerativeModel {
+            return (summary, await ai.summarize(transcript))
+        }
+        let remote = await requestRemote(.summarize, prompt: transcript, timeout: 20)
+        return (summary, remote.map { "\($0.text)\n— summarised by \($0.answeredBy)" })
+    }
+
+    // MARK: - #13 Auto-reply helper
+
+    private var answeredSafetyChecks: Set<UUID> = []
+    /// Last time the user did something in the app (sending counts).
+    private(set) var lastUserActivity = Date()
+    /// Delay before the auto-reply (shortened in tests).
+    var autoReplyDelay: TimeInterval = 5 * 60
+
+    /// If the user hasn't answered an "are you safe?" in time, reply with facts only — no claim
+    /// of being safe: that they haven't answered, battery, and when they were last active.
+    private func scheduleAutoReply(for check: SafetyCheck, groupID: UUID) {
+        guard settings.autoReplySafetyChecks else { return }
+        let session = self.session
+        Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: UInt64(self.autoReplyDelay * 1_000_000_000))
+            guard session == self.session, !self.answeredSafetyChecks.contains(check.requestID) else { return }
+            self.answeredSafetyChecks.insert(check.requestID)
+            let minutes = Int(Date().timeIntervalSince(self.lastUserActivity) / 60)
+            var parts = ["Auto-reply: \(self.nickname) hasn't answered yet"]
+            if let battery = self.batteryPercent { parts.append("battery \(battery)%") }
+            parts.append(minutes < 1 ? "active just now" : "last active \(minutes) min ago")
+            self.send(.text(parts.joined(separator: " · ")), to: ConversationKey.group(groupID))
+        }
+    }
+
+    // MARK: - #11 Credibility
+
+    @Published private(set) var digestCredibility: [String: Credibility] = [:]
+
+    // MARK: - #12 Spam
+
+    private var spamFilter = SpamFilter()
+    @Published private(set) var spamHiddenCount = 0
 
     private func notify(title: String, body: String, key: String, critical: Bool = false) {
         guard settings.notificationsEnabled, mode == .bluetooth,
@@ -715,5 +893,14 @@ extension MeshService: MeshNodeDelegate {
             refreshRadioState()
             snapshotDirty = true
         }
+    }
+}
+
+
+extension PeerInfo {
+    /// This device as a PeerInfo (for role matching against our own capabilities).
+    static func selfStub(_ node: MeshNode) -> PeerInfo {
+        PeerInfo(peerID: node.peerID, identity: node.identity.publicIdentity, nickname: node.nickname,
+                 capabilities: node.capabilities, lastSeen: Date(), hops: 0)
     }
 }

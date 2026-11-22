@@ -58,6 +58,21 @@ struct SettingsView: View {
                     Text("Safety & privacy")
                 }
 
+                Section {
+                    Toggle("I'm a medic (doctor, nurse, first-aider)", isOn: $settings.isMedic)
+                        .onChange(of: settings.isMedic) { _, _ in mesh.applySettingsChange() }
+                        .accessibilityIdentifier("settings.medic")
+                    Toggle("I'm a rescuer / volunteer", isOn: $settings.isRescuer)
+                        .onChange(of: settings.isRescuer) { _, _ in mesh.applySettingsChange() }
+                        .accessibilityIdentifier("settings.rescuer")
+                    Toggle("Auto-reply to “are you safe?” after 5 min", isOn: $settings.autoReplySafetyChecks)
+                        .accessibilityIdentifier("settings.autoReply")
+                } header: {
+                    Text("Helping others")
+                } footer: {
+                    Text("Roles are shared with nearby phones so people with emergencies can find you. The auto-reply never says you're safe — only that you haven't answered, your battery, and when you were last active.")
+                }
+
                 Section("Notifications") {
                     Toggle("Message & SOS alerts", isOn: $settings.notificationsEnabled)
                         .onChange(of: settings.notificationsEnabled) { _, enabled in

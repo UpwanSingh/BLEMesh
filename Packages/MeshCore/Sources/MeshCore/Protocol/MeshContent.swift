@@ -182,25 +182,48 @@ public struct GroupInvite: Codable, Equatable, Sendable {
     }
 }
 
+/// What a phone without an on-device model can ask a capable peer to do for it.
+public enum AITask: String, Codable, Sendable {
+    /// Answer a question (default).
+    case answer
+    /// Triage an emergency message (returns `AIResponse.triage`).
+    case triage
+    /// Translate `prompt` into `targetLanguage`.
+    case translate
+    /// Summarise the text in `prompt` (e.g. a catch-up of many messages).
+    case summarize
+}
+
 public struct AIQuery: Codable, Equatable, Sendable {
     public var queryID: UUID
     public var prompt: String
+    /// nil means `.answer` (older peers don't send it).
+    public var task: AITask?
+    /// For `.translate`: BCP-47 target language, e.g. "hi".
+    public var targetLanguage: String?
 
-    public init(queryID: UUID = UUID(), prompt: String) {
+    public init(queryID: UUID = UUID(), prompt: String, task: AITask? = nil, targetLanguage: String? = nil) {
         self.queryID = queryID
         self.prompt = prompt
+        self.task = task
+        self.targetLanguage = targetLanguage
     }
+
+    public var effectiveTask: AITask { task ?? .answer }
 }
 
 public struct AIResponse: Codable, Equatable, Sendable {
     public var queryID: UUID
     public var text: String
     public var answeredBy: String
+    /// For `.triage` tasks.
+    public var triage: SOSTriage?
 
-    public init(queryID: UUID, text: String, answeredBy: String) {
+    public init(queryID: UUID, text: String, answeredBy: String, triage: SOSTriage? = nil) {
         self.queryID = queryID
         self.text = text
         self.answeredBy = answeredBy
+        self.triage = triage
     }
 }
 

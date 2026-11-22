@@ -125,6 +125,20 @@ struct SOSRow: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.08)))
                 .accessibilityIdentifier("sos.medical")
             }
+            if !message.isOutgoing || state.responders.isEmpty {
+                let helpers = ResponderMatcher.suggest(for: report.triage, among: mesh.peers.filter { $0.peerID != message.sender })
+                if !helpers.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: report.triage?.category == .medical ? "cross.case.fill" : "person.badge.shield.checkmark")
+                            .accessibilityHidden(true)
+                        Text("Nearby: " + helpers.map { "\(mesh.uniqueName(for: $0.peerID)) (\($0.capabilities.contains(.medic) ? "medic" : "rescuer"), \(($0.hops ?? 0) + 1) hop\(($0.hops ?? 0) == 0 ? "" : "s"))" }.joined(separator: ", "))
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("sos.suggestedResponders")
+                }
+            }
             ForEach(state.responders, id: \.peer) { responder in
                 Label("\(mesh.uniqueName(for: responder.peer)): \(responder.status.label)" + (responder.note.map { " — \($0)" } ?? ""),
                       systemImage: "figure.run")

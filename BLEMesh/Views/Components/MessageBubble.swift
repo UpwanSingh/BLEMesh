@@ -15,6 +15,8 @@ struct MessageBubble: View {
 
     @State private var showTranslation = false
     @State private var answered = false
+    @State private var remoteTranslation: String?
+    @State private var askingRemote = false
     @State private var translated: String?
     @State private var translationFailed = false
 
@@ -115,7 +117,25 @@ struct MessageBubble: View {
                     Label(translated, systemImage: "character.bubble")
                         .font(.callout)
                 } else if translationFailed {
-                    Text("Translation unavailable for this language pair").font(.caption)
+                    if let remote = remoteTranslation {
+                        Label(remote, systemImage: "person.wave.2").font(.callout)
+                            .accessibilityIdentifier("message.remoteTranslation")
+                    } else if mesh.node.bestAIHelper() != nil {
+                        Button(askingRemote ? "Asking a nearby phone…" : "Translate with a nearby AI phone") {
+                            askingRemote = true
+                            Task {
+                                remoteTranslation = await mesh.requestRemote(.translate, prompt: bodyText,
+                                                                             targetLanguage: settings.preferredLanguage)?.text
+                                    ?? "No nearby phone could translate this."
+                                askingRemote = false
+                            }
+                        }
+                        .font(.caption)
+                        .disabled(askingRemote)
+                        .accessibilityIdentifier("message.translateRemote")
+                    } else {
+                        Text("Translation unavailable for this language pair").font(.caption)
+                    }
                 } else {
                     ProgressView().controlSize(.small)
                 }

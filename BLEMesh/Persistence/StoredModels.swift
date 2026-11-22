@@ -36,6 +36,8 @@ final class StoredConversation {
     var unreadCount: Int
     var updatedAt: Date
     var lastPreview: String
+    /// When the user last had this conversation open (start of "what I missed").
+    var lastOpenedAt: Date?
 
     init(key: String, kind: ConversationKind, title: String, updatedAt: Date = .now) {
         self.key = key
@@ -67,6 +69,8 @@ final class StoredMessage {
     var statusRaw: Int
     /// Incoming: whether we already told the sender we read it.
     var readReceiptSent: Bool
+    /// Flagged by the spam filter (public channel); hidden unless the user reveals it.
+    var isSpam: Bool = false
 
     init(id: UUID, conversationKey: String, senderHex: String, senderName: String, isOutgoing: Bool,
          content: MeshContent, sentAt: Date, receivedAt: Date = .now, hops: Int = 0,

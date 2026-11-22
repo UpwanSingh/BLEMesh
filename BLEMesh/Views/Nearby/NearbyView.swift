@@ -5,18 +5,40 @@ import MeshCore
 struct NearbyView: View {
     @EnvironmentObject private var mesh: MeshService
     @State private var digestExpanded = true
+    @State private var showSpam = false
+    @State private var showCatchUp = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 RadioStatusBanner()
                 DigestCard(expanded: $digestExpanded)
+                if mesh.spamHiddenCount > 0 {
+                    Button {
+                        showSpam.toggle()
+                    } label: {
+                        Label(showSpam ? "Hide spam" : "\(mesh.spamHiddenCount) message\(mesh.spamHiddenCount == 1 ? "" : "s") hidden as spam — show",
+                              systemImage: "eye.slash")
+                            .font(.caption)
+                    }
+                    .padding(.vertical, 4)
+                    .accessibilityIdentifier("nearby.spamToggle")
+                }
                 Divider()
-                MessageList(conversationKey: ConversationKey.nearby, showSenders: true)
+                MessageList(conversationKey: ConversationKey.nearby, showSenders: true, includeSpam: showSpam)
+                    .id(showSpam)
                 Composer(conversationKey: ConversationKey.nearby, placeholder: "Message everyone nearby")
             }
             .navigationTitle("Nearby")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showCatchUp = true } label: { Image(systemName: "text.badge.star") }
+                        .accessibilityIdentifier("nearby.catchUp")
+                        .accessibilityLabel("Catch me up")
+                }
+            }
+            .sheet(isPresented: $showCatchUp) { CatchUpView(conversationKey: ConversationKey.nearby) }
             .onAppear {
                 mesh.openConversationKey = ConversationKey.nearby
                 mesh.markRead(key: ConversationKey.nearby)
@@ -65,6 +87,13 @@ struct DigestCard: View {
                             PriorityBadge(priority: item.priority)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(item.headline).font(.caption)
+                                if let credibility = mesh.digestCredibility[item.id] {
+                                    Label(credibility.label, systemImage: credibility == .corroborated ? "checkmark.circle"
+                                          : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
+                                        .font(.caption2)
+                                        .foregroundStyle(credibility == .corroborated ? .green : (credibility == .disputed ? .red : .orange))
+                                        .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
+                                }
                                 Text("\(item.reporters) report\(item.reporters == 1 ? "" : "s")\(item.locations.first.map { " · \($0)" } ?? "")")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
