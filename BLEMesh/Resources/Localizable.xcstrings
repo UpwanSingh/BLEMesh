@@ -786,6 +786,16 @@
         }
       }
     },
+    "Distance and direction: %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दूरी और दिशा: %@"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "hi": {
@@ -802,6 +812,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "दोहराव रोके गए"
+          }
+        }
+      }
+    },
+    "E": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पूर्व"
           }
         }
       }
@@ -1180,6 +1201,16 @@
         }
       }
     },
+    "List": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सूची"
+          }
+        }
+      }
+    },
     "Location": {
       "localizations": {
         "hi": {
@@ -1207,6 +1238,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "बैटरी कम"
+          }
+        }
+      }
+    },
+    "Map": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नक्शा"
+          }
+        }
+      }
+    },
+    "Map tiles need internet. Pins, distances and directions work offline.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नक्शे की तस्वीरों के लिए इंटरनेट चाहिए। पिन, दूरी और दिशा बिना इंटरनेट काम करते हैं।"
           }
         }
       }
@@ -1394,6 +1445,39 @@
         }
       }
     },
+    "N": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उत्तर"
+          }
+        }
+      }
+    },
+    "NE": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उत्तर-पूर्व"
+          }
+        }
+      }
+    },
+    "NW": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उत्तर-पश्चिम"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "hi": {
@@ -1490,6 +1574,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "आस-पास कोई SOS नहीं।"
+          }
+        }
+      }
+    },
+    "No SOS calls with a location yet.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी किसी SOS में लोकेशन नहीं है।"
           }
         }
       }
@@ -1986,6 +2080,28 @@
         }
       }
     },
+    "S": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दक्षिण"
+          }
+        }
+      }
+    },
+    "SE": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दक्षिण-पूर्व"
+          }
+        }
+      }
+    },
     "SOS": {
       "localizations": {
         "hi": {
@@ -2022,6 +2138,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "आस-पास सभी को SOS"
+          }
+        }
+      }
+    },
+    "SW": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दक्षिण-पश्चिम"
           }
         }
       }
@@ -2529,6 +2656,16 @@
         }
       }
     },
+    "View": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दृश्य"
+          }
+        }
+      }
+    },
     "Violence": {
       "extractionState": "manual",
       "localizations": {
@@ -2556,6 +2693,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "आवाज़, अनुवाद, SOS प्राथमिकता"
+          }
+        }
+      }
+    },
+    "W": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पश्चिम"
           }
         }
       }
@@ -2640,6 +2788,16 @@
         }
       }
     },
+    "Your SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका SOS"
+          }
+        }
+      }
+    },
     "Your code — let them scan it": {
       "localizations": {
         "hi": {
@@ -2706,6 +2864,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "जैसे परिवार, बचाव दल"
+          }
+        }
+      }
+    },
+    "here": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यहीं"
           }
         }
       }

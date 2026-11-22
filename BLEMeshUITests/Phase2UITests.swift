@@ -134,3 +134,35 @@ final class Phase2UITests: XCTestCase {
         screenshot("p2-07-roles")
     }
 }
+
+/// Phase 3: offline directions and the SOS map.
+final class SOSMapUITests: XCTestCase {
+    var app: XCUIApplication!
+
+    override func setUp() {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-skipSplash"]
+    }
+
+    private func el(_ id: String) -> XCUIElement { app.descendants(matching: .any)[id].firstMatch }
+
+    func testSOSShowsDirectionsAndMap() {
+        app.launch()
+        app.tabBars.buttons["SOS"].tap()
+        // Meera's SOS (~14 s) carries GPS; the demo phone stands ~290 m south-west of it.
+        let directions = el("sos.directions")
+        XCTAssertTrue(directions.waitForExistence(timeout: 30))
+        XCTAssertTrue(directions.label.contains("290 m NE"), directions.label)
+        app.segmentedControls.buttons["Map"].tap()
+        XCTAssertTrue(el("sosmap.pin").waitForExistence(timeout: 10), "SOS pin on the map")
+        XCTAssertTrue(el("sosmap.pin").label.contains("Meera"), el("sosmap.pin").label)
+        XCTAssertTrue(el("sosmap.me").exists, "this phone on the map")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "p3-sos-map"
+        shot.lifetime = .keepAlways
+        add(shot)
+        app.segmentedControls.buttons["List"].tap()
+        XCTAssertTrue(el("sos.directions").waitForExistence(timeout: 5))
+    }
+}

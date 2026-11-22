@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01DC0F256853F4788CBAB7C1 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */; };
+		066A6A896CAB0D10CBFBFAB0 /* SOSMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E70B3FDF8295354D9EF0302F /* SOSMapView.swift */; };
 		09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9181EC87D7992C670AEC8834 /* TrustStore.swift */; };
 		0E5FE6A8B7E9081005DA8E5D /* Phase2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03A7D00F1D604D003786A264 /* Phase2UITests.swift */; };
 		1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D01F697E706885E4168E385 /* MeshServiceTests.swift */; };
@@ -112,6 +113,7 @@
 		D7F8D968F43CA4E10BB6C1A2 /* LocationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationProvider.swift; sourceTree = "<group>"; };
 		D968E715388EDAA0753F2915 /* BLEMeshUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BLEMeshUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D98495B9FFA743FAB55A879D /* BLEMeshTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BLEMeshTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E70B3FDF8295354D9EF0302F /* SOSMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSMapView.swift; sourceTree = "<group>"; };
 		FACBEC4D40FCBDB65708CA3C /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -190,6 +192,7 @@
 		5380C927D95085D5467D887C /* SOS */ = {
 			isa = PBXGroup;
 			children = (
+				E70B3FDF8295354D9EF0302F /* SOSMapView.swift */,
 				507CD7DBC28C06A30297FD74 /* SOSView.swift */,
 			);
 			path = SOS;
@@ -529,6 +532,7 @@
 				F8BE51211823C6F1F7ECC0DA /* NetworkView.swift in Sources */,
 				97F09356B174ADAE139D5101 /* OnDeviceAI.swift in Sources */,
 				2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */,
+				066A6A896CAB0D10CBFBFAB0 /* SOSMapView.swift in Sources */,
 				B425D255C83C0860D937FEFB /* SOSView.swift in Sources */,
 				489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */,
 				613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */,

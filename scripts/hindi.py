@@ -284,6 +284,14 @@ HI = {
     "· %lld people": "· %lld लोग",
     "“%@”": "“%@”",
     "": "",
+    "List": "सूची",
+    "Map": "नक्शा",
+    "View": "दृश्य",
+    "You": "आप",
+    "Your SOS": "आपका SOS",
+    "No SOS calls with a location yet.": "अभी किसी SOS में लोकेशन नहीं है।",
+    "Map tiles need internet. Pins, distances and directions work offline.": "नक्शे की तस्वीरों के लिए इंटरनेट चाहिए। पिन, दूरी और दिशा बिना इंटरनेट काम करते हैं।",
+    "Distance and direction: %@": "दूरी और दिशा: %@",
     " · %@": " · %@",
     "…or paste their code": "…या उनका कोड पेस्ट करें",
     "⚠️ %@ needs help": "⚠️ %@ को मदद चाहिए",
@@ -301,6 +309,9 @@ MANUAL = {
     "Open": "खुला", "Acknowledged": "देख लिया गया", "Help on the way": "मदद आ रही है", "Cancelled": "रद्द",
     "Confirmed by several people": "कई लोगों ने पुष्टि की", "Unverified — single report": "अपुष्ट — एक ही रिपोर्ट",
     "Disputed": "विवादित",
+    "here": "यहीं",
+    "N": "उत्तर", "NE": "उत्तर-पूर्व", "E": "पूर्व", "SE": "दक्षिण-पूर्व",
+    "S": "दक्षिण", "SW": "दक्षिण-पश्चिम", "W": "पश्चिम", "NW": "उत्तर-पश्चिम",
 }
 
 

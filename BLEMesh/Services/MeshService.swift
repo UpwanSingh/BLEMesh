@@ -23,6 +23,8 @@ final class MeshService: ObservableObject {
     @Published private(set) var stats = MeshStats()
     @Published private(set) var groups: [GroupInfo] = []
     @Published private(set) var digest: AreaDigest?
+    /// This phone's last GPS fix, for offline directions to SOS calls (demo: a fixed point near the scripted ones).
+    @Published private(set) var myLocation: GeoPoint?
     @Published private(set) var digestOverview: String = ""
     @Published private(set) var isBuildingDigest = false
     /// Outstanding "Ask the mesh" questions: queryID → the helper we asked. Answers from anyone
@@ -788,6 +790,17 @@ final class MeshService: ObservableObject {
     private func finishRemote(_ id: UUID, with response: AIResponse?) {
         guard let pending = remoteTasks.removeValue(forKey: id) else { return }
         pending.continuation.resume(returning: response)
+    }
+
+    // MARK: - Location (SOS directions and map)
+
+    static let demoLocation = GeoPoint(latitude: 28.6125, longitude: 77.2065, accuracyMeters: 10)
+
+    /// Refresh `myLocation`. Asks for permission only when `prompt` is true (the user opened the map).
+    func refreshMyLocation(prompt: Bool = false) async {
+        if mode == .demo { myLocation = Self.demoLocation; return }
+        guard prompt || LocationProvider.isAuthorized else { return }
+        if let fix = await LocationProvider.currentLocation() { myLocation = fix }
     }
 
     // MARK: - #10 Catch-up

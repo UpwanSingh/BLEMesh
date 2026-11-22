@@ -9,6 +9,7 @@ struct SOSView: View {
     private var nearbyMessages: [StoredMessage]
     @State private var showCompose = false
     @State private var path: [String] = []
+    @State private var showMap = false
 
     private var reports: [(StoredMessage, SOSReport)] {
         nearbyMessages.compactMap { message in
@@ -45,11 +46,23 @@ struct SOSView: View {
                 }
                 CheckInSection(path: $path)
                 Section {
+                    Picker("View", selection: $showMap) {
+                        Text("List").tag(false)
+                        Text("Map").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("sos.viewPicker")
                     if reports.isEmpty {
                         Text("No SOS calls nearby.").foregroundStyle(Theme.Colors.secondaryText)
                     }
-                    ForEach(reports, id: \.0.id) { message, report in
-                        SOSRow(message: message, report: report) { key in path.append(key) }
+                    if showMap {
+                        SOSMapView(reports: reports, me: mesh.myLocation)
+                            .frame(height: 360)
+                            .listRowInsets(EdgeInsets())
+                    } else {
+                        ForEach(reports, id: \.0.id) { message, report in
+                            SOSRow(message: message, report: report) { key in path.append(key) }
+                        }
                     }
                 } header: {
                     Text("SOS board (\(reports.count))").foregroundStyle(Theme.Colors.secondaryText)
@@ -66,6 +79,10 @@ struct SOSView: View {
                 }
             }
             .sheet(isPresented: $showCompose) { SOSComposeView() }
+            .task { await mesh.refreshMyLocation() }
+            .onChange(of: showMap) { _, map in
+                if map { Task { await mesh.refreshMyLocation(prompt: true) } }
+            }
         }
     }
 }
@@ -147,6 +164,12 @@ struct SOSRow: View {
             AdaptiveRow(spacing: 10) {
                 Text(message.isOutgoing ? "You" : message.senderName).font(.caption.weight(.medium))
                 if message.hops > 0 { Text("\(message.hops + 1) hops away").font(.caption) }
+                if let location = report.location, let me = mesh.myLocation, !message.isOutgoing {
+                    Label(me.localizedDirections(to: location), systemImage: "location.north.line")
+                        .font(.caption.weight(.semibold))
+                        .accessibilityLabel(Text("Distance and direction: \(me.localizedDirections(to: location))"))
+                        .accessibilityIdentifier("sos.directions")
+                }
                 if let location = report.location, let url = location.mapsURL {
                     Link(destination: url) {
                         Label("Location", systemImage: "location.fill").font(.caption)
