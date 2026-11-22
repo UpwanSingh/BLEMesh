@@ -20,7 +20,7 @@ struct Composer: View {
                 HStack {
                     Image(systemName: "waveform")
                         .symbolEffect(.variableColor.iterative, isActive: true)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.danger)
                     Text(recorder.transcript.isEmpty ? "Listening… release to send" : recorder.transcript)
                         .font(.callout)
                         .lineLimit(3)
@@ -30,7 +30,7 @@ struct Composer: View {
                 .accessibilityIdentifier("composer.liveTranscript")
             }
             if case .unavailable(let reason) = recorder.state {
-                Text(reason).font(.caption).foregroundStyle(.red).padding(.horizontal)
+                Text(reason).font(.caption).foregroundStyle(Theme.Colors.danger).padding(.horizontal)
             }
             HStack(spacing: 10) {
                 if focused {
@@ -39,7 +39,7 @@ struct Composer: View {
                     } label: {
                         Image(systemName: "keyboard.chevron.compact.down")
                             .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     }
                     .accessibilityLabel("Hide keyboard")
                     .accessibilityIdentifier("composer.hideKeyboard")

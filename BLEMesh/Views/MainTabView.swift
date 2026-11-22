@@ -54,22 +54,23 @@ struct RadioStatusBanner: View {
                 .frame(width: 8, height: 8)
             Text(mesh.radioStatus)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
                 .accessibilityIdentifier("radio.status")
             Spacer()
             if mesh.linkCount > 0 {
                 Label("\(mesh.peers.filter(\.isReachable).count) reachable", systemImage: "person.2.wave.2")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 6)
         .background(.bar)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var color: Color {
-        if !mesh.isRadioReady { return .red }
-        return mesh.linkCount > 0 ? .green : .orange
+        if !mesh.isRadioReady { return Theme.Colors.danger }
+        return mesh.linkCount > 0 ? Theme.Colors.success : Theme.Colors.warning
     }
 }

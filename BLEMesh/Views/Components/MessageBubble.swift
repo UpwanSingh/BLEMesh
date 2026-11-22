@@ -29,7 +29,7 @@ struct MessageBubble: View {
                 if showSender && !message.isOutgoing {
                     Text(message.senderName)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
                 bubble
                 footer
@@ -82,10 +82,10 @@ struct MessageBubble: View {
                         } else {
                             HStack {
                                 Button("I'm safe") { answer(.safe, check) }
-                                    .tint(.green)
+                                    .tint(Theme.Colors.success)
                                     .accessibilityIdentifier("safety.answer.safe")
                                 Button("I need help") { answer(.needHelp, check) }
-                                    .tint(.orange)
+                                    .tint(Theme.Colors.warning)
                                     .accessibilityIdentifier("safety.answer.help")
                             }
                             .buttonStyle(.borderedProminent)
@@ -166,7 +166,7 @@ struct MessageBubble: View {
             }
         }
         .font(.caption2)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.Colors.secondaryText)
     }
 
     @ViewBuilder private var menu: some View {
@@ -213,7 +213,7 @@ struct MessageBubble: View {
     }
 
     private var bubbleColor: Color {
-        if case .sos? = content { return message.isOutgoing ? .red : Color.red.opacity(0.12) }
+        if case .sos? = content { return message.isOutgoing ? Theme.Colors.danger : Color.red.opacity(0.12) }
         return message.isOutgoing ? Theme.Colors.accent : Theme.Colors.card
     }
 }
@@ -253,9 +253,9 @@ struct StatusIcon: View {
         switch status {
         case .queued: Image(systemName: "clock").accessibilityLabel("Queued")
         case .sent: Image(systemName: "checkmark").accessibilityLabel("Sent")
-        case .delivered: Image(systemName: "checkmark.circle.fill").foregroundStyle(.blue).accessibilityLabel("Delivered")
-        case .read: Image(systemName: "eye.fill").foregroundStyle(.blue).accessibilityLabel("Read")
-        case .failed: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red).accessibilityLabel("Failed")
+        case .delivered: Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.Colors.accent).accessibilityLabel("Delivered")
+        case .read: Image(systemName: "eye.fill").foregroundStyle(Theme.Colors.accent).accessibilityLabel("Read")
+        case .failed: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.Colors.danger).accessibilityLabel("Failed")
         }
     }
 }
@@ -293,16 +293,16 @@ struct PriorityBadge: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(Capsule().fill(color))
-            .foregroundStyle(.white)
+            .foregroundStyle(priority == .medium ? Color.black : Color.white)
             .accessibilityIdentifier("priority.\(priority.label)")
     }
 
     private var color: Color {
         switch priority {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow.opacity(0.9)
-        case .low: return .gray
+        case .critical: return Theme.Colors.danger
+        case .high: return Theme.Colors.warning
+        case .medium: return .yellow
+        case .low: return Theme.Colors.secondaryText
         }
     }
 }

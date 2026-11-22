@@ -33,12 +33,11 @@ struct SOSView: View {
                             Text("Send SOS").font(.title2.weight(.bold))
                             Text("Reaches every phone in range and is relayed onward")
                                 .font(.caption)
-                                .opacity(0.9)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                         .foregroundStyle(.white)
-                        .background(RoundedRectangle(cornerRadius: 20).fill(Color.red.gradient))
+                        .background(RoundedRectangle(cornerRadius: 20).fill(Theme.Colors.danger))
                     }
                     .buttonStyle(.plain)
                     .listRowInsets(EdgeInsets())
@@ -47,15 +46,15 @@ struct SOSView: View {
                 CheckInSection(path: $path)
                 Section {
                     if reports.isEmpty {
-                        Text("No SOS calls nearby.").foregroundStyle(.secondary)
+                        Text("No SOS calls nearby.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                     ForEach(reports, id: \.0.id) { message, report in
                         SOSRow(message: message, report: report) { key in path.append(key) }
                     }
                 } header: {
-                    Text("SOS board (\(reports.count))")
+                    Text("SOS board (\(reports.count))").foregroundStyle(Theme.Colors.secondaryText)
                 } footer: {
-                    Text("Ranked by urgency using on-device triage. Treat single, unconfirmed reports with care.")
+                    Text("Ranked by urgency using on-device triage. Treat single, unconfirmed reports with care.").foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
             .navigationTitle("SOS")
@@ -97,24 +96,24 @@ struct SOSRow: View {
                     if let people = triage.peopleAffected { Text("· \(people) people").font(.caption) }
                 }
                 Spacer()
-                Text(message.sentAt, style: .relative).font(.caption2).foregroundStyle(.secondary)
+                Text(message.sentAt, style: .relative).font(.caption2).foregroundStyle(Theme.Colors.secondaryText)
             }
-            HStack(spacing: 6) {
+            FlowLayout(spacing: 6, lineSpacing: 4) {
                 StatusPill(status: state.status)
                 if !state.responders.isEmpty {
-                    Text("\(state.responders.count) responding").font(.caption).foregroundStyle(.secondary)
+                    Text("\(state.responders.count) responding").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                 }
                 if state.resolvedClaims == 1 && state.status != .resolved {
-                    Text("1 says resolved").font(.caption).foregroundStyle(.secondary)
+                    Text("1 says resolved").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                 }
                 if !message.isOutgoing, let sender = message.sender, mesh.isNewDevice(sender) {
-                    Label("New device", systemImage: "exclamationmark.shield").font(.caption2).foregroundStyle(.orange)
+                    Label("New device", systemImage: "exclamationmark.shield").font(.caption2).foregroundStyle(Theme.Colors.warning)
                         .accessibilityIdentifier("sos.newDevice")
                 }
             }
             Text(report.triage?.summary ?? report.text).font(.body)
             if report.triage?.summary != nil {
-                Text("“\(report.text)”").font(.caption).foregroundStyle(.secondary)
+                Text("“\(report.text)”").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
             }
             if let medical = report.medical, !medical.isEmpty {
                 VStack(alignment: .leading, spacing: 1) {
@@ -134,7 +133,7 @@ struct SOSRow: View {
                         Text("Nearby: " + helpers.map { "\(mesh.uniqueName(for: $0.peerID)) (\($0.capabilities.contains(.medic) ? "medic" : "rescuer"), \(($0.hops ?? 0) + 1) hop\(($0.hops ?? 0) == 0 ? "" : "s"))" }.joined(separator: ", "))
                     }
                     .font(.caption)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Theme.Colors.accent)
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("sos.suggestedResponders")
                 }
@@ -143,29 +142,35 @@ struct SOSRow: View {
                 Label("\(mesh.uniqueName(for: responder.peer)): \(responder.status.label)" + (responder.note.map { " — \($0)" } ?? ""),
                       systemImage: "figure.run")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
-            HStack(spacing: 10) {
+            FlowLayout(spacing: 10, lineSpacing: 2) {
                 Text(message.isOutgoing ? "You" : message.senderName).font(.caption.weight(.medium))
                 if message.hops > 0 { Text("\(message.hops + 1) hops away").font(.caption) }
                 if let location = report.location, let url = location.mapsURL {
-                    Link(destination: url) { Label("Location", systemImage: "location.fill").font(.caption) }
+                    Link(destination: url) {
+                        Label("Location", systemImage: "location.fill").font(.caption)
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                    }
+                    .foregroundStyle(Theme.Colors.accent)
                 }
                 if let hints = report.triage?.locationHints, let first = hints.first {
                     Label(first, systemImage: "mappin").font(.caption)
                 }
-                Spacer()
                 if !message.isOutgoing, let sender = message.sender {
                     Button {
                         onReply(mesh.startDirectConversation(with: sender, name: message.senderName))
                     } label: {
                         Text("Reply").font(.caption.weight(.semibold))
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
+                    .foregroundStyle(Theme.Colors.accent)
                     .fixedSize()
                 }
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.secondaryText)
             if state.status < .resolved {
                 actions
             }
@@ -191,7 +196,7 @@ struct SOSRow: View {
                     .accessibilityIdentifier("sos.action.resolved")
             }
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.borderedProminent) // white on the accessible accent: readable on any row
         .controlSize(.small)
         .font(.caption.weight(.semibold))
     }
@@ -211,11 +216,11 @@ struct StatusPill: View {
 
     private var color: Color {
         switch status {
-        case .open: return .red
-        case .acknowledged: return .orange
-        case .enRoute: return .blue
-        case .resolved: return .green
-        case .cancelled: return .gray
+        case .open: return Theme.Colors.danger
+        case .acknowledged: return Theme.Colors.warning
+        case .enRoute: return Theme.Colors.accent
+        case .resolved: return Theme.Colors.success
+        case .cancelled: return Theme.Colors.secondaryText
         }
     }
 }
@@ -233,20 +238,22 @@ struct CheckInSection: View {
                     report(.safe)
                 } label: {
                     Label("I'm safe", systemImage: "checkmark.shield.fill").frame(maxWidth: .infinity)
+                        .foregroundStyle(.white)
                 }
-                .tint(.green)
+                .tint(Theme.Colors.success)
                 .accessibilityIdentifier("checkin.safe")
                 Button {
                     report(.needHelp)
                 } label: {
                     Label("I need help", systemImage: "exclamationmark.triangle.fill").frame(maxWidth: .infinity)
+                        .foregroundStyle(.white)
                 }
-                .tint(.orange)
+                .tint(Theme.Colors.warning)
                 .accessibilityIdentifier("checkin.needHelp")
             }
             .buttonStyle(.borderedProminent)
             if let confirmation {
-                Text(confirmation).font(.caption).foregroundStyle(.secondary)
+                Text(confirmation).font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                     .accessibilityIdentifier("checkin.confirmation")
             }
             ForEach(mesh.groups) { group in
@@ -258,10 +265,10 @@ struct CheckInSection: View {
                 .accessibilityIdentifier("checkin.locator.\(group.name)")
             }
         } header: {
-            Text("Check in")
+            Text("Check in").foregroundStyle(Theme.Colors.secondaryText)
         } footer: {
             Text(mesh.groups.isEmpty ? "Create a group (e.g. Family) in Chats to share check-ins privately."
-                                     : "Sent end-to-end encrypted to your groups, with your battery level.")
+                                     : "Sent end-to-end encrypted to your groups, with your battery level.").foregroundStyle(Theme.Colors.secondaryText)
         }
     }
 
@@ -296,12 +303,12 @@ struct SOSComposeView: View {
                 if let sentTriage {
                     Section {
                         Label("SOS sent to everyone in range", systemImage: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(Theme.Colors.success)
                             .accessibilityIdentifier("sos.sent")
                         HStack { PriorityBadge(priority: sentTriage.priority); Text(sentTriage.summary) }
                     }
                 } else {
-                    Section("What's happening?") {
+                    Section {
                         TextField("Describe the emergency, people involved, and landmarks", text: $text, axis: .vertical)
                             .lineLimit(3...8)
                             .accessibilityIdentifier("sos.text")
@@ -314,7 +321,7 @@ struct SOSComposeView: View {
                                 }
                             }
                         }
-                    }
+                    } header: { SectionTitle("What's happening?") }
                     Section {
                         Toggle("Include my GPS location", isOn: $includeLocation)
                         if !mesh.trust.medical.isEmpty {
@@ -322,15 +329,15 @@ struct SOSComposeView: View {
                                 .accessibilityIdentifier("sos.includeMedical")
                         }
                     } footer: {
-                        Text("GPS works without internet. Your SOS is signed but not encrypted, so anyone nearby can help — including reading your medical ID if you attach it.")
+                        Text("GPS works without internet. Your SOS is signed but not encrypted, so anyone nearby can help — including reading your medical ID if you attach it.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                     if let preview {
-                        Section("On-device triage") {
+                        Section {
                             HStack { PriorityBadge(priority: preview.priority); Text(preview.category.label).bold() }
                             Text(preview.summary).font(.callout)
                             Text(preview.source == "llm" ? "Assessed by on-device AI" : "Assessed by offline rules")
-                                .font(.caption2).foregroundStyle(.secondary)
-                        }
+                                .font(.caption2).foregroundStyle(Theme.Colors.secondaryText)
+                        } header: { SectionTitle("On-device triage") }
                     }
                 }
             }
@@ -345,7 +352,7 @@ struct SOSComposeView: View {
                         } label: {
                             if sending { ProgressView() } else { Text("Send SOS").bold() }
                         }
-                        .tint(.red)
+                        .tint(Theme.Colors.danger)
                         .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sending)
                         .accessibilityIdentifier("sos.send")
                     }

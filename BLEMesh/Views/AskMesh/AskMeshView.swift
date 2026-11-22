@@ -28,7 +28,7 @@ struct AskMeshView: View {
                                 HStack {
                                     ProgressView()
                                     Text(asking ? "Thinking…" : "Waiting for an answer from the mesh…")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                                     Spacer()
                                 }
                                 .accessibilityIdentifier("ask.pending")
@@ -64,10 +64,10 @@ struct AskMeshView: View {
             Text(sourceText).font(.caption)
             Spacer()
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.Colors.secondaryText)
         .padding(.horizontal)
         .padding(.vertical, 6)
-        .background(.bar)
+        .background(Theme.Colors.card)
         .accessibilityIdentifier("ask.source")
     }
 

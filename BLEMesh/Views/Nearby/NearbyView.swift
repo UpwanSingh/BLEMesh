@@ -13,6 +13,7 @@ struct NearbyView: View {
             VStack(spacing: 0) {
                 RadioStatusBanner()
                 DigestCard(expanded: $digestExpanded)
+                    .fixedSize(horizontal: false, vertical: true) // never squeezed by the message list
                 if mesh.spamHiddenCount > 0 {
                     Button {
                         showSpam.toggle()
@@ -68,12 +69,16 @@ struct DigestCard: View {
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
                 .accessibilityIdentifier("digest.refresh")
                 Button {
                     withAnimation { expanded.toggle() }
                 } label: {
                     Image(systemName: expanded ? "chevron.up" : "chevron.down")
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
                 .accessibilityIdentifier("digest.toggle")
                 .accessibilityLabel(expanded ? "Collapse summary" : "Expand summary")
             }
@@ -91,22 +96,22 @@ struct DigestCard: View {
                                     Label(credibility.label, systemImage: credibility == .corroborated ? "checkmark.circle"
                                           : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
                                         .font(.caption2)
-                                        .foregroundStyle(credibility == .corroborated ? .green : (credibility == .disputed ? .red : .orange))
+                                        .foregroundStyle(credibility == .corroborated ? Theme.Colors.success : (credibility == .disputed ? Theme.Colors.danger : Theme.Colors.warning))
                                         .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
                                 }
                                 Text("\(item.reporters) report\(item.reporters == 1 ? "" : "s")\(item.locations.first.map { " · \($0)" } ?? "")")
                                     .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
                             }
                         }
                     }
                     Text(mesh.ai.hasGenerativeModel ? "Summarised on this phone by on-device AI" : "Summarised on this phone (offline rules)")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 } else {
                     Text("Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
         }

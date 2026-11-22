@@ -13,16 +13,16 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Profile") {
+                Section {
                     TextField("Your name", text: $name)
                         .onSubmit { mesh.rename(to: name) }
                         .accessibilityIdentifier("settings.name")
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Your safety number").font(.caption).foregroundStyle(.secondary)
+                        Text("Your safety number").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                         Text(mesh.myFingerprint).font(.system(.body, design: .monospaced))
                             .accessibilityIdentifier("settings.safetyNumber")
                     }
-                }
+                } header: { SectionTitle("Profile") }
 
                 Section {
                     Toggle("Answer questions for people nearby", isOn: $settings.helpOthersWithAI)
@@ -36,9 +36,9 @@ struct SettingsView: View {
                     Toggle("Auto-translate incoming messages", isOn: $settings.autoTranslate)
                     Toggle("Read voice notes aloud on arrival", isOn: $settings.autoPlayVoice)
                 } header: {
-                    Text("On-device AI")
+                    Text("On-device AI").foregroundStyle(Theme.Colors.secondaryText)
                 } footer: {
-                    Text(mesh.ai.statusDescription + ". Voice, translation, triage and answers never leave your phone.")
+                    Text(mesh.ai.statusDescription + ". Voice, translation, triage and answers never leave your phone.").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
                 Section {
@@ -55,7 +55,7 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.blocked")
                 } header: {
-                    Text("Safety & privacy")
+                    Text("Safety & privacy").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
                 Section {
@@ -68,17 +68,17 @@ struct SettingsView: View {
                     Toggle("Auto-reply to “are you safe?” after 5 min", isOn: $settings.autoReplySafetyChecks)
                         .accessibilityIdentifier("settings.autoReply")
                 } header: {
-                    Text("Helping others")
+                    Text("Helping others").foregroundStyle(Theme.Colors.secondaryText)
                 } footer: {
-                    Text("Roles are shared with nearby phones so people with emergencies can find you. The auto-reply never says you're safe — only that you haven't answered, your battery, and when you were last active.")
+                    Text("Roles are shared with nearby phones so people with emergencies can find you. The auto-reply never says you're safe — only that you haven't answered, your battery, and when you were last active.").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
-                Section("Notifications") {
+                Section {
                     Toggle("Message & SOS alerts", isOn: $settings.notificationsEnabled)
                         .onChange(of: settings.notificationsEnabled) { _, enabled in
                             if enabled { MeshService.requestNotificationPermission() }
                         }
-                }
+                } header: { SectionTitle("Notifications") }
 
                 Section {
                     Picker("Keep messages", selection: $settings.retentionDays) {
@@ -90,7 +90,7 @@ struct SettingsView: View {
                     }
                     .onChange(of: settings.retentionDays) { _, _ in mesh.purgeExpiredMessages() }
                 } header: {
-                    Text("Storage")
+                    Text("Storage").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
                 if mesh.mode == .demo {
@@ -100,9 +100,9 @@ struct SettingsView: View {
                         Button("Walk back into range") { mesh.setDemoLinks(enabled: true) }
                             .accessibilityIdentifier("demo.return")
                     } header: {
-                        Text("Demo mesh")
+                        Text("Demo mesh").foregroundStyle(Theme.Colors.secondaryText)
                     } footer: {
-                        Text("Simulated devices: Asha, Kabir (nearby), Ravi (2 hops, has on-device AI), Meera (3 hops).")
+                        Text("Simulated devices: Asha, Kabir (nearby), Ravi (2 hops, has on-device AI), Meera (3 hops).").foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
 
@@ -112,14 +112,14 @@ struct SettingsView: View {
                     Button("Erase everything (panic wipe)", role: .destructive) { confirmWipe = true }
                         .accessibilityIdentifier("settings.panicWipe")
                 } footer: {
-                    Text("Panic wipe deletes all messages, groups, contacts and your keys immediately, and gives this phone a new identity.")
+                    Text("Panic wipe deletes all messages, groups, contacts and your keys immediately, and gives this phone a new identity.").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
-                Section("About") {
-                    LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
-                    LabeledContent("Protocol", value: "BLEMesh v\(Packet.currentVersion)")
-                    LabeledContent("Encryption", value: "X25519 · ChaCha20-Poly1305 · Ed25519")
-                }
+                Section {
+                    InfoRow("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
+                    InfoRow("Protocol", value: "BLEMesh v\(Packet.currentVersion)")
+                    InfoRow("Encryption", value: "X25519 · ChaCha20-Poly1305 · Ed25519")
+                } header: { SectionTitle("About") }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
