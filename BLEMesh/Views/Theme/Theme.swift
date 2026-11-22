@@ -50,51 +50,17 @@ extension View {
     }
 }
 
-/// Lays children out left to right and wraps onto new lines instead of truncating them
-/// (metadata rows stay readable at large text sizes).
-struct FlowLayout: Layout {
+/// One line when it fits; otherwise the same items stacked, so nothing is truncated
+/// (metadata rows stay readable in long languages and at large text sizes).
+struct AdaptiveRow<Content: View>: View {
     var spacing: CGFloat = 8
-    var lineSpacing: CGFloat = 4
+    @ViewBuilder var content: Content
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = arrange(subviews, width: proposal.width ?? .infinity)
-        let width = rows.map(\.width).max() ?? 0
-        let height = rows.map(\.height).reduce(0, +) + lineSpacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: proposal.width.map { min($0, width) } ?? width, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var y = bounds.minY
-        for row in arrange(subviews, width: bounds.width) {
-            var x = bounds.minX
-            for index in row.items {
-                let size = subviews[index].sizeThatFits(.init(width: bounds.width, height: nil))
-                // Items that fit get their ideal size (no truncation); only an item wider than the row wraps.
-                let fits = subviews[index].sizeThatFits(.unspecified).width <= bounds.width
-                subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2), anchor: .topLeading,
-                                      proposal: fits ? .unspecified : .init(width: bounds.width, height: nil))
-                x += size.width + spacing
-            }
-            y += row.height + lineSpacing
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: spacing) { content }
+            VStack(alignment: .leading, spacing: 2) { content }
         }
-    }
-
-    private struct Row { var items: [Int] = []; var width: CGFloat = 0; var height: CGFloat = 0 }
-
-    private func arrange(_ subviews: Subviews, width: CGFloat) -> [Row] {
-        var rows: [Row] = [Row()]
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.init(width: width, height: nil))
-            let extra = rows[rows.count - 1].items.isEmpty ? size.width : size.width + spacing
-            if rows[rows.count - 1].width + extra > width && !rows[rows.count - 1].items.isEmpty {
-                rows.append(Row())
-            }
-            let added = rows[rows.count - 1].items.isEmpty ? size.width : size.width + spacing
-            rows[rows.count - 1].items.append(index)
-            rows[rows.count - 1].width += added
-            rows[rows.count - 1].height = max(rows[rows.count - 1].height, size.height)
-        }
-        return rows.filter { !$0.items.isEmpty }
     }
 }
 

@@ -18,7 +18,8 @@ struct NearbyView: View {
                     Button {
                         showSpam.toggle()
                     } label: {
-                        Label(showSpam ? "Hide spam" : "\(mesh.spamHiddenCount) message\(mesh.spamHiddenCount == 1 ? "" : "s") hidden as spam — show",
+                        Label(showSpam ? "Hide spam" : mesh.spamHiddenCount == 1 ? "1 message hidden as spam — show"
+                                : "\(mesh.spamHiddenCount) messages hidden as spam — show",
                               systemImage: "eye.slash")
                             .font(.caption)
                     }
@@ -93,13 +94,14 @@ struct DigestCard: View {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(item.headline).font(.caption)
                                 if let credibility = mesh.digestCredibility[item.id] {
-                                    Label(credibility.label, systemImage: credibility == .corroborated ? "checkmark.circle"
+                                    Label(L(credibility.label), systemImage: credibility == .corroborated ? "checkmark.circle"
                                           : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
                                         .font(.caption2)
                                         .foregroundStyle(credibility == .corroborated ? Theme.Colors.success : (credibility == .disputed ? Theme.Colors.danger : Theme.Colors.warning))
                                         .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
                                 }
-                                Text("\(item.reporters) report\(item.reporters == 1 ? "" : "s")\(item.locations.first.map { " · \($0)" } ?? "")")
+                                (Text(item.reporters == 1 ? "1 report" : "\(item.reporters) reports")
+                                    + Text(item.locations.first.map { " · \($0)" } ?? ""))
                                     .font(.caption2)
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }

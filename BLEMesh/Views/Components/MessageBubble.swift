@@ -103,7 +103,7 @@ struct MessageBubble: View {
                     if let url = checkIn.location?.mapsURL { Link("Location", destination: url).font(.caption) }
                 }
             case .sosUpdate(let update):
-                Label(update.status.label + (update.note.map { ": \($0)" } ?? ""), systemImage: "figure.run")
+                Label(L(update.status.label) + (update.note.map { ": \($0)" } ?? ""), systemImage: "figure.run")
                     .font(.callout)
             default:
                 Text(bodyText)
@@ -269,7 +269,7 @@ struct SOSCardContent: View {
                 Image(systemName: "sos.circle.fill")
                 if let triage = report.triage {
                     PriorityBadge(priority: triage.priority)
-                    Text(triage.category.label).font(.caption.weight(.semibold))
+                    Text(L(triage.category.label)).font(.caption.weight(.semibold))
                 }
             }
             Text(report.text)
@@ -288,7 +288,7 @@ struct PriorityBadge: View {
     let priority: SOSTriage.Priority
 
     var body: some View {
-        Text(priority.label.uppercased())
+        Text(L(priority.label).uppercased())
             .font(.caption2.weight(.heavy))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

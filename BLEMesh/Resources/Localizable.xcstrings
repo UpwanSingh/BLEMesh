@@ -1,0 +1,2821 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ""
+          }
+        }
+      }
+    },
+    " · %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · %@"
+          }
+        }
+      }
+    },
+    "%@ asks: are you safe?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ पूछ रहे हैं: क्या आप सुरक्षित हैं?"
+          }
+        }
+      }
+    },
+    "%@ — who's safe?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — कौन सुरक्षित है?"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld hops": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld हॉप"
+          }
+        }
+      }
+    },
+    "%lld hops away": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld हॉप दूर"
+          }
+        }
+      }
+    },
+    "%lld messages hidden as spam — show": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld संदेश स्पैम मानकर छिपाए गए — दिखाएँ"
+          }
+        }
+      }
+    },
+    "%lld reachable": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld पहुँच में"
+          }
+        }
+      }
+    },
+    "%lld reports": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld रिपोर्ट"
+          }
+        }
+      }
+    },
+    "%lld responding": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld मदद कर रहे हैं"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        }
+      }
+    },
+    "1 day": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 दिन"
+          }
+        }
+      }
+    },
+    "1 message hidden as spam — show": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 संदेश स्पैम मानकर छिपाया गया — दिखाएँ"
+          }
+        }
+      }
+    },
+    "1 report": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 रिपोर्ट"
+          }
+        }
+      }
+    },
+    "1 says resolved": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 ने कहा हल हो गया"
+          }
+        }
+      }
+    },
+    "30 days": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 दिन"
+          }
+        }
+      }
+    },
+    "7 days": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 दिन"
+          }
+        }
+      }
+    },
+    "90 days": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 दिन"
+          }
+        }
+      }
+    },
+    "AI": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI"
+          }
+        }
+      }
+    },
+    "AI that works offline": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बिना इंटरनेट चलने वाला AI"
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जानकारी"
+          }
+        }
+      }
+    },
+    "Acknowledged": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देख लिया गया"
+          }
+        }
+      }
+    },
+    "Admin": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एडमिन"
+          }
+        }
+      }
+    },
+    "Already in your language": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहले से आपकी भाषा में है"
+          }
+        }
+      }
+    },
+    "Answer from %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ से जवाब"
+          }
+        }
+      }
+    },
+    "Answer questions for people nearby": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास के लोगों के सवालों के जवाब दें"
+          }
+        }
+      }
+    },
+    "Area summary": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इलाके का सारांश"
+          }
+        }
+      }
+    },
+    "Ask": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पूछें"
+          }
+        }
+      }
+    },
+    "Ask anything — first aid, safety, translation…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कुछ भी पूछें — प्राथमिक उपचार, सुरक्षा, अनुवाद…"
+          }
+        }
+      }
+    },
+    "Ask everyone: are you safe?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सबसे पूछें: क्या आप सुरक्षित हैं?"
+          }
+        }
+      }
+    },
+    "Ask the Mesh": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश से पूछें"
+          }
+        }
+      }
+    },
+    "Asked everyone": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सबसे पूछ लिया"
+          }
+        }
+      }
+    },
+    "Asking a nearby phone…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पास के फ़ोन से पूछ रहे हैं…"
+          }
+        }
+      }
+    },
+    "Assessed by offline rules": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन नियमों से आँका गया"
+          }
+        }
+      }
+    },
+    "Assessed by on-device AI": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोन के AI से आँका गया"
+          }
+        }
+      }
+    },
+    "Attach my medical ID": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरी मेडिकल ID जोड़ें"
+          }
+        }
+      }
+    },
+    "Auto-reply to “are you safe?” after 5 min": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 मिनट बाद “क्या आप सुरक्षित हैं?” का अपने-आप जवाब"
+          }
+        }
+      }
+    },
+    "Auto-translate incoming messages": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आने वाले संदेशों का अपने-आप अनुवाद"
+          }
+        }
+      }
+    },
+    "BLE Mesh": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BLE Mesh"
+          }
+        }
+      }
+    },
+    "Back": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वापस"
+          }
+        }
+      }
+    },
+    "Block": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ब्लॉक करें"
+          }
+        }
+      }
+    },
+    "Blocked": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ब्लॉक किया गया"
+          }
+        }
+      }
+    },
+    "Blocked and reported devices disappear from this phone. Their traffic is still relayed for others.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ब्लॉक और रिपोर्ट किए गए डिवाइस इस फ़ोन से गायब हो जाते हैं। उनका ट्रैफ़िक दूसरों के लिए अब भी आगे भेजा जाता है।"
+          }
+        }
+      }
+    },
+    "Blocked devices": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ब्लॉक किए गए डिवाइस"
+          }
+        }
+      }
+    },
+    "Bluetooth LE isn't supported on this device": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस डिवाइस पर Bluetooth LE समर्थित नहीं है"
+          }
+        }
+      }
+    },
+    "Bluetooth is off": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth बंद है"
+          }
+        }
+      }
+    },
+    "Bluetooth permission needed — enable it in Settings": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth की अनुमति चाहिए — Settings में चालू करें"
+          }
+        }
+      }
+    },
+    "Can answer Ask-the-Mesh questions": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश से पूछे गए सवालों के जवाब दे सकता है"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द करें"
+          }
+        }
+      }
+    },
+    "Cancel SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS रद्द करें"
+          }
+        }
+      }
+    },
+    "Cancelled": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द"
+          }
+        }
+      }
+    },
+    "Carried (store & forward)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "साथ ले जाए गए (स्टोर और फ़ॉरवर्ड)"
+          }
+        }
+      }
+    },
+    "Catch me up": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जो छूट गया, बताएँ"
+          }
+        }
+      }
+    },
+    "Chats": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चैट"
+          }
+        }
+      }
+    },
+    "Check in": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हाल बताएँ"
+          }
+        }
+      }
+    },
+    "Clear medical ID": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेडिकल ID मिटाएँ"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बंद करें"
+          }
+        }
+      }
+    },
+    "Collapse summary": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सारांश छोटा करें"
+          }
+        }
+      }
+    },
+    "Compare these in person. If they match on both phones, nobody is impersonating either of you.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इन्हें आमने-सामने मिलाएँ। दोनों फ़ोन पर एक जैसे हों तो कोई भी आप में से किसी का रूप नहीं धर रहा।"
+          }
+        }
+      }
+    },
+    "Confirmed by several people": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कई लोगों ने पुष्टि की"
+          }
+        }
+      }
+    },
+    "Connected to %lld device(s)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld डिवाइस से जुड़े हैं"
+          }
+        }
+      }
+    },
+    "Contact": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संपर्क"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखें"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कॉपी करें"
+          }
+        }
+      }
+    },
+    "Create": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बनाएँ"
+          }
+        }
+      }
+    },
+    "Create a group (e.g. Family) in Chats to share check-ins privately.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हाल निजी तौर पर बताने के लिए चैट में एक समूह (जैसे परिवार) बनाएँ।"
+          }
+        }
+      }
+    },
+    "Critical": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "गंभीर"
+          }
+        }
+      }
+    },
+    "Decentralized Messaging": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बिना सर्वर के मैसेजिंग"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हटाएँ"
+          }
+        }
+      }
+    },
+    "Delivered": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच गया"
+          }
+        }
+      }
+    },
+    "Demo mesh": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डेमो मेश"
+          }
+        }
+      }
+    },
+    "Demo mesh (simulated devices)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डेमो मेश (नकली डिवाइस)"
+          }
+        }
+      }
+    },
+    "Describe the emergency, people involved, and landmarks": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपातकाल, कितने लोग, और पास की पहचान वाली जगह बताएँ"
+          }
+        }
+      }
+    },
+    "Details": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "विवरण"
+          }
+        }
+      }
+    },
+    "Direct and group messages are encrypted on your phone. Phones that relay them can't read them. Compare safety numbers to verify a contact.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निजी और समूह संदेश आपके फ़ोन पर ही एन्क्रिप्ट होते हैं। उन्हें आगे भेजने वाले फ़ोन उन्हें पढ़ नहीं सकते। संपर्क की पुष्टि के लिए सुरक्षा नंबर मिलाएँ।"
+          }
+        }
+      }
+    },
+    "Direct connection": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सीधा कनेक्शन"
+          }
+        }
+      }
+    },
+    "Disputed": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "विवादित"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हो गया"
+          }
+        }
+      }
+    },
+    "Duplicates suppressed": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दोहराव रोके गए"
+          }
+        }
+      }
+    },
+    "Encryption": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एन्क्रिप्शन"
+          }
+        }
+      }
+    },
+    "End-to-end encrypted": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एंड-टू-एंड एन्क्रिप्टेड"
+          }
+        }
+      }
+    },
+    "Erase everything (panic wipe)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सब कुछ मिटाएँ (पैनिक वाइप)"
+          }
+        }
+      }
+    },
+    "Erase everything?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सब कुछ मिटाएँ?"
+          }
+        }
+      }
+    },
+    "Erase now": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी मिटाएँ"
+          }
+        }
+      }
+    },
+    "Expand summary": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सारांश बड़ा करें"
+          }
+        }
+      }
+    },
+    "Failed": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नहीं भेजा जा सका"
+          }
+        }
+      }
+    },
+    "Fire": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आग"
+          }
+        }
+      }
+    },
+    "Flood": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाढ़"
+          }
+        }
+      }
+    },
+    "Forever": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हमेशा"
+          }
+        }
+      }
+    },
+    "GPS works without internet. Your SOS is signed but not encrypted, so anyone nearby can help — including reading your medical ID if you attach it.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GPS बिना इंटरनेट के काम करता है। आपका SOS हस्ताक्षरित है पर एन्क्रिप्टेड नहीं, ताकि आस-पास कोई भी मदद कर सके — और अगर आप मेडिकल ID जोड़ते हैं तो वे उसे भी पढ़ सकते हैं।"
+          }
+        }
+      }
+    },
+    "Get Started": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शुरू करें"
+          }
+        }
+      }
+    },
+    "Group name": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "समूह का नाम"
+          }
+        }
+      }
+    },
+    "Has on-device AI": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोन में AI है"
+          }
+        }
+      }
+    },
+    "Help on the way": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मदद आ रही है"
+          }
+        }
+      }
+    },
+    "Help when it matters": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ज़रूरत के समय मदद"
+          }
+        }
+      }
+    },
+    "Helping others": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दूसरों की मदद"
+          }
+        }
+      }
+    },
+    "Hide keyboard": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कीबोर्ड छिपाएँ"
+          }
+        }
+      }
+    },
+    "Hide spam": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्पैम छिपाएँ"
+          }
+        }
+      }
+    },
+    "Hide translation": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अनुवाद छिपाएँ"
+          }
+        }
+      }
+    },
+    "High": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऊँची"
+          }
+        }
+      }
+    },
+    "Hold to record a voice note": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वॉइस नोट रिकॉर्ड करने के लिए दबाए रखें"
+          }
+        }
+      }
+    },
+    "How It Works": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह कैसे काम करता है"
+          }
+        }
+      }
+    },
+    "I need help": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मुझे मदद चाहिए"
+          }
+        }
+      }
+    },
+    "I'm a medic (doctor, nurse, first-aider)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं मेडिकल सहायक हूँ (डॉक्टर, नर्स, प्राथमिक उपचारक)"
+          }
+        }
+      }
+    },
+    "I'm a rescuer / volunteer": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं बचावकर्मी / स्वयंसेवक हूँ"
+          }
+        }
+      }
+    },
+    "I'm responding": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं मदद कर रहा/रही हूँ"
+          }
+        }
+      }
+    },
+    "I'm safe": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं सुरक्षित हूँ"
+          }
+        }
+      }
+    },
+    "I'm safe now": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अब मैं सुरक्षित हूँ"
+          }
+        }
+      }
+    },
+    "Include my GPS location": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरी GPS लोकेशन जोड़ें"
+          }
+        }
+      }
+    },
+    "Invalid / forged dropped": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अमान्य / जाली हटाए गए"
+          }
+        }
+      }
+    },
+    "Keep messages": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदेश रखें"
+          }
+        }
+      }
+    },
+    "Keys don't match — this may be an impostor. Don't trust this contact.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कुंजियाँ मेल नहीं खातीं — यह कोई धोखेबाज़ हो सकता है। इस संपर्क पर भरोसा न करें।"
+          }
+        }
+      }
+    },
+    "Leave": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "छोड़ें"
+          }
+        }
+      }
+    },
+    "Leave group": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "समूह छोड़ें"
+          }
+        }
+      }
+    },
+    "Leave this group?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह समूह छोड़ें?"
+          }
+        }
+      }
+    },
+    "Links": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कनेक्शन"
+          }
+        }
+      }
+    },
+    "Location": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लोकेशन"
+          }
+        }
+      }
+    },
+    "Low": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कम"
+          }
+        }
+      }
+    },
+    "Low battery": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बैटरी कम"
+          }
+        }
+      }
+    },
+    "Medical": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चिकित्सा"
+          }
+        }
+      }
+    },
+    "Medical ID": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेडिकल ID"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मध्यम"
+          }
+        }
+      }
+    },
+    "Members": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सदस्य"
+          }
+        }
+      }
+    },
+    "Members (%lld)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सदस्य (%lld)"
+          }
+        }
+      }
+    },
+    "Members get the group key in an end-to-end encrypted invite. Phones that relay group messages can't read them.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सदस्यों को समूह की कुंजी एंड-टू-एंड एन्क्रिप्टेड निमंत्रण में मिलती है। समूह संदेश आगे भेजने वाले फ़ोन उन्हें पढ़ नहीं सकते।"
+          }
+        }
+      }
+    },
+    "Mesh (%lld reachable)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश (%lld पहुँच में)"
+          }
+        }
+      }
+    },
+    "Mesh ID": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश ID"
+          }
+        }
+      }
+    },
+    "Message": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदेश"
+          }
+        }
+      }
+    },
+    "Message & SOS alerts": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदेश और SOS अलर्ट"
+          }
+        }
+      }
+    },
+    "Message everyone nearby": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास सभी को संदेश भेजें"
+          }
+        }
+      }
+    },
+    "Messages find their way": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदेश अपना रास्ता ढूँढ लेते हैं"
+          }
+        }
+      }
+    },
+    "Messages hop through other phones to reach people out of range, and wait to be carried forward when someone walks into range.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदेश दूसरे फ़ोन से होकर दूर के लोगों तक पहुँचते हैं, और जब कोई पहुँच में आता है तो उसके साथ आगे बढ़ते हैं।"
+          }
+        }
+      }
+    },
+    "Messaging without internet": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बिना इंटरनेट के मैसेजिंग"
+          }
+        }
+      }
+    },
+    "Missing person": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लापता व्यक्ति"
+          }
+        }
+      }
+    },
+    "Most important": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सबसे ज़रूरी"
+          }
+        }
+      }
+    },
+    "Multi-hop & store-and-forward": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कई फ़ोन से होकर, और रुककर आगे"
+          }
+        }
+      }
+    },
+    "My language": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरी भाषा"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नाम"
+          }
+        }
+      }
+    },
+    "Nearby": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास"
+          }
+        }
+      }
+    },
+    "Network": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नेटवर्क"
+          }
+        }
+      }
+    },
+    "New Chat": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नई चैट"
+          }
+        }
+      }
+    },
+    "New Group": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नया समूह"
+          }
+        }
+      }
+    },
+    "New chat": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नई चैट"
+          }
+        }
+      }
+    },
+    "New device": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नया डिवाइस"
+          }
+        }
+      }
+    },
+    "New group": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नया समूह"
+          }
+        }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आगे"
+          }
+        }
+      }
+    },
+    "No SOS calls nearby.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास कोई SOS नहीं।"
+          }
+        }
+      }
+    },
+    "No chats yet": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी कोई चैट नहीं"
+          }
+        }
+      }
+    },
+    "No devices yet. Phones running BLE Mesh connect automatically when in range.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी कोई डिवाइस नहीं। BLE Mesh वाले फ़ोन पहुँच में आते ही अपने-आप जुड़ जाते हैं।"
+          }
+        }
+      }
+    },
+    "No one to add yet — people appear when they're in range.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी जोड़ने के लिए कोई नहीं — लोग पहुँच में आने पर दिखेंगे।"
+          }
+        }
+      }
+    },
+    "Nobody nearby yet": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी आस-पास कोई नहीं"
+          }
+        }
+      }
+    },
+    "Not your verified “%@” — same name, different device": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके पुष्ट “%@” नहीं — नाम वही, डिवाइस अलग"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सूचनाएँ"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ठीक है"
+          }
+        }
+      }
+    },
+    "On my way": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं आ रहा/रही हूँ"
+          }
+        }
+      }
+    },
+    "On-device AI": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोन पर AI"
+          }
+        }
+      }
+    },
+    "On-device triage": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोन पर प्राथमिकता जाँच"
+          }
+        }
+      }
+    },
+    "Open": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "खुला"
+          }
+        }
+      }
+    },
+    "Open the family locator.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "परिवार लोकेटर खोलें।"
+          }
+        }
+      }
+    },
+    "Other": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अन्य"
+          }
+        }
+      }
+    },
+    "Other phones running BLE Mesh appear here automatically when in range.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BLE Mesh वाले दूसरे फ़ोन पहुँच में आने पर यहाँ अपने-आप दिखेंगे।"
+          }
+        }
+      }
+    },
+    "Out of range": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच से बाहर"
+          }
+        }
+      }
+    },
+    "Packets received": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मिले पैकेट"
+          }
+        }
+      }
+    },
+    "Packets sent": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भेजे गए पैकेट"
+          }
+        }
+      }
+    },
+    "Panic wipe deletes all messages, groups, contacts and your keys immediately, and gives this phone a new identity.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पैनिक वाइप सारे संदेश, समूह, संपर्क और आपकी कुंजियाँ तुरंत मिटा देता है, और इस फ़ोन को नई पहचान देता है।"
+          }
+        }
+      }
+    },
+    "Play voice note": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वॉइस नोट चलाएँ"
+          }
+        }
+      }
+    },
+    "Private by design": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शुरू से ही निजी"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "प्रोफ़ाइल"
+          }
+        }
+      }
+    },
+    "Protocol": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "प्रोटोकॉल"
+          }
+        }
+      }
+    },
+    "Queued": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कतार में"
+          }
+        }
+      }
+    },
+    "Radio": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रेडियो"
+          }
+        }
+      }
+    },
+    "Ranked by urgency using on-device triage. Treat single, unconfirmed reports with care.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ोन पर हुई जाँच के आधार पर तात्कालिकता के क्रम में। अकेली, अपुष्ट रिपोर्टों को सावधानी से लें।"
+          }
+        }
+      }
+    },
+    "Rate-limited": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सीमा से रोके गए"
+          }
+        }
+      }
+    },
+    "Reachability": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच"
+          }
+        }
+      }
+    },
+    "Reachable now": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी पहुँच में"
+          }
+        }
+      }
+    },
+    "Reaches every phone in range and is relayed onward": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच में हर फ़ोन तक जाता है और आगे भेजा जाता है"
+          }
+        }
+      }
+    },
+    "Read": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पढ़ लिया"
+          }
+        }
+      }
+    },
+    "Read aloud": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पढ़कर सुनाएँ"
+          }
+        }
+      }
+    },
+    "Read voice notes aloud on arrival": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आते ही वॉइस नोट पढ़कर सुनाएँ"
+          }
+        }
+      }
+    },
+    "Reading what you missed…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जो छूटा उसे पढ़ रहे हैं…"
+          }
+        }
+      }
+    },
+    "Relayed for others": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दूसरों के लिए आगे भेजे"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हटाएँ"
+          }
+        }
+      }
+    },
+    "Remove verification": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्टि हटाएँ"
+          }
+        }
+      }
+    },
+    "Removing someone, or anyone leaving, changes the group key so they can't read new messages.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "किसी को हटाने या किसी के छोड़ने पर समूह की कुंजी बदल जाती है, ताकि वे नए संदेश न पढ़ सकें।"
+          }
+        }
+      }
+    },
+    "Replay introduction": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "परिचय फिर से देखें"
+          }
+        }
+      }
+    },
+    "Reply": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जवाब दें"
+          }
+        }
+      }
+    },
+    "Report and block": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रिपोर्ट और ब्लॉक करें"
+          }
+        }
+      }
+    },
+    "Report and block this device?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस डिवाइस को रिपोर्ट और ब्लॉक करें?"
+          }
+        }
+      }
+    },
+    "Report as spam or abuse": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्पैम या दुरुपयोग की रिपोर्ट करें"
+          }
+        }
+      }
+    },
+    "Reported": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रिपोर्ट किया गया"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रीसेट करें"
+          }
+        }
+      }
+    },
+    "Reset all settings to defaults?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सारी सेटिंग्स पहले जैसी कर दें?"
+          }
+        }
+      }
+    },
+    "Reset settings": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सेटिंग्स रीसेट करें"
+          }
+        }
+      }
+    },
+    "Resolved": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हल हो गया"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फिर से भेजें"
+          }
+        }
+      }
+    },
+    "Roles are shared with nearby phones so people with emergencies can find you. The auto-reply never says you're safe — only that you haven't answered, your battery, and when you were last active.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भूमिकाएँ आस-पास के फ़ोन से साझा होती हैं ताकि मुसीबत में फँसे लोग आपको ढूँढ सकें। अपने-आप जवाब कभी नहीं कहता कि आप सुरक्षित हैं — बस यह कि आपने जवाब नहीं दिया, आपकी बैटरी, और आप आख़िरी बार कब सक्रिय थे।"
+          }
+        }
+      }
+    },
+    "SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS"
+          }
+        }
+      }
+    },
+    "SOS board (%lld)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS बोर्ड (%lld)"
+          }
+        }
+      }
+    },
+    "SOS sent to everyone in range": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच में सभी को SOS भेजा गया"
+          }
+        }
+      }
+    },
+    "SOS to everyone nearby": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास सभी को SOS"
+          }
+        }
+      }
+    },
+    "Safety & privacy": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सुरक्षा और निजता"
+          }
+        }
+      }
+    },
+    "Safety numbers (theirs, then yours)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सुरक्षा नंबर (पहले उनका, फिर आपका)"
+          }
+        }
+      }
+    },
+    "Same name as a verified contact — not them": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्ट संपर्क जैसा नाम — पर वे नहीं हैं"
+          }
+        }
+      }
+    },
+    "Scan their code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उनका कोड स्कैन करें"
+          }
+        }
+      }
+    },
+    "Seen before — messages wait until they're back": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहले देखा गया — उनके लौटने तक संदेश रुके रहेंगे"
+          }
+        }
+      }
+    },
+    "Send": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भेजें"
+          }
+        }
+      }
+    },
+    "Send SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS भेजें"
+          }
+        }
+      }
+    },
+    "Send an SOS with your location. It's triaged on-device so responders see the most urgent requests first. Allow Bluetooth to get started.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपनी लोकेशन के साथ SOS भेजें। फ़ोन पर ही उसकी प्राथमिकता तय होती है ताकि मदद करने वाले सबसे ज़रूरी अनुरोध पहले देखें। शुरू करने के लिए Bluetooth की अनुमति दें।"
+          }
+        }
+      }
+    },
+    "Sent": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भेजा गया"
+          }
+        }
+      }
+    },
+    "Sent end-to-end encrypted to your groups, with your battery level.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके समूहों को एंड-टू-एंड एन्क्रिप्टेड भेजा जाता है, आपकी बैटरी के स्तर के साथ।"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सेटिंग्स"
+          }
+        }
+      }
+    },
+    "Shows each member's latest check-in. “Unknown” means no check-in in the last 6 hours.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हर सदस्य का ताज़ा हाल दिखाता है। “अज्ञात” का मतलब है पिछले 6 घंटे में कोई हाल नहीं मिला।"
+          }
+        }
+      }
+    },
+    "Simulated devices: Asha, Kabir (nearby), Ravi (2 hops, has on-device AI), Meera (3 hops).": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नकली डिवाइस: आशा, कबीर (पास), रवि (2 हॉप, फ़ोन में AI), मीरा (3 हॉप)।"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "छोड़ें"
+          }
+        }
+      }
+    },
+    "Something went wrong": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कुछ गड़बड़ हो गई"
+          }
+        }
+      }
+    },
+    "Speak and your words travel as tiny text, read aloud on arrival. Translate on-device, get an area summary, and ask the mesh — all without the cloud.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बोलिए — आपकी बात छोटे से टेक्स्ट के रूप में जाती है और पहुँचने पर पढ़कर सुनाई जाती है। फ़ोन पर अनुवाद करें, इलाके का सारांश पाएँ और मेश से पूछें — सब बिना क्लाउड के।"
+          }
+        }
+      }
+    },
+    "Start a private, end-to-end encrypted chat with anyone the mesh can reach.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश जिस तक पहुँच सके, उससे निजी, एंड-टू-एंड एन्क्रिप्टेड चैट शुरू करें।"
+          }
+        }
+      }
+    },
+    "Starting Bluetooth…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth शुरू हो रहा है…"
+          }
+        }
+      }
+    },
+    "Starting…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शुरू हो रहा है…"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रोकें"
+          }
+        }
+      }
+    },
+    "Storage": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्टोरेज"
+          }
+        }
+      }
+    },
+    "Stored only on this phone (Keychain). Attached to an SOS only when you choose — and then anyone nearby can read it.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सिर्फ़ इसी फ़ोन पर रखी जाती है (Keychain)। SOS में तभी जुड़ती है जब आप चुनें — और तब आस-पास कोई भी उसे पढ़ सकता है।"
+          }
+        }
+      }
+    },
+    "Summarised on this phone (offline rules)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसी फ़ोन पर सारांश बना (ऑफ़लाइन नियम)"
+          }
+        }
+      }
+    },
+    "Summarised on this phone by on-device AI": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसी फ़ोन के AI ने सारांश बनाया"
+          }
+        }
+      }
+    },
+    "Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आस-पास के पिछले एक घंटे के सार्वजनिक संदेशों और SOS का सारांश — आपके फ़ोन पर, ऑफ़लाइन।"
+          }
+        }
+      }
+    },
+    "Supplies": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सामान"
+          }
+        }
+      }
+    },
+    "Tap to answer “I'm safe” or “I need help”.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“मैं सुरक्षित हूँ” या “मुझे मदद चाहिए” कहने के लिए टैप करें।"
+          }
+        }
+      }
+    },
+    "That code belongs to a different device.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह कोड किसी दूसरे डिवाइस का है।"
+          }
+        }
+      }
+    },
+    "That isn't a BLE Mesh code.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह BLE Mesh कोड नहीं है।"
+          }
+        }
+      }
+    },
+    "Their code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उनका कोड"
+          }
+        }
+      }
+    },
+    "Thinking…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सोच रहे हैं…"
+          }
+        }
+      }
+    },
+    "This can't be undone.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसे वापस नहीं किया जा सकता।"
+          }
+        }
+      }
+    },
+    "This phone": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह फ़ोन"
+          }
+        }
+      }
+    },
+    "This phone hasn't met that device yet.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह फ़ोन अभी उस डिवाइस से नहीं मिला है।"
+          }
+        }
+      }
+    },
+    "Traffic": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ट्रैफ़िक"
+          }
+        }
+      }
+    },
+    "Translate": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अनुवाद करें"
+          }
+        }
+      }
+    },
+    "Translate with a nearby AI phone": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पास के AI वाले फ़ोन से अनुवाद कराएँ"
+          }
+        }
+      }
+    },
+    "Translation unavailable for this language pair": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इन भाषाओं के बीच अनुवाद उपलब्ध नहीं"
+          }
+        }
+      }
+    },
+    "Trapped": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फँसे हुए"
+          }
+        }
+      }
+    },
+    "Try asking": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पूछकर देखें"
+          }
+        }
+      }
+    },
+    "Unblock": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अनब्लॉक करें"
+          }
+        }
+      }
+    },
+    "Unverified — single report": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपुष्ट — एक ही रिपोर्ट"
+          }
+        }
+      }
+    },
+    "Verified": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्ट"
+          }
+        }
+      }
+    },
+    "Verified in person": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आमने-सामने पुष्टि की गई"
+          }
+        }
+      }
+    },
+    "Verified — show codes": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्ट — कोड दिखाएँ"
+          }
+        }
+      }
+    },
+    "Verified — this really is %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्ट — यह सच में %@ हैं"
+          }
+        }
+      }
+    },
+    "Verify": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्टि करें"
+          }
+        }
+      }
+    },
+    "Verify %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ की पुष्टि करें"
+          }
+        }
+      }
+    },
+    "Verify with QR code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR कोड से पुष्टि करें"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वर्ज़न"
+          }
+        }
+      }
+    },
+    "Violence": {
+      "extractionState": "manual",
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हिंसा"
+          }
+        }
+      }
+    },
+    "Voice note · %llds": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वॉइस नोट · %lld सेकंड"
+          }
+        }
+      }
+    },
+    "Voice, translation, SOS triage": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आवाज़, अनुवाद, SOS प्राथमिकता"
+          }
+        }
+      }
+    },
+    "Waiting for an answer from the mesh…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेश से जवाब का इंतज़ार…"
+          }
+        }
+      }
+    },
+    "Walk back into range": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वापस पहुँच में आएँ"
+          }
+        }
+      }
+    },
+    "Walk out of range": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहुँच से बाहर जाएँ"
+          }
+        }
+      }
+    },
+    "Welcome to BLE Mesh": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BLE Mesh में आपका स्वागत है"
+          }
+        }
+      }
+    },
+    "What's happening?": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्या हो रहा है?"
+          }
+        }
+      }
+    },
+    "Who's safe? (family locator)": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कौन सुरक्षित है? (परिवार लोकेटर)"
+          }
+        }
+      }
+    },
+    "You answered": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपने जवाब दिया"
+          }
+        }
+      }
+    },
+    "You haven't blocked anyone.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपने किसी को ब्लॉक नहीं किया है।"
+          }
+        }
+      }
+    },
+    "Your code — let them scan it": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका कोड — उन्हें स्कैन करने दें"
+          }
+        }
+      }
+    },
+    "Your name": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका नाम"
+          }
+        }
+      }
+    },
+    "Your phone talks directly to nearby phones over Bluetooth and passes messages along for others. No SIM, Wi-Fi, account or server needed.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका फ़ोन Bluetooth से सीधे पास के फ़ोन से बात करता है और दूसरों के संदेश आगे पहुँचाता है। न SIM, न Wi-Fi, न अकाउंट, न सर्वर चाहिए।"
+          }
+        }
+      }
+    },
+    "Your safety number": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका सुरक्षा नंबर"
+          }
+        }
+      }
+    },
+    "Your verification code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका पुष्टि कोड"
+          }
+        }
+      }
+    },
+    "direct": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सीधा"
+          }
+        }
+      }
+    },
+    "e.g. Family, Rescue team": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जैसे परिवार, बचाव दल"
+          }
+        }
+      }
+    },
+    "offline": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन"
+          }
+        }
+      }
+    },
+    "· %lld hops": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %lld हॉप"
+          }
+        }
+      }
+    },
+    "· %lld people": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %lld लोग"
+          }
+        }
+      }
+    },
+    "“%@”": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”"
+          }
+        }
+      }
+    },
+    "…or paste their code": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…या उनका कोड पेस्ट करें"
+          }
+        }
+      }
+    },
+    "⚠️ %@ needs help": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠️ %@ को मदद चाहिए"
+          }
+        }
+      }
+    },
+    "🆘 %@%@ SOS from %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "🆘 %1$@%2$@ SOS from %3$@"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🆘 %1$@%3$@ से %2$@ SOS"
+          }
+        }
+      }
+    },
+    "🔋 %lld%%": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔋 %lld%%"
+          }
+        }
+      }
+    },
+    "🧰 You're a responder nearby — ": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🧰 आप पास के मददगार हैं — "
+          }
+        }
+      }
+    },
+    "🩺 You're a medic nearby — ": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🩺 आप पास के मेडिकल सहायक हैं — "
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -5,6 +5,8 @@ options:
     iOS: "17.0"
   generateEmptyDirectories: true
   createIntermediateGroups: true
+  developmentLanguage: en
+  knownRegions: [en, hi]
 
 settings:
   base:
@@ -38,6 +40,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         MARKETING_VERSION: "2.0"
         CURRENT_PROJECT_VERSION: "1"
+        SWIFT_EMIT_LOC_STRINGS: YES
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 
   BLEMeshTests:
     type: bundle.unit-test

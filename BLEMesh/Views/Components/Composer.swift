@@ -7,7 +7,7 @@ struct Composer: View {
     @EnvironmentObject private var settings: AppSettings
     @StateObject private var recorder = VoiceRecorder()
     let conversationKey: String
-    var placeholder = "Message"
+    var placeholder: LocalizedStringKey = "Message"
     var allowVoice = true
 
     @State private var text = ""

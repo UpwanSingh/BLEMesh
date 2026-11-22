@@ -92,13 +92,13 @@ struct SOSRow: View {
             HStack {
                 if let triage = report.triage {
                     PriorityBadge(priority: triage.priority)
-                    Text(triage.category.label).font(.subheadline.weight(.semibold))
+                    Text(L(triage.category.label)).font(.subheadline.weight(.semibold))
                     if let people = triage.peopleAffected { Text("· \(people) people").font(.caption) }
                 }
                 Spacer()
                 Text(message.sentAt, style: .relative).font(.caption2).foregroundStyle(Theme.Colors.secondaryText)
             }
-            FlowLayout(spacing: 6, lineSpacing: 4) {
+            AdaptiveRow(spacing: 6) {
                 StatusPill(status: state.status)
                 if !state.responders.isEmpty {
                     Text("\(state.responders.count) responding").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
@@ -139,12 +139,12 @@ struct SOSRow: View {
                 }
             }
             ForEach(state.responders, id: \.peer) { responder in
-                Label("\(mesh.uniqueName(for: responder.peer)): \(responder.status.label)" + (responder.note.map { " — \($0)" } ?? ""),
+                Label("\(mesh.uniqueName(for: responder.peer)): \(L(responder.status.label))" + (responder.note.map { " — \($0)" } ?? ""),
                       systemImage: "figure.run")
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
-            FlowLayout(spacing: 10, lineSpacing: 2) {
+            AdaptiveRow(spacing: 10) {
                 Text(message.isOutgoing ? "You" : message.senderName).font(.caption.weight(.medium))
                 if message.hops > 0 { Text("\(message.hops + 1) hops away").font(.caption) }
                 if let location = report.location, let url = location.mapsURL {
@@ -206,7 +206,7 @@ struct StatusPill: View {
     let status: SOSStatus
 
     var body: some View {
-        Text(status.label)
+        Text(L(status.label))
             .font(.caption2.weight(.bold))
             .padding(.horizontal, 7).padding(.vertical, 2)
             .background(Capsule().fill(color.opacity(0.18)))
@@ -333,7 +333,7 @@ struct SOSComposeView: View {
                     }
                     if let preview {
                         Section {
-                            HStack { PriorityBadge(priority: preview.priority); Text(preview.category.label).bold() }
+                            HStack { PriorityBadge(priority: preview.priority); Text(L(preview.category.label)).bold() }
                             Text(preview.summary).font(.callout)
                             Text(preview.source == "llm" ? "Assessed by on-device AI" : "Assessed by offline rules")
                                 .font(.caption2).foregroundStyle(Theme.Colors.secondaryText)

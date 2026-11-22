@@ -18,7 +18,7 @@ final class MeshService: ObservableObject {
 
     @Published private(set) var peers: [PeerInfo] = []
     @Published private(set) var linkCount = 0
-    @Published private(set) var radioStatus = "Starting…"
+    @Published private(set) var radioStatus = String(localized: "Starting…")
     @Published private(set) var isRadioReady = false
     @Published private(set) var stats = MeshStats()
     @Published private(set) var groups: [GroupInfo] = []
@@ -140,7 +140,7 @@ final class MeshService: ObservableObject {
         switch mode {
         case .demo:
             isRadioReady = true
-            radioStatus = "Demo mesh (simulated devices)"
+            radioStatus = String(localized: "Demo mesh (simulated devices)")
             linkCount = node.linkCount
         case .bluetooth:
             guard let transport = bleTransport else { return }
@@ -148,15 +148,15 @@ final class MeshService: ObservableObject {
             linkCount = transport.linkCount
             switch (transport.centralState, transport.peripheralState) {
             case (.poweredOn, .poweredOn):
-                radioStatus = linkCount == 0 ? "Searching for nearby devices…" : "Connected to \(linkCount) device\(linkCount == 1 ? "" : "s")"
+                radioStatus = linkCount == 0 ? "Searching for nearby devices…" : String(localized: "Connected to \(linkCount) device(s)")
             case (.poweredOff, _), (_, .poweredOff):
-                radioStatus = "Bluetooth is off"
+                radioStatus = String(localized: "Bluetooth is off")
             case (.unauthorized, _), (_, .unauthorized):
-                radioStatus = "Bluetooth permission needed — enable it in Settings"
+                radioStatus = String(localized: "Bluetooth permission needed — enable it in Settings")
             case (.unsupported, _), (_, .unsupported):
-                radioStatus = "Bluetooth LE isn't supported on this device"
+                radioStatus = String(localized: "Bluetooth LE isn't supported on this device")
             default:
-                radioStatus = "Starting Bluetooth…"
+                radioStatus = String(localized: "Starting Bluetooth…")
             }
         }
         refreshPeers()
@@ -660,7 +660,7 @@ final class MeshService: ObservableObject {
             let verified = AIResponse(queryID: response.queryID, text: response.text, answeredBy: label)
             storeLocal(id: envelope.messageID, content: .aiResponse(verified), key: ConversationKey.askMesh, outgoing: false,
                        senderName: label, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
-            notify(title: "Answer from \(label)", body: response.text, key: ConversationKey.askMesh)
+            notify(title: String(localized: "Answer from \(label)"), body: response.text, key: ConversationKey.askMesh)
             return
         case .groupInvite(let invite):
             let key = ConversationKey.group(invite.groupID)
@@ -718,16 +718,17 @@ final class MeshService: ObservableObject {
 
         switch envelope.content {
         case .sos(let report):
-            let priority = report.triage?.priority.label ?? "SOS"
+            let priority = report.triage.map { L($0.priority.label) } ?? "SOS"
             // #13: responders get a role-specific alert for emergencies they can help with.
             let role = ResponderMatcher.suggest(for: report.triage, among: [PeerInfo.selfStub(node)]).isEmpty ? "" :
-                (node.capabilities.contains(.medic) && report.triage?.category == .medical ? "🩺 You're a medic nearby — " : "🧰 You're a responder nearby — ")
-            notify(title: "🆘 \(role)\(priority) SOS from \(senderName)", body: report.triage?.summary ?? report.text, key: key, critical: true)
+                (node.capabilities.contains(.medic) && report.triage?.category == .medical
+                    ? String(localized: "🩺 You're a medic nearby — ") : String(localized: "🧰 You're a responder nearby — "))
+            notify(title: String(localized: "🆘 \(role)\(priority) SOS from \(senderName)"), body: report.triage?.summary ?? report.text, key: key, critical: true)
         case .safetyCheck(let check):
-            notify(title: "\(senderName) asks: are you safe?", body: "Tap to answer “I'm safe” or “I need help”.", key: key, critical: true)
+            notify(title: String(localized: "\(senderName) asks: are you safe?"), body: String(localized: "Tap to answer “I'm safe” or “I need help”."), key: key, critical: true)
             if case .group(let groupID) = message.scope { scheduleAutoReply(for: check, groupID: groupID) }
         case .checkIn(let checkIn) where checkIn.status == .needHelp:
-            notify(title: "⚠️ \(senderName) needs help", body: checkIn.note ?? "Open the family locator.", key: key, critical: true)
+            notify(title: String(localized: "⚠️ \(senderName) needs help"), body: checkIn.note ?? String(localized: "Open the family locator."), key: key, critical: true)
         case .sosUpdate:
             break // shown on the SOS board; no alert
         default:
