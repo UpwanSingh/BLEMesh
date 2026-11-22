@@ -124,7 +124,8 @@ struct SOSRow: View {
                     Text("1 says resolved").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                 }
                 if !message.isOutgoing, let sender = message.sender, mesh.isNewDevice(sender) {
-                    Label("New device", systemImage: "exclamationmark.shield").font(.caption2).foregroundStyle(Theme.Colors.warning)
+                    InlineLabel("New device", systemImage: "exclamationmark.shield").font(.caption2).foregroundStyle(Theme.Colors.warning)
+                        .accessibilityElement(children: .combine)
                         .accessibilityIdentifier("sos.newDevice")
                 }
             }
@@ -156,30 +157,16 @@ struct SOSRow: View {
                 }
             }
             ForEach(state.responders, id: \.peer) { responder in
-                Label("\(mesh.uniqueName(for: responder.peer)): \(L(responder.status.label))" + (responder.note.map { " — \($0)" } ?? ""),
-                      systemImage: "figure.run")
+                InlineLabel("\(mesh.uniqueName(for: responder.peer)): \(L(responder.status.label))" + (responder.note.map { " — \($0)" } ?? ""),
+                            systemImage: "figure.run")
+                    .accessibilityElement(children: .combine)
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
-            AdaptiveRow(spacing: 10) {
+            HStack(spacing: 10) {
                 Text(message.isOutgoing ? "You" : message.senderName).font(.caption.weight(.medium))
                 if message.hops > 0 { Text("\(message.hops + 1) hops away").font(.caption) }
-                if let location = report.location, let me = mesh.myLocation, !message.isOutgoing {
-                    Label(me.localizedDirections(to: location), systemImage: "location.north.line")
-                        .font(.caption.weight(.semibold))
-                        .accessibilityLabel(Text("Distance and direction: \(me.localizedDirections(to: location))"))
-                        .accessibilityIdentifier("sos.directions")
-                }
-                if let location = report.location, let url = location.mapsURL {
-                    Link(destination: url) {
-                        Label("Location", systemImage: "location.fill").font(.caption)
-                            .frame(minHeight: 44).contentShape(Rectangle())
-                    }
-                    .foregroundStyle(Theme.Colors.accent)
-                }
-                if let hints = report.triage?.locationHints, let first = hints.first {
-                    Label(first, systemImage: "mappin").font(.caption)
-                }
+                Spacer(minLength: 0)
                 if !message.isOutgoing, let sender = message.sender {
                     Button {
                         onReply(mesh.startDirectConversation(with: sender, name: message.senderName))
@@ -194,6 +181,28 @@ struct SOSRow: View {
                 }
             }
             .foregroundStyle(Theme.Colors.secondaryText)
+            if report.location != nil || report.triage?.locationHints.first != nil {
+                AdaptiveRow(spacing: 14) {
+                    if let location = report.location, let me = mesh.myLocation, !message.isOutgoing {
+                        InlineLabel(me.localizedDirections(to: location), systemImage: "location.north.line")
+                            .font(.caption.weight(.semibold))
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text("Distance and direction: \(me.localizedDirections(to: location))"))
+                            .accessibilityIdentifier("sos.directions")
+                    }
+                    if let location = report.location, let url = location.mapsURL {
+                        Link(destination: url) {
+                            InlineLabel("Location", systemImage: "location.fill").font(.caption)
+                                .frame(minHeight: 44).contentShape(Rectangle())
+                        }
+                        .foregroundStyle(Theme.Colors.accent)
+                    }
+                    if let first = report.triage?.locationHints.first {
+                        InlineLabel(first, systemImage: "mappin").font(.caption)
+                    }
+                }
+                .foregroundStyle(Theme.Colors.secondaryText)
+            }
             if state.status < .resolved {
                 actions
             }

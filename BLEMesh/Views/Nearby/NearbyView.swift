@@ -13,7 +13,7 @@ struct NearbyView: View {
             VStack(spacing: 0) {
                 RadioStatusBanner()
                 DigestCard(expanded: $digestExpanded)
-                    .fixedSize(horizontal: false, vertical: true) // never squeezed by the message list
+                    .layoutPriority(1) // never squeezed to nothing by the message list
                 if mesh.spamHiddenCount > 0 {
                     Button {
                         showSpam.toggle()
@@ -84,37 +84,45 @@ struct DigestCard: View {
                 .accessibilityLabel(expanded ? "Collapse summary" : "Expand summary")
             }
             if expanded {
-                if let digest = mesh.digest {
-                    Text(mesh.digestOverview)
-                        .font(.callout)
-                        .accessibilityIdentifier("digest.overview")
-                    ForEach(digest.items.prefix(4)) { item in
-                        HStack(alignment: .top, spacing: 6) {
-                            PriorityBadge(priority: item.priority)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(item.headline).font(.caption)
-                                if let credibility = mesh.digestCredibility[item.id] {
-                                    Label(L(credibility.label), systemImage: credibility == .corroborated ? "checkmark.circle"
-                                          : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
-                                        .font(.caption2)
-                                        .foregroundStyle(credibility == .corroborated ? Theme.Colors.success : (credibility == .disputed ? Theme.Colors.danger : Theme.Colors.warning))
-                                        .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
+                // Scrolls within a bounded height so a long summary never pushes the messages off screen.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let digest = mesh.digest {
+                            Text(mesh.digestOverview)
+                                .font(.callout)
+                                .accessibilityIdentifier("digest.overview")
+                            ForEach(digest.items.prefix(4)) { item in
+                                HStack(alignment: .top, spacing: 6) {
+                                    PriorityBadge(priority: item.priority)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(item.headline).font(.caption)
+                                        if let credibility = mesh.digestCredibility[item.id] {
+                                            Label(L(credibility.label), systemImage: credibility == .corroborated ? "checkmark.circle"
+                                                  : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
+                                                .font(.caption2)
+                                                .foregroundStyle(credibility == .corroborated ? Theme.Colors.success : (credibility == .disputed ? Theme.Colors.danger : Theme.Colors.warning))
+                                                .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
+                                        }
+                                        (Text(item.reporters == 1 ? "1 report" : "\(item.reporters) reports")
+                                            + Text(item.locations.first.map { " · \($0)" } ?? ""))
+                                            .font(.caption2)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                    }
                                 }
-                                (Text(item.reporters == 1 ? "1 report" : "\(item.reporters) reports")
-                                    + Text(item.locations.first.map { " · \($0)" } ?? ""))
-                                    .font(.caption2)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
                             }
+                            Text(mesh.ai.hasGenerativeModel ? "Summarised on this phone by on-device AI" : "Summarised on this phone (offline rules)")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        } else {
+                            Text("Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
                     }
-                    Text(mesh.ai.hasGenerativeModel ? "Summarised on this phone by on-device AI" : "Summarised on this phone (offline rules)")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                } else {
-                    Text("Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.")
-                        .font(.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxHeight: 240)
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding()

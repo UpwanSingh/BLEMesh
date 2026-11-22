@@ -559,12 +559,13 @@ final class MeshService: ObservableObject {
         defer { isBuildingDigest = false }
         let since = Date().addingTimeInterval(-3600)
         let key = ConversationKey.nearby
+        // Spam and blocked devices never feed the area summary.
         let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate {
-            $0.conversationKey == key && $0.sentAt > since
+            $0.conversationKey == key && $0.sentAt > since && $0.isSpam == false
         })
         let messages = (try? context.fetch(descriptor)) ?? []
         let inputs: [DigestInput] = messages.compactMap { message in
-            guard let sender = message.sender, let content = message.content else { return nil }
+            guard let sender = message.sender, !trust.isBlocked(sender), let content = message.content else { return nil }
             switch content {
             case .text(let text): return DigestInput(sender: sender, text: text, date: message.sentAt)
             case .voice(let note): return DigestInput(sender: sender, text: note.transcript, date: message.sentAt)
@@ -671,13 +672,15 @@ final class MeshService: ObservableObject {
     }
 
     private func storeLocal(id: UUID, content: MeshContent, key: String, outgoing: Bool, senderName: String,
-                            sender: PeerID? = nil, sentAt: Date = Date(), hops: Int = 0, status: DeliveryStatus = .sent) {
+                            sender: PeerID? = nil, sentAt: Date = Date(), hops: Int = 0, status: DeliveryStatus = .sent,
+                            isSpam: Bool = false) {
         guard fetchMessage(id) == nil else { return }
         let message = StoredMessage(id: id, conversationKey: key, senderHex: (sender ?? myPeerID).hex,
                                     senderName: senderName, isOutgoing: outgoing, content: content,
                                     sentAt: sentAt, hops: hops, status: status)
+        message.isSpam = isSpam // set before the first save, so spam is never visible even briefly
         context.insert(message)
-        if let conversation = fetchConversation(key) {
+        if let conversation = fetchConversation(key), !isSpam {
             conversation.updatedAt = Date()
             conversation.lastPreview = content.previewText
             if !outgoing && !(openConversationKey == key && isVisible) { conversation.unreadCount += 1 }
@@ -758,20 +761,17 @@ final class MeshService: ObservableObject {
             key = ConversationKey.group(groupID)
             ensureConversation(key, kind: .group, title: node.groups[groupID]?.name ?? "Group")
         }
-        storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
-                   senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
-
         // #12: the public channel is open to anyone, so it gets a spam filter (SOS calls are never hidden).
-        if message.scope == .broadcast, case .text(let text) = envelope.content {
+        var isSpam = false
+        if message.scope == .broadcast, case .text(let text) = envelope.content, fetchMessage(envelope.messageID) == nil {
             spamFilter.reported = trust.reported
-            let verdict = spamFilter.evaluate(sender: sender, text: text, date: envelope.sentAt)
-            if verdict.isSpam, let stored = fetchMessage(envelope.messageID) {
-                stored.isSpam = true
-                spamHiddenCount += 1
-                if let conversation = fetchConversation(key), conversation.unreadCount > 0 { conversation.unreadCount -= 1 }
-                try? context.save()
-                return
-            }
+            isSpam = spamFilter.evaluate(sender: sender, text: text, date: envelope.sentAt).isSpam
+        }
+        storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
+                   senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops, isSpam: isSpam)
+        if isSpam {
+            spamHiddenCount += 1
+            return
         }
 
         if openConversationKey == key, isVisible, message.scope == .direct {

@@ -25,9 +25,20 @@ final class Phase2UITests: XCTestCase {
     }
 
     private func reveal(_ element: XCUIElement) -> XCUIElement {
-        for _ in 0..<6 where !element.exists { app.swipeUp() }
+        for _ in 0..<6 where !(element.exists && element.isHittable) { app.swipeUp() }
+        for _ in 0..<8 where !(element.exists && element.isHittable) { app.swipeDown() }
         XCTAssertTrue(element.waitForExistence(timeout: 3), "\(element) not found")
         return element
+    }
+
+    /// Tap a text field until the keyboard is up (a slow simulator can drop the first tap).
+    private func focus(_ field: XCUIElement) {
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        for _ in 0..<3 {
+            field.tap()
+            if app.keyboards.firstMatch.waitForExistence(timeout: 5) { return }
+        }
+        XCTFail("keyboard never appeared for \(field)")
     }
 
     /// Wait on the Network tab until a scripted broadcast has had time to arrive (the Nearby tab
@@ -44,7 +55,7 @@ final class Phase2UITests: XCTestCase {
         app.launch()
         waitOnNetwork(seconds: 45) // Ravi's "water … community hall" broadcast at ~40 s
         app.tabBars.buttons["Ask"].tap()
-        el("ask.text").tap()
+        focus(el("ask.text"))
         el("ask.text").typeText("Where is water being given out?")
         el("ask.send").tap()
         XCTAssertTrue(any(containing: "community hall").waitForExistence(timeout: 20), "answer didn't quote the nearby message")
@@ -52,7 +63,7 @@ final class Phase2UITests: XCTestCase {
         XCTAssertTrue(any(containing: "Messages nearby").exists, "answer should be labelled by its real source")
         screenshot("p2-01-local-answer")
 
-        el("ask.text").tap()
+        focus(el("ask.text"))
         el("ask.text").typeText("How much paracetamol can I give my child?")
         el("ask.send").tap()
         XCTAssertTrue(any(containing: "pharmacist").waitForExistence(timeout: 30), "dosing questions must be refused")
@@ -122,15 +133,17 @@ final class Phase2UITests: XCTestCase {
         app.launch()
         app.tabBars.buttons["Chats"].tap()
         el("chats.settings").tap()
-        let medic = reveal(el("settings.medic"))
-        let autoReply = reveal(el("settings.autoReply"))
-        XCTAssertEqual(medic.value as? String, "0")
-        XCTAssertEqual(autoReply.value as? String, "1", "auto-reply is on by default")
-        if medic.switches.firstMatch.exists { medic.switches.firstMatch.tap() } else { medic.tap() }
-        XCTAssertEqual(el("settings.medic").value as? String, "1")
+        let autoReply = app.switches.matching(NSPredicate(format: "label == %@", "Auto-reply to “are you safe?” after 5 min")).firstMatch
+        XCTAssertEqual(reveal(autoReply).value as? String, "1", "auto-reply is on by default")
+        // The form loads rows lazily: look the medic row up again after scrolling.
+        let medic = app.switches.matching(NSPredicate(format: "label == %@", "I'm a medic (doctor, nurse, first-aider)")).firstMatch
+        XCTAssertEqual(reveal(medic).value as? String, "0")
+        medic.switches.firstMatch.tap()
+        let on = expectation(for: NSPredicate(format: "value == '1'"), evaluatedWith: reveal(medic))
+        wait(for: [on], timeout: 10)
         el("settings.done").tap()
         el("chats.settings").tap()
-        XCTAssertEqual(reveal(el("settings.medic")).value as? String, "1")
+        XCTAssertEqual(reveal(app.switches.matching(NSPredicate(format: "label == %@", "I'm a medic (doctor, nurse, first-aider)")).firstMatch).value as? String, "1")
         screenshot("p2-07-roles")
     }
 }

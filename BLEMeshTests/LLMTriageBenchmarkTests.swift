@@ -5,10 +5,13 @@ import MeshCore
 
 /// Measures Apple's on-device model on the held-out triage set (only where the model is available,
 /// e.g. Apple-silicon simulators with Apple Intelligence enabled, or iPhone 15 Pro and later).
+/// Opt-in (`LLM_BENCHMARK=1`): it makes 100+ model calls. In the simulator every call fails (no model
+/// assets) and the system's inference service grows with each one, so it must not run by default.
 @MainActor
 @Suite("On-device model triage (held-out v2)")
 struct LLMTriageBenchmarkTests {
-    @Test func measureModelTriage() async throws {
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["LLM_BENCHMARK"] == "1"))
+    func measureModelTriage() async throws {
         #if canImport(FoundationModels)
         guard #available(iOS 26.0, *), FoundationModelsEngine.isSupported else {
             print("LLMTRIAGE skipped: no on-device model here")

@@ -34,6 +34,12 @@ AI keeps working offline: voice notes, translation, SOS triage, an area summary 
 | **Medical ID** | Blood type, allergies, conditions and more, kept in the Keychain and attached to an SOS only when you choose. |
 | **Trust** | QR verification, warnings about look-alike names, block and report, and group re-keying when members leave or are removed. |
 | **Safety** | Panic wipe erases messages, groups, contacts and keys, then creates a new identity. Message retention is configurable. |
+| **Hindi** | The whole interface in Hindi (317 strings, plus the Apple Watch app), including SOS priority, category and status labels. Message content and the first-aid guide stay as written. |
+| **Accessibility** | Text colours meet WCAG AA (4.5:1) in light and dark mode, tap targets are at least 44 pt, rows wrap instead of truncating, and controls have VoiceOver labels. Checked with Xcode's accessibility audit on every main screen and a contrast unit test. |
+| **SOS map & directions** | Distance and compass direction to each SOS ("290 m NE") worked out on the phone from GPS, with no network needed. Also a map of SOS calls (map tiles need internet; pins don't). |
+| **QR group invites** | Group admins show a QR code; scanning it asks the admin's phone over the mesh to add you. The code contains no key, expires in 24 hours, and the group is re-keyed when someone joins. |
+| **Apple Watch SOS** | Hold the watch's SOS button for 2 seconds. The iPhone sends it over the mesh with its GPS fix, and the watch shows responders' status. If the iPhone isn't reachable, the SOS is queued. |
+| **SDK** | `Packages/MeshCore` is a documented Swift package: bring your own transport, with an example (`swift run mesh-demo`) and tests that use only the public API. |
 | **Demo mesh** | Simulated neighbours, for trying the app or UI-testing it with no other phones (`-demoMesh` launch argument). |
 
 ## Architecture
@@ -72,10 +78,13 @@ open BLEMesh.xcodeproj     # pick your team under Signing & Capabilities, then r
 ## Tests
 
 ```bash
-./scripts/test-core.sh     # MeshCore: 122 tests: protocol, crypto, routing, security, crowds, AI safety, triage benchmark
+./scripts/test-core.sh     # MeshCore: 136 tests: protocol, crypto, routing, security, crowds, AI safety, triage, SDK
 xcodegen generate
 xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMesh \
-  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # 41 app unit tests + 34 UI tests
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # app unit tests + UI tests (incl. Hindi, accessibility audit)
+xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMeshWatch \
+  -destination 'platform=watchOS Simulator,name=Apple Watch Series 12 (46mm)'
+python3 scripts/hindi.py --check   # every UI string has a Hindi translation
 ```
 
 The UI tests drive the real app in demo-mesh mode. They cover onboarding, a direct chat with
@@ -96,6 +105,7 @@ CI (`.github/workflows/ci.yml`) runs both on every pull request.
 - **Offline triage is imperfect.** On a held-out set written after tuning, the offline triage gets the category right 80% of the time and the priority 77% of the time, but catches only 57% of critical cases. An SOS is never ranked below "high". The on-device language-model path couldn't be measured: the iOS simulator reports the model as available, but its model assets are missing, so every generation fails. The app detects this and labels answers by their real source.
 - **Medical content needs clinical review** before real-world use. The guide follows public first-aid guidance (sources are listed per entry) but hasn't been reviewed by a clinician.
 - **Forward secrecy is coarse:** prekeys rotate daily and are deleted after 7 days, so the exposure window is up to a week (no per-message ratchet).
+- **Direct messages across dense crowds are not 100% reliable.** In the simulated 100-phone crowd, 599 of 600 direct messages to contacts 4–7 hops away arrived within 13 minutes. One was lost: when there's no route, messages are flooded, and relay suppression can prune every copy for a pair right at the 7-hop limit. A possible fix is to stop suppressing the later retries.
 - **Proof-of-work slows fake SOS floods** but doesn't stop an attacker with many devices.
 - **Metadata:** relays can see sender and recipient mesh IDs, which they need for routing, though not the content.
 - **iOS background limits:** iOS restricts Bluetooth advertising in the background, so two phones that are both in the background discover each other slowly. Existing connections stay up and state restoration is enabled.

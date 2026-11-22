@@ -85,3 +85,20 @@ struct InfoRow: View {
         }
     }
 }
+
+/// Icon + text that keeps its natural size inside list rows (SwiftUI's `Label` reserves a fixed
+/// icon column in lists, which pads and clips short inline labels).
+struct InlineLabel: View {
+    let title: Text
+    let systemImage: String
+
+    init(_ title: LocalizedStringKey, systemImage: String) { self.title = Text(title); self.systemImage = systemImage }
+    init(_ title: String, systemImage: String) { self.title = Text(verbatim: title); self.systemImage = systemImage }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage).accessibilityHidden(true)
+            title.fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}

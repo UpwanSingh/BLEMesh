@@ -1629,6 +1629,7 @@
       }
     },
     "New device": {
+      "extractionState": "stale",
       "localizations": {
         "hi": {
           "stringUnit": {

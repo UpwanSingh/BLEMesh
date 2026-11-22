@@ -21,7 +21,9 @@ final class AccessibilityUITests: XCTestCase {
         add(shot)
         do {
             try app.performAccessibilityAudit { issue in
-                let element = issue.element.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label.prefix(60))" } ?? "no element"
+                // Elements can vanish while the audit runs (live demo traffic); never touch a stale one.
+                let live = issue.element.flatMap { $0.exists ? $0 : nil }
+                let element = live.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label.prefix(60))" } ?? "no element"
                 let description = "\(screen) | \(issue.compactDescription) | \(element)"
                 print("A11Y", description, issue.element == nil ? "| detail: \(issue.detailedDescription)" : "")
                 // Logged but not failed: borderline contrast (system greys), and Dynamic Type
@@ -30,12 +32,12 @@ final class AccessibilityUITests: XCTestCase {
                     || issue.compactDescription.contains("partially unsupported")
                 // Content scrolled under the translucent tab bar, and the system's glass toolbar
                 // buttons, are measured against the blur behind them; that's not the app's styling.
-                let frame = issue.element?.frame ?? .zero
+                let frame = live?.frame ?? .zero
                 let underSystemBars = [self.app.tabBars.firstMatch, self.app.navigationBars.firstMatch]
                     .contains { $0.exists && $0.frame.intersects(frame) }
                 // Issues the audit can't attribute to an element are mostly sub-nodes of content
                 // scrolled under the tab bar; colour contrast is verified exactly by `ContrastTests`.
-                let unattributedContrast = issue.element == nil && issue.compactDescription.hasPrefix("Contrast")
+                let unattributedContrast = live == nil && issue.compactDescription.hasPrefix("Contrast")
                 return advisory || underSystemBars || unattributedContrast
             }
         } catch {
@@ -44,6 +46,7 @@ final class AccessibilityUITests: XCTestCase {
     }
 
     func testMainScreensPassTheAccessibilityAudit() {
+        let launched = Date()
         app.launch()
         app.tabBars.buttons["Network"].tap()
         XCTAssertTrue(el("network.peer.Meera").waitForExistence(timeout: 20))
@@ -52,10 +55,6 @@ final class AccessibilityUITests: XCTestCase {
 
         app.tabBars.buttons["Chats"].tap()
         audit("Chats")
-
-        app.tabBars.buttons["Nearby"].tap()
-        Thread.sleep(forTimeInterval: 10) // let some public messages arrive
-        audit("Nearby")
 
         app.tabBars.buttons["SOS"].tap()
         XCTAssertTrue(el("sos.action.enRoute").waitForExistence(timeout: 20))
@@ -67,5 +66,12 @@ final class AccessibilityUITests: XCTestCase {
         app.tabBars.buttons["Chats"].tap()
         el("chats.settings").tap()
         audit("Settings")
+        el("settings.done").tap()
+
+        // Audit Nearby once the demo's scripted broadcasts (last at ~55 s) have arrived, so rows
+        // aren't moving while the audit measures them.
+        Thread.sleep(forTimeInterval: max(0, 60 - Date().timeIntervalSince(launched)))
+        app.tabBars.buttons["Nearby"].tap()
+        audit("Nearby")
     }
 }
