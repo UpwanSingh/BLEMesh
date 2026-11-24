@@ -33,4 +33,11 @@ struct NavigationTests {
         #expect(indiaGate.directions(to: connaughtPlace) == "2.4 km NW")
         #expect(me.directions(to: GeoPoint(latitude: 28.61255, longitude: 77.20652)) == "here")
     }
+
+    @Test func landmarksStopAtJoiningWords() {
+        #expect(HeuristicTriage.locationHints(in: "Elderly man fell near the bus stand and can't move his leg") == ["the bus stand"])
+        #expect(HeuristicTriage.locationHints(in: "Fire near the market, lots of smoke") == ["the market"])
+        #expect(HeuristicTriage.locationHints(in: "trapped behind the school, one is bleeding") == ["the school"])
+        #expect(HeuristicTriage.locationHints(in: "stuck near gate 4 with my kids").first == "gate 4")
+    }
 }

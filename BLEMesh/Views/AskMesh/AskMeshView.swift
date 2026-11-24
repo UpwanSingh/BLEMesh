@@ -62,8 +62,10 @@ struct AskMeshView: View {
         HStack(spacing: 6) {
             Image(systemName: mesh.ai.hasGenerativeModel ? "iphone.gen3" : (mesh.node.bestAIHelper() != nil ? "person.wave.2" : "book.closed"))
             Text(sourceText).font(.caption)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
+            Spacer(minLength: 0)
         }
+        .fixedSize(horizontal: false, vertical: true)
         .foregroundStyle(Theme.Colors.secondaryText)
         .padding(.horizontal)
         .padding(.vertical, 6)

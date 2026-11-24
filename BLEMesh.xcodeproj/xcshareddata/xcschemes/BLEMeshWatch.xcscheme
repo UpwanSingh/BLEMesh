@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "1600"
-   version = "1.3">
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      buildArchitectures = "Automatic"
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -41,7 +42,8 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
@@ -53,7 +55,8 @@
       </MacroExpansion>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "69A20B6ECD4580ED02D2958D"
@@ -63,6 +66,8 @@
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -80,6 +85,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7C3A1730574F4DCF63748B0A"
             BuildableName = "BLEMeshWatch.app"
+            BlueprintName = "BLEMeshWatch"
             ReferencedContainer = "container:BLEMesh.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -96,6 +102,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7C3A1730574F4DCF63748B0A"
             BuildableName = "BLEMeshWatch.app"
+            BlueprintName = "BLEMeshWatch"
             ReferencedContainer = "container:BLEMesh.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

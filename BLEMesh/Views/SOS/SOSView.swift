@@ -17,6 +17,12 @@ struct SOSView: View {
             return (message, report)
         }
         .sorted { lhs, rhs in
+            // Your own recent SOS stays on top (its responders and outcome are what you're watching);
+            // everyone else's are ranked by urgency, newest first.
+            let recent = Date().addingTimeInterval(-6 * 3600)
+            let lMine = lhs.0.isOutgoing && lhs.0.sentAt > recent
+            let rMine = rhs.0.isOutgoing && rhs.0.sentAt > recent
+            if lMine != rMine { return lMine }
             let lp = lhs.1.triage?.priority ?? .medium, rp = rhs.1.triage?.priority ?? .medium
             return lp != rp ? lp > rp : lhs.0.sentAt > rhs.0.sentAt
         }

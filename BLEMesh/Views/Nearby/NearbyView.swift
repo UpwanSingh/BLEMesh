@@ -13,7 +13,9 @@ struct NearbyView: View {
             VStack(spacing: 0) {
                 RadioStatusBanner()
                 DigestCard(expanded: $digestExpanded)
-                    .layoutPriority(1) // never squeezed to nothing by the message list
+                    // Full height (the expanded part scrolls inside a 240 pt cap), so the message
+                    // list can never squeeze it.
+                    .fixedSize(horizontal: false, vertical: true)
                 if mesh.spamHiddenCount > 0 {
                     Button {
                         showSpam.toggle()
@@ -123,10 +125,23 @@ struct DigestCard: View {
                 }
                 .frame(maxHeight: 240)
                 .fixedSize(horizontal: false, vertical: true)
+                .modifier(NoScrollEdgeFade())
             }
         }
         .padding()
         .background(Theme.Colors.card)
         .task { if mesh.digest == nil { await mesh.refreshDigest() } }
+    }
+}
+
+/// iOS 26 fades content at a scroll view's edges; inside this small card that dims the last line
+/// below readable contrast, so the fade is turned off here.
+private struct NoScrollEdgeFade: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .all)
+        } else {
+            content
+        }
     }
 }

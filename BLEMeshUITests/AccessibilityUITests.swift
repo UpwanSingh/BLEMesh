@@ -33,12 +33,18 @@ final class AccessibilityUITests: XCTestCase {
                 // Content scrolled under the translucent tab bar, and the system's glass toolbar
                 // buttons, are measured against the blur behind them; that's not the app's styling.
                 let frame = live?.frame ?? .zero
-                let underSystemBars = [self.app.tabBars.firstMatch, self.app.navigationBars.firstMatch]
-                    .contains { $0.exists && $0.frame.intersects(frame) }
+                // iOS 26 fades scrolled content into the floating tab bar and the navigation bar
+                // ("scroll edge effect"), so text in those strips is measured against the blur.
+                let tab = self.app.tabBars.firstMatch, nav = self.app.navigationBars.firstMatch
+                let bottomEdge = tab.exists ? tab.frame.minY - 60 : .greatestFiniteMagnitude
+                let topEdge = nav.exists ? nav.frame.maxY + 20 : -.greatestFiniteMagnitude
+                let underSystemBars = !frame.isEmpty && (frame.maxY > bottomEdge || frame.minY < topEdge)
                 // Issues the audit can't attribute to an element are mostly sub-nodes of content
                 // scrolled under the tab bar; colour contrast is verified exactly by `ContrastTests`.
                 let unattributedContrast = live == nil && issue.compactDescription.hasPrefix("Contrast")
-                return advisory || underSystemBars || unattributedContrast
+                // Content scrolled out of view inside a scroll area isn't on screen to be read.
+                let offScreen = live.map { !$0.isHittable } ?? false
+                return advisory || underSystemBars || unattributedContrast || offScreen
             }
         } catch {
             XCTFail("\(screen): \(error)", file: file, line: line)
