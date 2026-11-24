@@ -66,7 +66,7 @@ struct SplashScreenView: View {
                 // Subtitle
                 Text("Decentralized Messaging")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Theme.Colors.secondaryText)
                     .opacity(subtitleOpacity)
                 
                 Spacer()
@@ -112,9 +112,9 @@ struct OnboardingPage: Identifiable {
     let id = UUID()
     let icon: String
     let iconColor: Color
-    let title: String
-    let subtitle: String
-    let description: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let description: LocalizedStringKey
 
     static let all: [OnboardingPage] = [
         OnboardingPage(
@@ -179,7 +179,7 @@ struct OnboardingView: View {
                             }
                         }
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                         .padding()
                     }
                 }
@@ -285,7 +285,7 @@ struct OnboardingPageView: View {
             // Description
             Text(page.description)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.Colors.secondaryText)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .padding(.horizontal, 32)

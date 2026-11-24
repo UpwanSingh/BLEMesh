@@ -247,7 +247,13 @@ final class ControlCoverageUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Meera"].waitForExistence(timeout: 5))
         app.navigationBars.buttons["BackButton"].tap()
 
-        el("sos.compose").tap()
+        // Wait for the back animation to finish before opening the compose sheet.
+        let compose = el("sos.compose")
+        XCTAssertTrue(compose.waitForExistence(timeout: 5))
+        for _ in 0..<10 where !compose.isHittable { Thread.sleep(forTimeInterval: 0.3) }
+        compose.tap()
+        if !el("sos.send").waitForExistence(timeout: 3) { compose.tap() }
+        XCTAssertTrue(el("sos.send").waitForExistence(timeout: 5))
         XCTAssertFalse(el("sos.send").isEnabled, "Send must be disabled until text is entered")
         app.buttons["Fire"].tap()
         let text = el("sos.text")

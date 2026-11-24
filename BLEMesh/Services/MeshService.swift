@@ -18,11 +18,13 @@ final class MeshService: ObservableObject {
 
     @Published private(set) var peers: [PeerInfo] = []
     @Published private(set) var linkCount = 0
-    @Published private(set) var radioStatus = "Starting…"
+    @Published private(set) var radioStatus = String(localized: "Starting…")
     @Published private(set) var isRadioReady = false
     @Published private(set) var stats = MeshStats()
     @Published private(set) var groups: [GroupInfo] = []
     @Published private(set) var digest: AreaDigest?
+    /// This phone's last GPS fix, for offline directions to SOS calls (demo: a fixed point near the scripted ones).
+    @Published private(set) var myLocation: GeoPoint?
     @Published private(set) var digestOverview: String = ""
     @Published private(set) var isBuildingDigest = false
     /// Outstanding "Ask the mesh" questions: queryID → the helper we asked. Answers from anyone
@@ -140,7 +142,7 @@ final class MeshService: ObservableObject {
         switch mode {
         case .demo:
             isRadioReady = true
-            radioStatus = "Demo mesh (simulated devices)"
+            radioStatus = String(localized: "Demo mesh (simulated devices)")
             linkCount = node.linkCount
         case .bluetooth:
             guard let transport = bleTransport else { return }
@@ -148,15 +150,15 @@ final class MeshService: ObservableObject {
             linkCount = transport.linkCount
             switch (transport.centralState, transport.peripheralState) {
             case (.poweredOn, .poweredOn):
-                radioStatus = linkCount == 0 ? "Searching for nearby devices…" : "Connected to \(linkCount) device\(linkCount == 1 ? "" : "s")"
+                radioStatus = linkCount == 0 ? "Searching for nearby devices…" : String(localized: "Connected to \(linkCount) device(s)")
             case (.poweredOff, _), (_, .poweredOff):
-                radioStatus = "Bluetooth is off"
+                radioStatus = String(localized: "Bluetooth is off")
             case (.unauthorized, _), (_, .unauthorized):
-                radioStatus = "Bluetooth permission needed — enable it in Settings"
+                radioStatus = String(localized: "Bluetooth permission needed — enable it in Settings")
             case (.unsupported, _), (_, .unsupported):
-                radioStatus = "Bluetooth LE isn't supported on this device"
+                radioStatus = String(localized: "Bluetooth LE isn't supported on this device")
             default:
-                radioStatus = "Starting Bluetooth…"
+                radioStatus = String(localized: "Starting Bluetooth…")
             }
         }
         refreshPeers()
@@ -244,6 +246,21 @@ final class MeshService: ObservableObject {
     }
 
     /// Live status of an SOS from the updates stored in the Nearby channel.
+    /// Your most recent SOS from the last 24 hours, if any, and its state.
+    func latestOwnSOS() -> (StoredMessage, SOSState)? {
+        let key = ConversationKey.nearby
+        let since = Date().addingTimeInterval(-24 * 3600)
+        var descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate {
+            $0.conversationKey == key && $0.isOutgoing == true && $0.sentAt >= since
+        }, sortBy: [SortDescriptor(\.sentAt, order: .reverse)])
+        descriptor.fetchLimit = 50
+        guard let sos = ((try? context.fetch(descriptor)) ?? []).first(where: {
+            if case .sos? = $0.content { return true }
+            return false
+        }) else { return nil }
+        return (sos, sosState(for: sos))
+    }
+
     func sosState(for sos: StoredMessage) -> SOSState {
         let key = ConversationKey.nearby
         let since = sos.sentAt.addingTimeInterval(-1)
@@ -433,6 +450,43 @@ final class MeshService: ObservableObject {
         demo?.broadcast(content, from: name)
     }
 
+    // MARK: - Group invite codes
+
+    /// Admin only: a fresh invite code (QR) for this group, valid for 24 hours.
+    func makeJoinCode(groupKey: String) -> GroupJoinCode? {
+        guard let id = ConversationKey.groupID(from: groupKey) else { return nil }
+        return try? node.makeJoinCode(for: id)
+    }
+
+    enum JoinResult: Equatable {
+        case requested(adminName: String)
+        case invalid, expired, alreadyMember
+    }
+
+    /// Ask the group's admin to add us. We join when their phone accepts (it may be out of range for now).
+    func joinGroup(code text: String) -> JoinResult {
+        guard let code = GroupJoinCode(string: text) else { return .invalid }
+        do {
+            try node.requestToJoin(code)
+            lastUserActivity = Date()
+            return .requested(adminName: node.peer(code.admin)?.nickname ?? String(localized: "the group admin"))
+        } catch MeshNodeError.codeExpired {
+            return .expired
+        } catch {
+            return .alreadyMember
+        }
+    }
+
+    /// Demo mode only: a bot scans our invite code (shows the admin side without a second phone).
+    func demoScan(_ code: GroupJoinCode, by name: String) {
+        demo?.requestToJoin(code, as: name)
+    }
+
+    /// Demo mode only: a bot creates a group and returns its invite code (tests the joining side).
+    func demoBotGroupCode(admin: String, members: [String], name: String) -> GroupJoinCode? {
+        demo?.makeGroupCode(admin: admin, members: members, name: name)
+    }
+
     @discardableResult
     func createGroup(name: String, members: Set<PeerID>) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -505,12 +559,13 @@ final class MeshService: ObservableObject {
         defer { isBuildingDigest = false }
         let since = Date().addingTimeInterval(-3600)
         let key = ConversationKey.nearby
+        // Spam and blocked devices never feed the area summary.
         let descriptor = FetchDescriptor<StoredMessage>(predicate: #Predicate {
-            $0.conversationKey == key && $0.sentAt > since
+            $0.conversationKey == key && $0.sentAt > since && $0.isSpam == false
         })
         let messages = (try? context.fetch(descriptor)) ?? []
         let inputs: [DigestInput] = messages.compactMap { message in
-            guard let sender = message.sender, let content = message.content else { return nil }
+            guard let sender = message.sender, !trust.isBlocked(sender), let content = message.content else { return nil }
             switch content {
             case .text(let text): return DigestInput(sender: sender, text: text, date: message.sentAt)
             case .voice(let note): return DigestInput(sender: sender, text: note.transcript, date: message.sentAt)
@@ -617,13 +672,15 @@ final class MeshService: ObservableObject {
     }
 
     private func storeLocal(id: UUID, content: MeshContent, key: String, outgoing: Bool, senderName: String,
-                            sender: PeerID? = nil, sentAt: Date = Date(), hops: Int = 0, status: DeliveryStatus = .sent) {
+                            sender: PeerID? = nil, sentAt: Date = Date(), hops: Int = 0, status: DeliveryStatus = .sent,
+                            isSpam: Bool = false) {
         guard fetchMessage(id) == nil else { return }
         let message = StoredMessage(id: id, conversationKey: key, senderHex: (sender ?? myPeerID).hex,
                                     senderName: senderName, isOutgoing: outgoing, content: content,
                                     sentAt: sentAt, hops: hops, status: status)
+        message.isSpam = isSpam // set before the first save, so spam is never visible even briefly
         context.insert(message)
-        if let conversation = fetchConversation(key) {
+        if let conversation = fetchConversation(key), !isSpam {
             conversation.updatedAt = Date()
             conversation.lastPreview = content.previewText
             if !outgoing && !(openConversationKey == key && isVisible) { conversation.unreadCount += 1 }
@@ -660,7 +717,7 @@ final class MeshService: ObservableObject {
             let verified = AIResponse(queryID: response.queryID, text: response.text, answeredBy: label)
             storeLocal(id: envelope.messageID, content: .aiResponse(verified), key: ConversationKey.askMesh, outgoing: false,
                        senderName: label, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
-            notify(title: "Answer from \(label)", body: response.text, key: ConversationKey.askMesh)
+            notify(title: String(localized: "Answer from \(label)"), body: response.text, key: ConversationKey.askMesh)
             return
         case .groupInvite(let invite):
             let key = ConversationKey.group(invite.groupID)
@@ -668,6 +725,15 @@ final class MeshService: ObservableObject {
             ensureConversation(key, kind: .group, title: invite.name)
             let note = isRekey ? "🔑 \(senderName) changed the group key (membership changed)" : "\(senderName) added you to “\(invite.name)”"
             storeLocal(id: envelope.messageID, content: .text(note), key: key,
+                       outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
+            refreshPeers()
+            saveSnapshot()
+            return
+        case .groupJoinRequest(let request):
+            // Delivered only when our node accepted it (admin, valid code) and added the sender.
+            let key = ConversationKey.group(request.groupID)
+            guard fetchConversation(key) != nil else { return }
+            storeLocal(id: envelope.messageID, content: .text(String(localized: "\(senderName) joined with the invite code")), key: key,
                        outgoing: false, senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
             refreshPeers()
             saveSnapshot()
@@ -695,20 +761,17 @@ final class MeshService: ObservableObject {
             key = ConversationKey.group(groupID)
             ensureConversation(key, kind: .group, title: node.groups[groupID]?.name ?? "Group")
         }
-        storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
-                   senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops)
-
         // #12: the public channel is open to anyone, so it gets a spam filter (SOS calls are never hidden).
-        if message.scope == .broadcast, case .text(let text) = envelope.content {
+        var isSpam = false
+        if message.scope == .broadcast, case .text(let text) = envelope.content, fetchMessage(envelope.messageID) == nil {
             spamFilter.reported = trust.reported
-            let verdict = spamFilter.evaluate(sender: sender, text: text, date: envelope.sentAt)
-            if verdict.isSpam, let stored = fetchMessage(envelope.messageID) {
-                stored.isSpam = true
-                spamHiddenCount += 1
-                if let conversation = fetchConversation(key), conversation.unreadCount > 0 { conversation.unreadCount -= 1 }
-                try? context.save()
-                return
-            }
+            isSpam = spamFilter.evaluate(sender: sender, text: text, date: envelope.sentAt).isSpam
+        }
+        storeLocal(id: envelope.messageID, content: envelope.content, key: key, outgoing: false,
+                   senderName: senderName, sender: sender, sentAt: envelope.sentAt, hops: message.hops, isSpam: isSpam)
+        if isSpam {
+            spamHiddenCount += 1
+            return
         }
 
         if openConversationKey == key, isVisible, message.scope == .direct {
@@ -718,16 +781,17 @@ final class MeshService: ObservableObject {
 
         switch envelope.content {
         case .sos(let report):
-            let priority = report.triage?.priority.label ?? "SOS"
+            let priority = report.triage.map { L($0.priority.label) } ?? "SOS"
             // #13: responders get a role-specific alert for emergencies they can help with.
             let role = ResponderMatcher.suggest(for: report.triage, among: [PeerInfo.selfStub(node)]).isEmpty ? "" :
-                (node.capabilities.contains(.medic) && report.triage?.category == .medical ? "🩺 You're a medic nearby — " : "🧰 You're a responder nearby — ")
-            notify(title: "🆘 \(role)\(priority) SOS from \(senderName)", body: report.triage?.summary ?? report.text, key: key, critical: true)
+                (node.capabilities.contains(.medic) && report.triage?.category == .medical
+                    ? String(localized: "🩺 You're a medic nearby — ") : String(localized: "🧰 You're a responder nearby — "))
+            notify(title: String(localized: "🆘 \(role)\(priority) SOS from \(senderName)"), body: report.triage?.summary ?? report.text, key: key, critical: true)
         case .safetyCheck(let check):
-            notify(title: "\(senderName) asks: are you safe?", body: "Tap to answer “I'm safe” or “I need help”.", key: key, critical: true)
+            notify(title: String(localized: "\(senderName) asks: are you safe?"), body: String(localized: "Tap to answer “I'm safe” or “I need help”."), key: key, critical: true)
             if case .group(let groupID) = message.scope { scheduleAutoReply(for: check, groupID: groupID) }
         case .checkIn(let checkIn) where checkIn.status == .needHelp:
-            notify(title: "⚠️ \(senderName) needs help", body: checkIn.note ?? "Open the family locator.", key: key, critical: true)
+            notify(title: String(localized: "⚠️ \(senderName) needs help"), body: checkIn.note ?? String(localized: "Open the family locator."), key: key, critical: true)
         case .sosUpdate:
             break // shown on the SOS board; no alert
         default:
@@ -787,6 +851,17 @@ final class MeshService: ObservableObject {
     private func finishRemote(_ id: UUID, with response: AIResponse?) {
         guard let pending = remoteTasks.removeValue(forKey: id) else { return }
         pending.continuation.resume(returning: response)
+    }
+
+    // MARK: - Location (SOS directions and map)
+
+    static let demoLocation = GeoPoint(latitude: 28.6125, longitude: 77.2065, accuracyMeters: 10)
+
+    /// Refresh `myLocation`. Asks for permission only when `prompt` is true (the user opened the map).
+    func refreshMyLocation(prompt: Bool = false) async {
+        if mode == .demo { myLocation = Self.demoLocation; return }
+        guard prompt || LocationProvider.isAuthorized else { return }
+        if let fix = await LocationProvider.currentLocation() { myLocation = fix }
     }
 
     // MARK: - #10 Catch-up

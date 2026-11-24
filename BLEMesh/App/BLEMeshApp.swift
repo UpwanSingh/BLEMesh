@@ -9,6 +9,7 @@ struct BLEMeshApp: App {
     @StateObject private var speaker = Speaker()
     @StateObject private var trust: TrustStore
     @Environment(\.scenePhase) private var scenePhase
+    private let watchBridge: WatchBridge?
 
     init() {
         let arguments = ProcessInfo.processInfo.arguments
@@ -30,8 +31,10 @@ struct BLEMeshApp: App {
         if isUITest { trust.wipe() }
         _settings = StateObject(wrappedValue: settings)
         _trust = StateObject(wrappedValue: trust)
+        // UI tests use the offline engine: deterministic, and no load on the system's model service.
         let service = MeshService(mode: demo ? .demo : .bluetooth, container: container,
-                                  settings: settings, trust: trust, persistSnapshot: !demo)
+                                  settings: settings, trust: trust, ai: isUITest ? OfflineKnowledgeEngine() : nil,
+                                  persistSnapshot: !demo)
         if demo && arguments.contains("-demoSpam") {
             // A scam broadcast for exercising the spam filter in UI tests.
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak service] in
@@ -39,6 +42,8 @@ struct BLEMeshApp: App {
             }
         }
         _mesh = StateObject(wrappedValue: service)
+        // Apple Watch SOS goes through this phone (not in unit tests, which drive the bridge directly).
+        watchBridge = isUnitTest ? nil : WatchBridge(mesh: service)
     }
 
     var body: some Scene {

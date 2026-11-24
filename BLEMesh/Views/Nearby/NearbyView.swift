@@ -13,11 +13,15 @@ struct NearbyView: View {
             VStack(spacing: 0) {
                 RadioStatusBanner()
                 DigestCard(expanded: $digestExpanded)
+                    // Full height (the expanded part scrolls inside a 240 pt cap), so the message
+                    // list can never squeeze it.
+                    .fixedSize(horizontal: false, vertical: true)
                 if mesh.spamHiddenCount > 0 {
                     Button {
                         showSpam.toggle()
                     } label: {
-                        Label(showSpam ? "Hide spam" : "\(mesh.spamHiddenCount) message\(mesh.spamHiddenCount == 1 ? "" : "s") hidden as spam — show",
+                        Label(showSpam ? "Hide spam" : mesh.spamHiddenCount == 1 ? "1 message hidden as spam — show"
+                                : "\(mesh.spamHiddenCount) messages hidden as spam — show",
                               systemImage: "eye.slash")
                             .font(.caption)
                     }
@@ -68,50 +72,76 @@ struct DigestCard: View {
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
                 .accessibilityIdentifier("digest.refresh")
                 Button {
                     withAnimation { expanded.toggle() }
                 } label: {
                     Image(systemName: expanded ? "chevron.up" : "chevron.down")
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
                 .accessibilityIdentifier("digest.toggle")
                 .accessibilityLabel(expanded ? "Collapse summary" : "Expand summary")
             }
             if expanded {
-                if let digest = mesh.digest {
-                    Text(mesh.digestOverview)
-                        .font(.callout)
-                        .accessibilityIdentifier("digest.overview")
-                    ForEach(digest.items.prefix(4)) { item in
-                        HStack(alignment: .top, spacing: 6) {
-                            PriorityBadge(priority: item.priority)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(item.headline).font(.caption)
-                                if let credibility = mesh.digestCredibility[item.id] {
-                                    Label(credibility.label, systemImage: credibility == .corroborated ? "checkmark.circle"
-                                          : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
-                                        .font(.caption2)
-                                        .foregroundStyle(credibility == .corroborated ? .green : (credibility == .disputed ? .red : .orange))
-                                        .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
+                // Scrolls within a bounded height so a long summary never pushes the messages off screen.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let digest = mesh.digest {
+                            Text(mesh.digestOverview)
+                                .font(.callout)
+                                .accessibilityIdentifier("digest.overview")
+                            ForEach(digest.items.prefix(4)) { item in
+                                HStack(alignment: .top, spacing: 6) {
+                                    PriorityBadge(priority: item.priority)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(item.headline).font(.caption)
+                                        if let credibility = mesh.digestCredibility[item.id] {
+                                            Label(L(credibility.label), systemImage: credibility == .corroborated ? "checkmark.circle"
+                                                  : (credibility == .disputed ? "exclamationmark.bubble" : "questionmark.circle"))
+                                                .font(.caption2)
+                                                .foregroundStyle(credibility == .corroborated ? Theme.Colors.success : (credibility == .disputed ? Theme.Colors.danger : Theme.Colors.warning))
+                                                .accessibilityIdentifier("digest.credibility.\(credibility.rawValue)")
+                                        }
+                                        (Text(item.reporters == 1 ? "1 report" : "\(item.reporters) reports")
+                                            + Text(item.locations.first.map { " · \($0)" } ?? ""))
+                                            .font(.caption2)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                    }
                                 }
-                                Text("\(item.reporters) report\(item.reporters == 1 ? "" : "s")\(item.locations.first.map { " · \($0)" } ?? "")")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
                             }
+                            Text(mesh.ai.hasGenerativeModel ? "Summarised on this phone by on-device AI" : "Summarised on this phone (offline rules)")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        } else {
+                            Text("Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
                     }
-                    Text(mesh.ai.hasGenerativeModel ? "Summarised on this phone by on-device AI" : "Summarised on this phone (offline rules)")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                } else {
-                    Text("Summarises the last hour of public messages and SOS calls nearby — on your phone, offline.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxHeight: 240)
+                .fixedSize(horizontal: false, vertical: true)
+                .modifier(NoScrollEdgeFade())
             }
         }
         .padding()
         .background(Theme.Colors.card)
         .task { if mesh.digest == nil { await mesh.refreshDigest() } }
+    }
+}
+
+/// iOS 26 fades content at a scroll view's edges; inside this small card that dims the last line
+/// below readable contrast, so the fade is turned off here.
+private struct NoScrollEdgeFade: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .all)
+        } else {
+            content
+        }
     }
 }

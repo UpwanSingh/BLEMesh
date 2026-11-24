@@ -7,59 +7,62 @@ struct NetworkView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("This phone") {
-                    LabeledContent("Name", value: mesh.nickname)
-                    LabeledContent("Mesh ID", value: mesh.myPeerID.short)
-                    LabeledContent("Radio", value: mesh.radioStatus)
-                    LabeledContent("Links", value: "\(mesh.linkCount)")
+                Section {
+                    InfoRow("Name", value: mesh.nickname)
+                    InfoRow("Mesh ID", value: mesh.myPeerID.short)
+                    InfoRow("Radio", value: mesh.radioStatus)
+                    InfoRow("Links", value: "\(mesh.linkCount)")
                         .accessibilityIdentifier("network.links")
-                    LabeledContent("AI", value: mesh.ai.hasGenerativeModel ? "On-device model" : "Offline guide")
-                }
+                    InfoRow("AI", value: mesh.ai.hasGenerativeModel ? "On-device model" : "Offline guide")
+                } header: { SectionTitle("This phone") }
 
                 Section {
                     if mesh.peers.isEmpty {
                         Text("No devices yet. Phones running BLE Mesh connect automatically when in range.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     }
                     ForEach(mesh.peers) { peer in
                         HStack {
-                            Circle().fill(peer.isNeighbor ? Color.green : (peer.isReachable ? Color.purple : Color.gray)).frame(width: 8, height: 8)
+                            Circle().fill(peer.isNeighbor ? Theme.Colors.success : (peer.isReachable ? Theme.Colors.multiHop : Theme.Colors.secondaryText))
+                                .frame(width: 8, height: 8)
+                                .accessibilityHidden(true) // the hop count says the same in words
                             VStack(alignment: .leading) {
                                 HStack(spacing: 4) {
                                     Text(mesh.uniqueName(for: peer.peerID))
                                     if mesh.trust.isVerified(peer.peerID) {
-                                        Image(systemName: "checkmark.seal.fill").foregroundStyle(.green).font(.caption)
+                                        Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.Colors.success).font(.caption)
                                     }
                                     if peer.capabilities.contains(.lowPower) {
-                                        Image(systemName: "battery.25").foregroundStyle(.orange).font(.caption)
+                                        Image(systemName: "battery.25").foregroundStyle(Theme.Colors.warning).font(.caption)
                                             .accessibilityLabel("Low battery")
                                     }
                                 }
-                                Text(peer.peerID.short).font(.caption2.monospaced()).foregroundStyle(.secondary)
+                                Text(peer.peerID.short).font(.caption2.monospaced()).foregroundStyle(Theme.Colors.secondaryText)
                             }
                             Spacer()
                             if peer.capabilities.contains(.onDeviceAI) {
-                                Image(systemName: "sparkles").foregroundStyle(.orange)
+                                Image(systemName: "sparkles").foregroundStyle(Theme.Colors.warning)
+                                    .accessibilityLabel("Has on-device AI")
                             }
                             Text(peer.hops.map { $0 == 0 ? "direct" : "\($0 + 1) hops" } ?? "offline")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
                         .accessibilityIdentifier("network.peer.\(peer.nickname)")
                     }
                 } header: {
-                    Text("Mesh (\(mesh.peers.filter(\.isReachable).count) reachable)")
+                    Text("Mesh (\(mesh.peers.filter(\.isReachable).count) reachable)").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
-                Section("Traffic") {
-                    LabeledContent("Packets received", value: "\(mesh.stats.packetsReceived)")
-                    LabeledContent("Packets sent", value: "\(mesh.stats.packetsSent)")
-                    LabeledContent("Relayed for others", value: "\(mesh.stats.relayed)")
+                Section {
+                    InfoRow("Packets received", value: "\(mesh.stats.packetsReceived)")
+                    InfoRow("Packets sent", value: "\(mesh.stats.packetsSent)")
+                    InfoRow("Relayed for others", value: "\(mesh.stats.relayed)")
                     LabeledContent("Carried (store & forward)", value: "\(mesh.stats.carried)")
-                    LabeledContent("Duplicates suppressed", value: "\(mesh.stats.duplicatesDropped)")
-                    LabeledContent("Invalid / forged dropped", value: "\(mesh.stats.invalidDropped)")
-                    LabeledContent("Rate-limited", value: "\(mesh.stats.rateLimited)")
-                }
+                    InfoRow("Duplicates suppressed", value: "\(mesh.stats.duplicatesDropped)")
+                    InfoRow("Invalid / forged dropped", value: "\(mesh.stats.invalidDropped)")
+                    InfoRow("Rate-limited", value: "\(mesh.stats.rateLimited)")
+                } header: { SectionTitle("Traffic") }
             }
             .navigationTitle("Network")
             .refreshable { mesh.refreshPeers() }

@@ -12,17 +12,33 @@ concurrency:
 jobs:
   meshcore:
     name: MeshCore tests
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - name: Use the newest Xcode on the runner
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Run MeshCore package tests
         run: ./scripts/test-core.sh
+      - name: Run the SDK example
+        run: cd Packages/MeshCore && swift run mesh-demo
+      - name: Every UI string has a Hindi translation
+        run: python3 scripts/hindi.py --check
 
   app:
     name: App build + unit & UI tests
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - name: Use the newest Xcode on the runner
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -44,3 +60,35 @@ jobs:
         with:
           name: TestResults
           path: TestResults.xcresult
+
+  watch:
+    name: Apple Watch app (build + UI tests)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the newest Xcode on the runner
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Pick a watch simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next((x["udid"] for k,v in d.items() if "watchOS" in k for x in v), ""))')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Test
+        if: steps.sim.outputs.udid != ''
+        run: |
+          xcodebuild test -project BLEMesh.xcodeproj -scheme BLEMeshWatch \
+            -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO
+      - name: Build only (no watch simulator on this runner)
+        if: steps.sim.outputs.udid == ''
+        run: |
+          xcodebuild build -project BLEMesh.xcodeproj -scheme BLEMeshWatch \
+            -destination "generic/platform=watchOS Simulator" CODE_SIGNING_ALLOWED=NO
+

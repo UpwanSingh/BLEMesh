@@ -29,7 +29,7 @@ struct FamilyLocatorView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(entry.member == mesh.myPeerID ? "\(mesh.nickname) (you)" : mesh.uniqueName(for: entry.member))
                                 .font(.body.weight(.medium))
-                            Text(statusText(entry)).font(.caption).foregroundStyle(.secondary)
+                            Text(statusText(entry)).font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                             if let note = entry.checkIn?.note { Text("“\(note)”").font(.caption) }
                             HStack(spacing: 10) {
                                 if let battery = entry.checkIn?.batteryPercent {
@@ -45,7 +45,7 @@ struct FamilyLocatorView: View {
                     .accessibilityIdentifier("locator.\(entry.checkIn?.status == .needHelp ? "needHelp" : (entry.isStale ? "unknown" : "safe"))")
                 }
             } footer: {
-                Text("Shows each member's latest check-in. “Unknown” means no check-in in the last 6 hours.")
+                Text("Shows each member's latest check-in. “Unknown” means no check-in in the last 6 hours.").foregroundStyle(Theme.Colors.secondaryText)
             }
             Section {
                 Button {
@@ -106,7 +106,7 @@ struct VerifyContactView: View {
                         .textSelection(.enabled)
                         .accessibilityIdentifier("verify.myCode")
                 } header: {
-                    Text("Your code — let them scan it")
+                    Text("Your code — let them scan it").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
                 Section {
@@ -126,7 +126,7 @@ struct VerifyContactView: View {
                         .disabled(manualCode.trimmingCharacters(in: .whitespaces).isEmpty)
                         .accessibilityIdentifier("verify.check")
                 } header: {
-                    Text("Their code")
+                    Text("Their code").foregroundStyle(Theme.Colors.secondaryText)
                 }
 
                 if let result {
@@ -134,20 +134,20 @@ struct VerifyContactView: View {
                         switch result {
                         case .verified:
                             Label("Verified — this really is \(mesh.uniqueName(for: peer))", systemImage: "checkmark.seal.fill")
-                                .foregroundStyle(.green)
+                                .foregroundStyle(Theme.Colors.success)
                                 .accessibilityIdentifier("verify.success")
                         case .mismatch:
-                            Label("That code belongs to a different device.", systemImage: "xmark.octagon.fill").foregroundStyle(.red)
+                            Label("That code belongs to a different device.", systemImage: "xmark.octagon.fill").foregroundStyle(Theme.Colors.danger)
                                 .accessibilityIdentifier("verify.mismatch")
                         case .keyMismatch:
                             Label("Keys don't match — this may be an impostor. Don't trust this contact.", systemImage: "exclamationmark.shield.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Theme.Colors.danger)
                                 .accessibilityIdentifier("verify.keyMismatch")
                         case .invalid:
-                            Label("That isn't a BLE Mesh code.", systemImage: "questionmark.circle").foregroundStyle(.orange)
+                            Label("That isn't a BLE Mesh code.", systemImage: "questionmark.circle").foregroundStyle(Theme.Colors.warning)
                                 .accessibilityIdentifier("verify.invalid")
                         case .unknownDevice:
-                            Label("This phone hasn't met that device yet.", systemImage: "questionmark.circle").foregroundStyle(.orange)
+                            Label("This phone hasn't met that device yet.", systemImage: "questionmark.circle").foregroundStyle(Theme.Colors.warning)
                         }
                     }
                 }
@@ -176,7 +176,11 @@ struct VerifyContactView: View {
         if case .verified = outcome { trust.setVerified(peer, true) }
     }
 
-    private func qrImage(_ string: String) -> UIImage? {
+    private func qrImage(_ string: String) -> UIImage? { QRCode.image(for: string) }
+}
+
+enum QRCode {
+    static func image(for string: String) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(string.utf8)
         filter.correctionLevel = "M"
@@ -236,7 +240,7 @@ struct MedicalIDView: View {
                 field("Medications", "e.g. insulin", \.medications, id: "medical.medications")
                 field("Emergency contact", "Name and number", \.emergencyContact, id: "medical.contact")
             } footer: {
-                Text("Stored only on this phone (Keychain). Attached to an SOS only when you choose — and then anyone nearby can read it.")
+                Text("Stored only on this phone (Keychain). Attached to an SOS only when you choose — and then anyone nearby can read it.").foregroundStyle(Theme.Colors.secondaryText)
             }
             if !trust.medical.isEmpty {
                 Section {
@@ -276,13 +280,13 @@ struct BlockedDevicesView: View {
     var body: some View {
         List {
             if trust.blocked.isEmpty {
-                Text("You haven't blocked anyone.").foregroundStyle(.secondary)
+                Text("You haven't blocked anyone.").foregroundStyle(Theme.Colors.secondaryText)
             }
             ForEach(Array(trust.blocked).sorted(), id: \.self) { peer in
                 HStack {
                     VStack(alignment: .leading) {
                         Text(mesh.displayName(for: peer))
-                        Text(trust.reported.contains(peer) ? "Reported" : "Blocked").font(.caption).foregroundStyle(.secondary)
+                        Text(trust.reported.contains(peer) ? "Reported" : "Blocked").font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                     }
                     Spacer()
                     Button("Unblock") { trust.setBlocked(peer, false) }

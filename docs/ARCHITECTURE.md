@@ -205,3 +205,45 @@ Everything runs on the phone; nothing leaves the mesh.
   refreshed and expired. Duplicate announces, which have already been signature-checked, now
   offer their path too.
 
+## Reach (Phase 3)
+
+- **Localization.**
+  - String Catalogs: `BLEMesh/Resources/Localizable.xcstrings` and `BLEMeshWatch/Localizable.xcstrings`.
+  - Strings are extracted from the build (`SWIFT_EMIT_LOC_STRINGS`) and synced with
+    `scripts/sync-strings.sh`. Hindi comes from `scripts/hindi.py`, and CI fails if a string lacks
+    Hindi.
+  - Labels that MeshCore produces at runtime (priority, category, SOS status, credibility) are
+    looked up with `L(_:)`.
+- **Accessibility.**
+  - Colours come from `Theme.Colors`, which are dynamic for light and dark mode. `ContrastTests`
+    computes their WCAG ratios against every system background.
+  - `AccessibilityUITests` runs `performAccessibilityAudit()` on each main screen.
+  - Two kinds of finding are treated as advisory:
+    - borderline "nearly passed" contrast and Dynamic Type "partially unsupported", which the audit
+      also reports for standard system controls;
+    - contrast measured on content under the translucent tab bar, or inside system glass buttons.
+- **SOS directions.**
+  - `GeoPoint.distance/bearing/compassPoint/directions` use the haversine formula and the initial
+    bearing, with no maps or network.
+  - The app shows directions from this phone's last fix. In demo mode that's a fixed point; on a
+    device, location permission is requested only when the map is opened.
+- **QR invites (`GroupJoinCode`).**
+  - Format: `blemesh:join:v1:<group>:<admin>:<16-byte secret>:<expiry>:<name>`.
+  - The code carries no key. The scanner sends `groupJoinRequest` (direct-only, end-to-end
+    encrypted) to the admin.
+  - The admin's node checks the secret in constant time and the expiry, adds the sender, and
+    re-keys the group.
+  - Codes live in memory, so restarting the admin's app invalidates them. A new code replaces the
+    old one.
+- **Apple Watch.**
+  - The watch app talks to the iPhone over WatchConnectivity (`Shared/WatchMessage.swift`).
+    `sendMessage` is used when the iPhone is reachable, otherwise `transferUserInfo` (queued).
+  - The iPhone's `WatchBridge` sends the SOS over the mesh with its own GPS fix, drops requests
+    older than 30 minutes, and pushes status to the watch: people in reach, and your SOS status
+    and responders.
+  - The SOS needs a 2-second hold; VoiceOver users double-tap.
+- **SDK.**
+  - `Packages/MeshCore/README.md` documents integration.
+  - `MeshCoreSDKTests` imports only the public API and wires its own transport.
+  - `swift run mesh-demo` runs a 5-phone line in the simulator.
+

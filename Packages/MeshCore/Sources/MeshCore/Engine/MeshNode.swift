@@ -219,6 +219,8 @@ public final class MeshNode {
     private var provenNeighbor: [LinkID: PeerID] = [:]
     private var directory: [PeerID: PeerInfo] = [:]
     private var routing: RoutingTable
+    /// Live invite codes for groups we administer (in memory: a restart invalidates them).
+    private var joinCodes: [UUID: GroupJoinCode] = [:]
     private var seenPackets: SeenCache<UUID>
     /// Delivered (origin, messageID) pairs — app-level dedup across retransmissions.
     private var deliveredMessages: SeenCache<String>
@@ -386,6 +388,43 @@ public final class MeshNode {
             try sendDirect(.groupInvite(invite), to: member)
         }
         return group
+    }
+
+    /// Admin only: add a member. The group is re-keyed so the newcomer can't read anything
+    /// captured from before they joined.
+    public func addMember(_ member: PeerID, to groupID: UUID) throws {
+        guard var group = groups[groupID] else { throw MeshNodeError.unknownGroup }
+        guard group.admin == peerID else { throw MeshNodeError.notGroupAdmin }
+        guard group.members.insert(member).inserted else { return }
+        groups[groupID] = group
+        rekeyGroup(groupID)
+    }
+
+    /// Admin only: a code (QR) that lets whoever scans it join, valid for `validFor` seconds.
+    /// A new code replaces the previous one for this group.
+    public func makeJoinCode(for groupID: UUID, validFor: TimeInterval = 24 * 3600) throws -> GroupJoinCode {
+        guard let group = groups[groupID] else { throw MeshNodeError.unknownGroup }
+        guard group.admin == peerID else { throw MeshNodeError.notGroupAdmin }
+        var secret = Data(count: 16)
+        for i in 0..<16 { secret[i] = UInt8.random(in: 0...255) }
+        let code = GroupJoinCode(groupID: groupID, groupName: group.name, admin: peerID, secret: secret,
+                                 expires: clock().addingTimeInterval(validFor))
+        joinCodes[groupID] = code
+        return code
+    }
+
+    /// Withdraw the current invite code for a group.
+    public func revokeJoinCode(for groupID: UUID) {
+        joinCodes[groupID] = nil
+    }
+
+    /// Ask the admin named in `code` to add us. Queued until the admin is reachable.
+    @discardableResult
+    public func requestToJoin(_ code: GroupJoinCode) throws -> UUID {
+        guard code.admin != peerID else { throw MeshNodeError.alreadyMember }
+        guard groups[code.groupID]?.members.contains(peerID) != true else { throw MeshNodeError.alreadyMember }
+        guard code.expires > clock() else { throw MeshNodeError.codeExpired }
+        return try sendDirect(.groupJoinRequest(GroupJoinRequest(groupID: code.groupID, secret: code.secret)), to: code.admin)
     }
 
     /// Admin only: remove a member and re-key so they can't read anything sent afterwards.
@@ -613,6 +652,7 @@ public final class MeshNode {
         directory.removeAll()
         carry.removeAll()
         lastAnnounceByPeer.removeAll()
+        joinCodes.removeAll()
     }
 
     // MARK: - Inbound handling
@@ -771,6 +811,15 @@ public final class MeshNode {
             }
             groups[invite.groupID] = updated
             leftGroups[invite.groupID] = nil
+            return true
+        case .groupJoinRequest(let request):
+            // Only the admin acts, and only for a live code whose secret matches (constant-time compare).
+            guard let code = joinCodes[request.groupID], code.expires > clock(),
+                  request.secret.count == code.secret.count,
+                  zip(request.secret, code.secret).reduce(0, { $0 | ($1.0 ^ $1.1) }) == 0,
+                  groups[request.groupID]?.admin == peerID else { return false }
+            guard groups[request.groupID]?.members.contains(sender) != true else { return false }
+            try? addMember(sender, to: request.groupID)
             return true
         case .groupLeave(let groupID):
             guard groups[groupID]?.members.contains(sender) == true else { return false }
@@ -1106,6 +1155,8 @@ public final class MeshNode {
 public enum MeshNodeError: Error {
     case unknownGroup
     case notGroupAdmin
+    case alreadyMember
+    case codeExpired
 }
 
 extension MeshContent {
@@ -1120,7 +1171,7 @@ extension MeshContent {
     var isAllowedInSharedChannels: Bool {
         switch self {
         case .text, .voice, .sos, .sosUpdate, .checkIn, .safetyCheck: return true
-        case .groupInvite, .groupLeave, .aiQuery, .aiResponse: return false
+        case .groupInvite, .groupLeave, .groupJoinRequest, .aiQuery, .aiResponse: return false
         }
     }
 }

@@ -8,16 +8,26 @@
 
 /* Begin PBXBuildFile section */
 		01DC0F256853F4788CBAB7C1 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */; };
+		066A6A896CAB0D10CBFBFAB0 /* SOSMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E70B3FDF8295354D9EF0302F /* SOSMapView.swift */; };
 		09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9181EC87D7992C670AEC8834 /* TrustStore.swift */; };
 		0E5FE6A8B7E9081005DA8E5D /* Phase2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03A7D00F1D604D003786A264 /* Phase2UITests.swift */; };
 		1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D01F697E706885E4168E385 /* MeshServiceTests.swift */; };
+		168EF2BE8C7E435F9515A7A9 /* WatchSOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D625AF655DFF26ECD4C3E342 /* WatchSOSView.swift */; };
+		233741015DD279525883245D /* JoinCodeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */; };
 		26CE28331595205C75D8DB90 /* LLMTriageBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */; };
+		283DE343B5C2A5CD8D7E0E92 /* BLEMeshWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E66FDDF153B9504A23F74F2B /* BLEMeshWatchApp.swift */; };
 		2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245963C629043F211DA896AA /* OnboardingView.swift */; };
 		2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */; };
 		3B17F632029C296E41DC60AB /* AskMeshView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776B256798972CE8FDE1ED6F /* AskMeshView.swift */; };
+		3DADB41554F4E3E2431551B7 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2591E3979363DE041F9AE8 /* Localization.swift */; };
 		489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D01DA76685C068E3E3CCAB /* SettingsView.swift */; };
+		4B5D23975DA5B6D9E434FC25 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 715B8F16B3AFB9EEEF883957 /* Localizable.xcstrings */; };
+		4B8C030D226F9BAECB976D1E /* ContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA3ADDD3A17858BE62793A2 /* ContrastTests.swift */; };
+		51730F8D6ECF35D39C6ECA01 /* GroupInviteViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */; };
 		54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */; };
+		554437D37AF6668362A3B815 /* BLEMeshWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D1BB453327A6A6EF9B3835AB /* BLEMeshWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5A1B6416B2A434BD19E2D99D /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865A21D3A2FFA7FBF5F2FBD5 /* MessageBubble.swift */; };
+		5C6BE79309FC953D55E5B51B /* WatchMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53D0E38F0FEB9D82AC3B08F /* WatchMessage.swift */; };
 		5CD74CD51FA3476247315A71 /* MeshSimulator in Frameworks */ = {isa = PBXBuildFile; productRef = B24900C7F24D83663A74749E /* MeshSimulator */; };
 		613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17BF5E6499152D16A206CB67 /* StoredModels.swift */; };
 		649C531C764317C52D57ED3A /* MeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = 27DA8003345648711A03527D /* MeshCore */; };
@@ -27,6 +37,9 @@
 		6E8153F8E061928B7E046ABD /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1204DDFE6456C497463939DB /* Logger.swift */; };
 		6F9BE5F64CA78A03A4BE953B /* ChatsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 283F0A3FE85E0394414E8CBA /* ChatsListView.swift */; };
 		73A38E34272DB02B13218C9C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F33A0E7F9B10DF36655FCDA /* MainTabView.swift */; };
+		73AA4AAD72A93E026ACBCB30 /* WatchBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE27B079FABA89F97B6F5572 /* WatchBridgeTests.swift */; };
+		8D20B9A55EAD4551C9F24D78 /* AccessibilityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3647BE59D5A1F6A47D5981A4 /* AccessibilityUITests.swift */; };
+		8F734CBED50569943556589A /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CD39E2EB0BF991939F7FEE /* WatchBridge.swift */; };
 		903771E5305B9D5A1B6197F1 /* MeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = E033A168F28B380D07248B51 /* MeshCore */; };
 		92A81262FC7794B36CF6C79D /* LocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8D968F43CA4E10BB6C1A2 /* LocationProvider.swift */; };
 		936F34B9D55CD429BDE209AE /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8F8694D1A12A8676798F86 /* Theme.swift */; };
@@ -40,19 +53,38 @@
 		B425D255C83C0860D937FEFB /* SOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 507CD7DBC28C06A30297FD74 /* SOSView.swift */; };
 		B81FDE5DF1C7BBB4E6A13518 /* IdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F3C96971785D920D7AD480 /* IdentityStore.swift */; };
 		D27A4ED21F3FC95DF559A416 /* Composer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F03CBF20CAF3DEB90A36474 /* Composer.swift */; };
+		D47D28F0CAEEA34B8BDE8048 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CAB0519B3556528C129917 /* WatchModel.swift */; };
 		DB84481CD90E55BEE5C8C1A7 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6B62383E3F0EAD97A6F6184 /* AppSettings.swift */; };
+		DCF8A01C8647B674B5AC9E6C /* LocalizationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4B663D1639FA07F550CC96 /* LocalizationUITests.swift */; };
 		E1FFC135CA0296FF219895D6 /* DemoMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87839F445AC8F08EB4BEA0B5 /* DemoMesh.swift */; };
+		E4C4FB808C21BCBA97B57B5C /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = BF4C8B4920BB5B6C22074361 /* Localizable.xcstrings */; };
+		E703BA3374B35095E05F9A7B /* WatchSOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D94429CF8DB36200F00D0FE /* WatchSOSUITests.swift */; };
 		F02D5B584B688638C9205949 /* Phase2ServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08F743BF2214D9122C65ECDD /* Phase2ServiceTests.swift */; };
+		F350EAF3538D9633A7A296FF /* WatchMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53D0E38F0FEB9D82AC3B08F /* WatchMessage.swift */; };
 		F8BE51211823C6F1F7ECC0DA /* NetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACBEC4D40FCBDB65708CA3C /* NetworkView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		464726F1352F5C34FA1A78BF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6DC7227B1382636CA7DA9D57 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C3A1730574F4DCF63748B0A;
+			remoteInfo = BLEMeshWatch;
+		};
 		5A3563D71CB7E8A657A867EC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6DC7227B1382636CA7DA9D57 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AF6A30E75EB922791A5FD902;
 			remoteInfo = BLEMesh;
+		};
+		774C8F5717B2913401368CC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6DC7227B1382636CA7DA9D57 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C3A1730574F4DCF63748B0A;
+			remoteInfo = BLEMeshWatch;
 		};
 		ED8CAF05BF3DA9763F92E100 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -63,8 +95,23 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		BAAA767F024EA584A2E22D5A /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				554437D37AF6668362A3B815 /* BLEMeshWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		03A7D00F1D604D003786A264 /* Phase2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase2UITests.swift; sourceTree = "<group>"; };
+		05F6BC94EDB839A87B670BA4 /* BLEMeshWatchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BLEMeshWatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		08F743BF2214D9122C65ECDD /* Phase2ServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase2ServiceTests.swift; sourceTree = "<group>"; };
 		0F33A0E7F9B10DF36655FCDA /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		1204DDFE6456C497463939DB /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
@@ -72,36 +119,53 @@
 		217685A035074ED6C3F129B8 /* MeshCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MeshCore; path = Packages/MeshCore; sourceTree = SOURCE_ROOT; };
 		245963C629043F211DA896AA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		283F0A3FE85E0394414E8CBA /* ChatsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsListView.swift; sourceTree = "<group>"; };
+		2DA3ADDD3A17858BE62793A2 /* ContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContrastTests.swift; sourceTree = "<group>"; };
 		300D552A4B042F1960516AC7 /* Phase1UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase1UITests.swift; sourceTree = "<group>"; };
 		35D01DA76685C068E3E3CCAB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3647BE59D5A1F6A47D5981A4 /* AccessibilityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityUITests.swift; sourceTree = "<group>"; };
 		3D01F697E706885E4168E385 /* MeshServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshServiceTests.swift; sourceTree = "<group>"; };
 		3F19E92193E1EA4632DA441E /* OnDeviceAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAI.swift; sourceTree = "<group>"; };
 		3F7BFD1123719513BB6FE1BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMTriageBenchmarkTests.swift; sourceTree = "<group>"; };
 		4A6EE420663D7E2058EA2EEB /* VoiceServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceServices.swift; sourceTree = "<group>"; };
+		4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinCodeServiceTests.swift; sourceTree = "<group>"; };
 		507CD7DBC28C06A30297FD74 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
 		5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlCoverageUITests.swift; sourceTree = "<group>"; };
 		60F7D9AFFE9F11B40BF0357E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6D3B0596E02F5169FFBB62DB /* TrustViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustViews.swift; sourceTree = "<group>"; };
+		70CD39E2EB0BF991939F7FEE /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
+		715B8F16B3AFB9EEEF883957 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		776B256798972CE8FDE1ED6F /* AskMeshView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskMeshView.swift; sourceTree = "<group>"; };
 		7F03CBF20CAF3DEB90A36474 /* Composer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Composer.swift; sourceTree = "<group>"; };
 		865A21D3A2FFA7FBF5F2FBD5 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
 		87839F445AC8F08EB4BEA0B5 /* DemoMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMesh.swift; sourceTree = "<group>"; };
+		8D94429CF8DB36200F00D0FE /* WatchSOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSOSUITests.swift; sourceTree = "<group>"; };
 		8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		9181EC87D7992C670AEC8834 /* TrustStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustStore.swift; sourceTree = "<group>"; };
 		9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshUITests.swift; sourceTree = "<group>"; };
+		9F4B663D1639FA07F550CC96 /* LocalizationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationUITests.swift; sourceTree = "<group>"; };
 		AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase1ServiceTests.swift; sourceTree = "<group>"; };
 		AA8F8694D1A12A8676798F86 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		AE27B079FABA89F97B6F5572 /* WatchBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridgeTests.swift; sourceTree = "<group>"; };
+		AF2591E3979363DE041F9AE8 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		B067D3E5BEBF5DD53C979FEA /* BLEMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshApp.swift; sourceTree = "<group>"; };
 		B6B62383E3F0EAD97A6F6184 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		BC515D9BE23EFA3836D289CF /* BLEMesh.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BLEMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BF4C8B4920BB5B6C22074361 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		C1EE8E63F3D8B4C3FAF1618B /* BLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLETransport.swift; sourceTree = "<group>"; };
 		C7F3C96971785D920D7AD480 /* IdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityStore.swift; sourceTree = "<group>"; };
+		CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupInviteViews.swift; sourceTree = "<group>"; };
 		CD20DD6A619E75D585B36641 /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
 		CDFB77DDA7156028E65F5340 /* NearbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyView.swift; sourceTree = "<group>"; };
+		D1BB453327A6A6EF9B3835AB /* BLEMeshWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BLEMeshWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3CAB0519B3556528C129917 /* WatchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
+		D53D0E38F0FEB9D82AC3B08F /* WatchMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMessage.swift; sourceTree = "<group>"; };
+		D625AF655DFF26ECD4C3E342 /* WatchSOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSOSView.swift; sourceTree = "<group>"; };
 		D7F8D968F43CA4E10BB6C1A2 /* LocationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationProvider.swift; sourceTree = "<group>"; };
 		D968E715388EDAA0753F2915 /* BLEMeshUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BLEMeshUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D98495B9FFA743FAB55A879D /* BLEMeshTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BLEMeshTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E66FDDF153B9504A23F74F2B /* BLEMeshWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEMeshWatchApp.swift; sourceTree = "<group>"; };
+		E70B3FDF8295354D9EF0302F /* SOSMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSMapView.swift; sourceTree = "<group>"; };
 		FACBEC4D40FCBDB65708CA3C /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -132,6 +196,8 @@
 				BC515D9BE23EFA3836D289CF /* BLEMesh.app */,
 				D98495B9FFA743FAB55A879D /* BLEMeshTests.xctest */,
 				D968E715388EDAA0753F2915 /* BLEMeshUITests.xctest */,
+				D1BB453327A6A6EF9B3835AB /* BLEMeshWatch.app */,
+				05F6BC94EDB839A87B670BA4 /* BLEMeshWatchUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -153,11 +219,28 @@
 				FCABA38C6653D7A5538828F9 /* Core */,
 				6E8DD9E79AA46E45EC0C4197 /* Intelligence */,
 				6FC8BB7C1DDC8BB9AC26FB55 /* Persistence */,
+				10A1A5EA9D7F5D7824D4428B /* Resources */,
 				AF16280E94C2B49AB61FC7B8 /* Services */,
 				C3FADE31A6B5652A368CC65F /* Transport */,
 				BAD5FCD5D3708C4A50BB343B /* Views */,
 			);
 			path = BLEMesh;
+			sourceTree = "<group>";
+		};
+		10A1A5EA9D7F5D7824D4428B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				715B8F16B3AFB9EEEF883957 /* Localizable.xcstrings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		250058C833A3B8EFE8482D30 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				D53D0E38F0FEB9D82AC3B08F /* WatchMessage.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		2BDD645D91DC497F17DFF0A3 /* Packages */ = {
@@ -171,6 +254,7 @@
 		5380C927D95085D5467D887C /* SOS */ = {
 			isa = PBXGroup;
 			children = (
+				E70B3FDF8295354D9EF0302F /* SOSMapView.swift */,
 				507CD7DBC28C06A30297FD74 /* SOSView.swift */,
 			);
 			path = SOS;
@@ -197,6 +281,7 @@
 			children = (
 				283F0A3FE85E0394414E8CBA /* ChatsListView.swift */,
 				8FC7AC5FAF642E987C5BD585 /* ConversationView.swift */,
+				CB7126A93C0A49AFB046FDCD /* GroupInviteViews.swift */,
 			);
 			path = Chats;
 			sourceTree = "<group>";
@@ -250,16 +335,29 @@
 				104238DF18CA911EF2E0C492 /* BLEMesh */,
 				F340B5A084129E213DCC364B /* BLEMeshTests */,
 				A30048861AFC070BAB399788 /* BLEMeshUITests */,
+				CD4385E04900C8277861838A /* BLEMeshWatch */,
+				8C9269A18FF338CE7E08ECC7 /* BLEMeshWatchUITests */,
 				2BDD645D91DC497F17DFF0A3 /* Packages */,
+				250058C833A3B8EFE8482D30 /* Shared */,
 				074F2F62FF2FECB47EA4FE6E /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		8C9269A18FF338CE7E08ECC7 /* BLEMeshWatchUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8D94429CF8DB36200F00D0FE /* WatchSOSUITests.swift */,
+			);
+			path = BLEMeshWatchUITests;
 			sourceTree = "<group>";
 		};
 		A30048861AFC070BAB399788 /* BLEMeshUITests */ = {
 			isa = PBXGroup;
 			children = (
+				3647BE59D5A1F6A47D5981A4 /* AccessibilityUITests.swift */,
 				9A5F01A1884600C28974F791 /* BLEMeshUITests.swift */,
 				5C9680D0620FD38D5235F85C /* ControlCoverageUITests.swift */,
+				9F4B663D1639FA07F550CC96 /* LocalizationUITests.swift */,
 				300D552A4B042F1960516AC7 /* Phase1UITests.swift */,
 				03A7D00F1D604D003786A264 /* Phase2UITests.swift */,
 			);
@@ -282,6 +380,7 @@
 				C7F3C96971785D920D7AD480 /* IdentityStore.swift */,
 				CD20DD6A619E75D585B36641 /* MeshService.swift */,
 				9181EC87D7992C670AEC8834 /* TrustStore.swift */,
+				70CD39E2EB0BF991939F7FEE /* WatchBridge.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -312,9 +411,21 @@
 			path = Transport;
 			sourceTree = "<group>";
 		};
+		CD4385E04900C8277861838A /* BLEMeshWatch */ = {
+			isa = PBXGroup;
+			children = (
+				E66FDDF153B9504A23F74F2B /* BLEMeshWatchApp.swift */,
+				BF4C8B4920BB5B6C22074361 /* Localizable.xcstrings */,
+				D3CAB0519B3556528C129917 /* WatchModel.swift */,
+				D625AF655DFF26ECD4C3E342 /* WatchSOSView.swift */,
+			);
+			path = BLEMeshWatch;
+			sourceTree = "<group>";
+		};
 		D41508D0A59E97FA5AA56BD8 /* Theme */ = {
 			isa = PBXGroup;
 			children = (
+				AF2591E3979363DE041F9AE8 /* Localization.swift */,
 				AA8F8694D1A12A8676798F86 /* Theme.swift */,
 			);
 			path = Theme;
@@ -331,10 +442,13 @@
 		F340B5A084129E213DCC364B /* BLEMeshTests */ = {
 			isa = PBXGroup;
 			children = (
+				2DA3ADDD3A17858BE62793A2 /* ContrastTests.swift */,
+				4C8909EFE762A4EA5118F23B /* JoinCodeServiceTests.swift */,
 				3FD66C08416AFA6BF3835737 /* LLMTriageBenchmarkTests.swift */,
 				3D01F697E706885E4168E385 /* MeshServiceTests.swift */,
 				AA4D7145E6CEC89B213207E2 /* Phase1ServiceTests.swift */,
 				08F743BF2214D9122C65ECDD /* Phase2ServiceTests.swift */,
+				AE27B079FABA89F97B6F5572 /* WatchBridgeTests.swift */,
 			);
 			path = BLEMeshTests;
 			sourceTree = "<group>";
@@ -368,6 +482,42 @@
 			productReference = D968E715388EDAA0753F2915 /* BLEMeshUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		69A20B6ECD4580ED02D2958D /* BLEMeshWatchUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 242F5424569BBFDF5C00A0B2 /* Build configuration list for PBXNativeTarget "BLEMeshWatchUITests" */;
+			buildPhases = (
+				DEC9FFFC071F2E000B430017 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F37EC7DDB120FDA7A0A23A21 /* PBXTargetDependency */,
+			);
+			name = BLEMeshWatchUITests;
+			packageProductDependencies = (
+			);
+			productName = BLEMeshWatchUITests;
+			productReference = 05F6BC94EDB839A87B670BA4 /* BLEMeshWatchUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		7C3A1730574F4DCF63748B0A /* BLEMeshWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7D434B06D58DA5A2EBC2F645 /* Build configuration list for PBXNativeTarget "BLEMeshWatch" */;
+			buildPhases = (
+				F3F7132B589108BF2BA57FD1 /* Sources */,
+				9C30A78A1798EA4885782A15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BLEMeshWatch;
+			packageProductDependencies = (
+			);
+			productName = BLEMeshWatch;
+			productReference = D1BB453327A6A6EF9B3835AB /* BLEMeshWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		92142BE016CA80C7EE0DFB53 /* BLEMeshTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8E3F118295167175FF88854F /* Build configuration list for PBXNativeTarget "BLEMeshTests" */;
@@ -395,10 +545,12 @@
 				33798337E118833793FA8134 /* Sources */,
 				7F1AA9C9CE6CB55060E48208 /* Resources */,
 				A56955B74D2AEB48FD495DD7 /* Frameworks */,
+				BAAA767F024EA584A2E22D5A /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				426FBE3A608729ABB47A2C0E /* PBXTargetDependency */,
 			);
 			name = BLEMesh;
 			packageProductDependencies = (
@@ -423,6 +575,15 @@
 						ProvisioningStyle = Automatic;
 						TestTargetID = AF6A30E75EB922791A5FD902;
 					};
+					69A20B6ECD4580ED02D2958D = {
+						DevelopmentTeam = 4C8ZG43R2Q;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 7C3A1730574F4DCF63748B0A;
+					};
+					7C3A1730574F4DCF63748B0A = {
+						DevelopmentTeam = 4C8ZG43R2Q;
+						ProvisioningStyle = Automatic;
+					};
 					92142BE016CA80C7EE0DFB53 = {
 						DevelopmentTeam = 4C8ZG43R2Q;
 						ProvisioningStyle = Automatic;
@@ -439,6 +600,7 @@
 			knownRegions = (
 				Base,
 				en,
+				hi,
 			);
 			mainGroup = 85CD68C92F8340AD4C1A659B;
 			minimizedProjectReferenceProxies = 1;
@@ -451,6 +613,8 @@
 			projectRoot = "";
 			targets = (
 				AF6A30E75EB922791A5FD902 /* BLEMesh */,
+				7C3A1730574F4DCF63748B0A /* BLEMeshWatch */,
+				69A20B6ECD4580ED02D2958D /* BLEMeshWatchUITests */,
 				92142BE016CA80C7EE0DFB53 /* BLEMeshTests */,
 				6361709C6FD7314129023CB0 /* BLEMeshUITests */,
 			);
@@ -463,6 +627,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B9BED95E4EA88D9AF061343 /* Assets.xcassets in Resources */,
+				4B5D23975DA5B6D9E434FC25 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9C30A78A1798EA4885782A15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E4C4FB808C21BCBA97B57B5C /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,10 +646,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4B8C030D226F9BAECB976D1E /* ContrastTests.swift in Sources */,
+				233741015DD279525883245D /* JoinCodeServiceTests.swift in Sources */,
 				26CE28331595205C75D8DB90 /* LLMTriageBenchmarkTests.swift in Sources */,
 				1478CDCDC6E07122C076A3AB /* MeshServiceTests.swift in Sources */,
 				9966BEA1257FC8D88A6D7B48 /* Phase1ServiceTests.swift in Sources */,
 				F02D5B584B688638C9205949 /* Phase2ServiceTests.swift in Sources */,
+				73AA4AAD72A93E026ACBCB30 /* WatchBridgeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,7 +668,9 @@
 				D27A4ED21F3FC95DF559A416 /* Composer.swift in Sources */,
 				01DC0F256853F4788CBAB7C1 /* ConversationView.swift in Sources */,
 				E1FFC135CA0296FF219895D6 /* DemoMesh.swift in Sources */,
+				51730F8D6ECF35D39C6ECA01 /* GroupInviteViews.swift in Sources */,
 				B81FDE5DF1C7BBB4E6A13518 /* IdentityStore.swift in Sources */,
+				3DADB41554F4E3E2431551B7 /* Localization.swift in Sources */,
 				92A81262FC7794B36CF6C79D /* LocationProvider.swift in Sources */,
 				6E8153F8E061928B7E046ABD /* Logger.swift in Sources */,
 				73A38E34272DB02B13218C9C /* MainTabView.swift in Sources */,
@@ -502,6 +680,7 @@
 				F8BE51211823C6F1F7ECC0DA /* NetworkView.swift in Sources */,
 				97F09356B174ADAE139D5101 /* OnDeviceAI.swift in Sources */,
 				2A8C501EF572E6D75621DB01 /* OnboardingView.swift in Sources */,
+				066A6A896CAB0D10CBFBFAB0 /* SOSMapView.swift in Sources */,
 				B425D255C83C0860D937FEFB /* SOSView.swift in Sources */,
 				489BA4ADCF42B864DA9B5AC6 /* SettingsView.swift in Sources */,
 				613647E8B6B9A3D2E11D2000 /* StoredModels.swift in Sources */,
@@ -509,6 +688,8 @@
 				09B5B9DC99BEF828C5D281C5 /* TrustStore.swift in Sources */,
 				6648C6D316C447F2EE55CF3B /* TrustViews.swift in Sources */,
 				B07A43D55586B357F8ED8356 /* VoiceServices.swift in Sources */,
+				8F734CBED50569943556589A /* WatchBridge.swift in Sources */,
+				F350EAF3538D9633A7A296FF /* WatchMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,10 +697,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D20B9A55EAD4551C9F24D78 /* AccessibilityUITests.swift in Sources */,
 				2C5E9BA6ABD1DF400C493BA7 /* BLEMeshUITests.swift in Sources */,
 				54603D2DA583088CB193AFA7 /* ControlCoverageUITests.swift in Sources */,
+				DCF8A01C8647B674B5AC9E6C /* LocalizationUITests.swift in Sources */,
 				6B0CA84A9BBCAA28C09326CE /* Phase1UITests.swift in Sources */,
 				0E5FE6A8B7E9081005DA8E5D /* Phase2UITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DEC9FFFC071F2E000B430017 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E703BA3374B35095E05F9A7B /* WatchSOSUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3F7132B589108BF2BA57FD1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				283DE343B5C2A5CD8D7E0E92 /* BLEMeshWatchApp.swift in Sources */,
+				5C6BE79309FC953D55E5B51B /* WatchMessage.swift in Sources */,
+				D47D28F0CAEEA34B8BDE8048 /* WatchModel.swift in Sources */,
+				168EF2BE8C7E435F9515A7A9 /* WatchSOSView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -536,9 +738,38 @@
 			target = AF6A30E75EB922791A5FD902 /* BLEMesh */;
 			targetProxy = 5A3563D71CB7E8A657A867EC /* PBXContainerItemProxy */;
 		};
+		426FBE3A608729ABB47A2C0E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C3A1730574F4DCF63748B0A /* BLEMeshWatch */;
+			targetProxy = 464726F1352F5C34FA1A78BF /* PBXContainerItemProxy */;
+		};
+		F37EC7DDB120FDA7A0A23A21 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C3A1730574F4DCF63748B0A /* BLEMeshWatch */;
+			targetProxy = 774C8F5717B2913401368CC2 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		085693734A7F50E509DCBD49 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "BLE Mesh";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.upwan.blemesh;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
 		0FE1FE5AE473726EB9FB37F3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -549,10 +780,48 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BLEMesh";
+			};
+			name = Release;
+		};
+		395E0033FF4A657E57B450EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.watchkitapp.uitests;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = BLEMeshWatch;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		4715D10D1E107FE9B06BD177 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.watchkitapp.uitests;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = BLEMeshWatch;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -568,9 +837,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh;
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -585,7 +856,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = BLEMesh;
@@ -604,9 +875,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh;
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -621,12 +894,31 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = BLEMesh;
 			};
 			name = Debug;
+		};
+		7B470F53450D9C568634C234 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "BLE Mesh";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.upwan.blemesh;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
 		};
 		AB74E4BF1E6557F1631A1708 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -681,7 +973,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -749,7 +1040,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -767,7 +1057,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.noxrail.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.upwan.blemesh.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BLEMesh";
@@ -777,11 +1067,29 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		242F5424569BBFDF5C00A0B2 /* Build configuration list for PBXNativeTarget "BLEMeshWatchUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				395E0033FF4A657E57B450EE /* Debug */,
+				4715D10D1E107FE9B06BD177 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		362A2079A0D35A8919738B4C /* Build configuration list for PBXNativeTarget "BLEMeshUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				63D7FC18F46B4E5F3657776E /* Debug */,
 				5A46FD315E9B2BEC575C6A10 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7D434B06D58DA5A2EBC2F645 /* Build configuration list for PBXNativeTarget "BLEMeshWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				085693734A7F50E509DCBD49 /* Debug */,
+				7B470F53450D9C568634C234 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

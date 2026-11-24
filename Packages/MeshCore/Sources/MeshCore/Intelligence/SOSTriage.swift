@@ -221,6 +221,13 @@ public enum HeuristicTriage {
         return nil
     }
 
+    static let landmarkStopWords: Set<String> = [
+        "and", "but", "or", "with", "who", "which", "where", "when", "while", "because", "so", "then",
+        "is", "are", "was", "were", "has", "have", "had", "can't", "cannot", "can", "cant", "won't", "will",
+        "please", "help", "we", "i", "he", "she", "they", "it", "my", "our", "his", "her", "their",
+        "aur", "hai", "hain",
+    ]
+
     static func locationHints(in text: String) -> [String] {
         let lower = text.lowercased()
         var hints: [String] = []
@@ -231,7 +238,11 @@ public enum HeuristicTriage {
                 if range.lowerBound == lower.startIndex || lower[lower.index(before: range.lowerBound)] == " " {
                     let tail = text[range.upperBound...]
                     let phrase = tail.split(whereSeparator: { ".,;!?\n".contains($0) }).first.map(String.init) ?? ""
-                    let words = phrase.split(separator: " ").prefix(4).joined(separator: " ")
+                    // A landmark is a short noun phrase: stop at the first joining word or verb
+                    // ("near the bus stand and can't move" → "the bus stand").
+                    let words = phrase.split(separator: " ").prefix(4)
+                        .prefix { !landmarkStopWords.contains($0.lowercased().trimmingCharacters(in: .punctuationCharacters)) }
+                        .joined(separator: " ")
                     if words.count >= 3, !hints.contains(words) { hints.append(words) }
                 }
                 searchRange = range.upperBound..<lower.endIndex

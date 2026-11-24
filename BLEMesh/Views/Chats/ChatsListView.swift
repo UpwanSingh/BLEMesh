@@ -9,6 +9,7 @@ struct ChatsListView: View {
     private var conversations: [StoredConversation]
 
     @State private var showPeerPicker = false
+    @State private var showJoin = false
     @State private var showNewGroup = false
     @State private var showSettings = false
     @State private var path: [String] = []
@@ -57,6 +58,9 @@ struct ChatsListView: View {
                         .accessibilityIdentifier("chats.settings")
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showJoin = true } label: { Image(systemName: "qrcode.viewfinder") }
+                        .accessibilityIdentifier("chats.join")
+                        .accessibilityLabel("Join a group with a code")
                     Button { showNewGroup = true } label: { Image(systemName: "person.3") }
                         .accessibilityIdentifier("chats.newGroup")
                         .accessibilityLabel("New group")
@@ -65,6 +69,7 @@ struct ChatsListView: View {
                         .accessibilityLabel("New chat")
                 }
             }
+            .sheet(isPresented: $showJoin) { JoinGroupView() }
             .sheet(isPresented: $showPeerPicker) {
                 PeerPickerView { peer in
                     let key = mesh.startDirectConversation(with: peer)
@@ -99,12 +104,12 @@ struct ConversationRow: View {
                     Spacer()
                     Text(conversation.updatedAt, style: .relative)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
                 HStack {
                     Text(conversation.lastPreview.isEmpty ? reachability : conversation.lastPreview)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                         .lineLimit(1)
                     Spacer()
                     if conversation.unreadCount > 0 {
@@ -144,14 +149,14 @@ struct PeerPickerView: View {
                                            description: Text("Other phones running BLE Mesh appear here automatically when in range."))
                 }
                 if !reachable.isEmpty {
-                    Section("Reachable now") {
+                    Section {
                         ForEach(reachable) { peer in row(peer) }
-                    }
+                    } header: { SectionTitle("Reachable now") }
                 }
                 if !offline.isEmpty {
-                    Section("Seen before — messages wait until they're back") {
+                    Section {
                         ForEach(offline) { peer in row(peer) }
-                    }
+                    } header: { SectionTitle("Seen before — messages wait until they're back") }
                 }
             }
             .navigationTitle("New Chat")
@@ -170,18 +175,18 @@ struct PeerPickerView: View {
                     HStack(spacing: 4) {
                         Text(mesh.uniqueName(for: peer.peerID)).foregroundStyle(.primary)
                         if mesh.trust.isVerified(peer.peerID) {
-                            Image(systemName: "checkmark.seal.fill").foregroundStyle(.green).accessibilityLabel("Verified")
+                            Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.Colors.success).accessibilityLabel("Verified")
                         }
                     }
                     if mesh.impersonatesVerifiedContact(peer.peerID) {
-                        Text("Same name as a verified contact — not them").font(.caption2).foregroundStyle(.red)
+                        Text("Same name as a verified contact — not them").font(.caption2).foregroundStyle(Theme.Colors.danger)
                     }
                     Text(peer.hops.map { $0 == 0 ? "Direct connection" : "\($0 + 1) hops away" } ?? "Out of range")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                 }
                 Spacer()
                 if peer.capabilities.contains(.onDeviceAI) {
-                    Image(systemName: "sparkles").foregroundStyle(.orange).accessibilityLabel("Has on-device AI")
+                    Image(systemName: "sparkles").foregroundStyle(Theme.Colors.warning).accessibilityLabel("Has on-device AI")
                 }
             }
         }
@@ -199,13 +204,13 @@ struct NewGroupView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Group name") {
+                Section {
                     TextField("e.g. Family, Rescue team", text: $name)
                         .accessibilityIdentifier("group.name")
-                }
+                } header: { SectionTitle("Group name") }
                 Section {
                     if mesh.peers.isEmpty {
-                        Text("No one to add yet — people appear when they're in range.").foregroundStyle(.secondary)
+                        Text("No one to add yet — people appear when they're in range.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                     ForEach(mesh.peers) { peer in
                         Button {
@@ -222,9 +227,9 @@ struct NewGroupView: View {
                         .accessibilityIdentifier("groupMember.\(peer.nickname)")
                     }
                 } header: {
-                    Text("Members (\(selected.count))")
+                    Text("Members (\(selected.count))").foregroundStyle(Theme.Colors.secondaryText)
                 } footer: {
-                    Text("Members get the group key in an end-to-end encrypted invite. Phones that relay group messages can't read them.")
+                    Text("Members get the group key in an end-to-end encrypted invite. Phones that relay group messages can't read them.").foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
             .navigationTitle("New Group")

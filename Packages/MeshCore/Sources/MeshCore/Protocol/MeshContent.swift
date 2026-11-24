@@ -18,6 +18,8 @@ public enum MeshContent: Codable, Equatable, Sendable {
     case checkIn(CheckIn)
     /// "Are you safe?" request to a group (e.g. family).
     case safetyCheck(SafetyCheck)
+    /// Sent to a group's admin after scanning its invite code; the admin adds the sender.
+    case groupJoinRequest(GroupJoinRequest)
 
     /// Text shown in message lists / notifications.
     public var previewText: String {
@@ -33,6 +35,7 @@ public enum MeshContent: Codable, Equatable, Sendable {
         case .checkIn(let checkIn): return checkIn.status == .safe ? "✅ I'm safe" + (checkIn.note.map { " — \($0)" } ?? "")
                                                                    : "⚠️ I need help" + (checkIn.note.map { " — \($0)" } ?? "")
         case .safetyCheck(let check): return "❓ Are you safe?" + (check.note.map { " — \($0)" } ?? "")
+        case .groupJoinRequest: return "Asked to join with an invite code"
         }
     }
 }
@@ -260,4 +263,72 @@ public struct MessageEnvelope: Codable, Equatable, Sendable {
 
     public func encode() throws -> Data { try Self.encoder.encode(self) }
     public static func decode(_ data: Data) throws -> MessageEnvelope { try decoder.decode(MessageEnvelope.self, from: data) }
+}
+
+/// A group invite code (shown as a QR code). It carries no key: whoever scans it asks the admin
+/// over the mesh, and the admin's phone adds them only if the one-time secret matches.
+public struct GroupJoinCode: Equatable, Sendable {
+    public var groupID: UUID
+    public var groupName: String
+    public var admin: PeerID
+    /// Random secret proving the scanner saw the code.
+    public var secret: Data
+    public var expires: Date
+
+    public init(groupID: UUID, groupName: String, admin: PeerID, secret: Data, expires: Date) {
+        self.groupID = groupID
+        self.groupName = groupName
+        self.admin = admin
+        self.secret = secret
+        self.expires = expires
+    }
+
+    /// `blemesh:join:v1:<group uuid>:<admin hex>:<secret hex>:<expiry unix>:<name base64url>`
+    public var string: String {
+        let name = Data(groupName.utf8).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return "blemesh:join:v1:\(groupID.uuidString):\(admin.hex):\(secret.map { String(format: "%02x", $0) }.joined()):\(Int(expires.timeIntervalSince1970)):\(name)"
+    }
+
+    public init?(string: String) {
+        let parts = string.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 8, parts[0] == "blemesh", parts[1] == "join", parts[2] == "v1",
+              let groupID = UUID(uuidString: String(parts[3])),
+              let admin = PeerID(hex: String(parts[4])),
+              let secret = Data(hexString: String(parts[5])), secret.count == 16,
+              let expiry = TimeInterval(parts[6]) else { return nil }
+        var base64 = String(parts[7]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+        guard let nameData = Data(base64Encoded: base64), let name = String(data: nameData, encoding: .utf8),
+              name.count <= 100 else { return nil }
+        self.init(groupID: groupID, groupName: name, admin: admin, secret: secret,
+                  expires: Date(timeIntervalSince1970: expiry))
+    }
+}
+
+public struct GroupJoinRequest: Codable, Equatable, Sendable {
+    public var groupID: UUID
+    public var secret: Data
+
+    public init(groupID: UUID, secret: Data) {
+        self.groupID = groupID
+        self.secret = secret
+    }
+}
+
+extension Data {
+    init?(hexString: String) {
+        guard hexString.count % 2 == 0 else { return nil }
+        var bytes = [UInt8]()
+        bytes.reserveCapacity(hexString.count / 2)
+        var index = hexString.startIndex
+        while index < hexString.endIndex {
+            let next = hexString.index(index, offsetBy: 2)
+            guard let byte = UInt8(hexString[index..<next], radix: 16) else { return nil }
+            bytes.append(byte)
+            index = next
+        }
+        self.init(bytes)
+    }
 }

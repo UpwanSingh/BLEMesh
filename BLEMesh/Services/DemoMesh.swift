@@ -206,6 +206,19 @@ final class DemoMesh {
         return "\(name) got it: “\(text.prefix(60))”"
     }
 
+    /// A bot scans an invite code and asks its admin to join.
+    func requestToJoin(_ code: GroupJoinCode, as name: String) {
+        _ = try? mesh.node(name).requestToJoin(code)
+    }
+
+    /// A bot creates a group with other bots and returns an invite code for it.
+    func makeGroupCode(admin: String, members: [String], name: String) -> GroupJoinCode? {
+        let node = mesh.node(admin)
+        guard let group = try? node.createGroup(name: name, members: Set(members.map { mesh.node($0).peerID })) else { return nil }
+        greetedGroups.insert("\(admin):\(group.id)")
+        return try? node.makeJoinCode(for: group.id)
+    }
+
     /// Broadcast on the public channel as one of the bots (tests and the `-demoSpam` launch argument).
     func broadcast(_ content: MeshContent, from name: String) {
         _ = try? mesh.node(name).sendBroadcast(content)

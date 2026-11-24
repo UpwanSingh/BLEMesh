@@ -1,0 +1,166 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld people in reach of your iPhone": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके iPhone की पहुँच में %lld लोग"
+          }
+        }
+      }
+    },
+    "Couldn't send.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नहीं भेज पाए।"
+          }
+        }
+      }
+    },
+    "Couldn't send. Use your iPhone.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नहीं भेज पाए। अपना iPhone इस्तेमाल करें।"
+          }
+        }
+      }
+    },
+    "Hold SOS for 2 seconds": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS को 2 सेकंड दबाए रखें"
+          }
+        }
+      }
+    },
+    "Hold for two seconds": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दो सेकंड दबाए रखें"
+          }
+        }
+      }
+    },
+    "I'm safe": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मैं सुरक्षित हूँ"
+          }
+        }
+      }
+    },
+    "Keep holding…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दबाए रखें…"
+          }
+        }
+      }
+    },
+    "SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS"
+          }
+        }
+      }
+    },
+    "SOS sent by your iPhone.%@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके iPhone ने SOS भेज दिया।%@"
+          }
+        }
+      }
+    },
+    "Send SOS": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOS भेजें"
+          }
+        }
+      }
+    },
+    "Sending…": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भेज रहे हैं…"
+          }
+        }
+      }
+    },
+    "Sent to your groups.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके समूहों को भेजा गया।"
+          }
+        }
+      }
+    },
+    "Will be sent when your iPhone is reachable.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone पहुँच में आते ही भेजा जाएगा।"
+          }
+        }
+      }
+    },
+    "You're not in any group yet.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप अभी किसी समूह में नहीं हैं।"
+          }
+        }
+      }
+    },
+    "Your SOS: %@": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका SOS: %@"
+          }
+        }
+      }
+    },
+    "iPhone not reachable. Your SOS will be sent as soon as it is.": {
+      "localizations": {
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone पहुँच में नहीं है। पहुँच में आते ही आपका SOS भेजा जाएगा।"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

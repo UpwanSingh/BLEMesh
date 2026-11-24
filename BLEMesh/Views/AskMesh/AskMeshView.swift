@@ -28,7 +28,7 @@ struct AskMeshView: View {
                                 HStack {
                                     ProgressView()
                                     Text(asking ? "Thinking…" : "Waiting for an answer from the mesh…")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.caption).foregroundStyle(Theme.Colors.secondaryText)
                                     Spacer()
                                 }
                                 .accessibilityIdentifier("ask.pending")
@@ -62,12 +62,14 @@ struct AskMeshView: View {
         HStack(spacing: 6) {
             Image(systemName: mesh.ai.hasGenerativeModel ? "iphone.gen3" : (mesh.node.bestAIHelper() != nil ? "person.wave.2" : "book.closed"))
             Text(sourceText).font(.caption)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
+            Spacer(minLength: 0)
         }
-        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .foregroundStyle(Theme.Colors.secondaryText)
         .padding(.horizontal)
         .padding(.vertical, 6)
-        .background(.bar)
+        .background(Theme.Colors.card)
         .accessibilityIdentifier("ask.source")
     }
 

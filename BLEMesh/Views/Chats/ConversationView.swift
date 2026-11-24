@@ -20,7 +20,7 @@ struct ConversationView: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 0) {
                     Text(title).font(.headline)
-                    Text(subtitle).font(.caption2).foregroundStyle(.secondary)
+                    Text(subtitle).font(.caption2).foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -108,6 +108,7 @@ struct ConversationInfoView: View {
     @Environment(\.dismiss) private var dismiss
     let conversationKey: String
     @State private var confirmLeave = false
+    @State private var showInvite = false
     @State private var confirmReport = false
     @State private var verifying = false
     @State private var showLocator = false
@@ -117,30 +118,30 @@ struct ConversationInfoView: View {
         NavigationStack {
             List {
                 if let peerID = ConversationKey.peer(from: conversationKey), let peer = mesh.peerInfo(peerID) {
-                    Section("Contact") {
-                        LabeledContent("Name", value: mesh.uniqueName(for: peer.peerID))
+                    Section {
+                        InfoRow("Name", value: mesh.uniqueName(for: peer.peerID))
                         if trust.isVerified(peer.peerID) {
-                            Label("Verified in person", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
+                            Label("Verified in person", systemImage: "checkmark.seal.fill").foregroundStyle(Theme.Colors.success)
                                 .accessibilityIdentifier("info.verified")
                         } else if mesh.impersonatesVerifiedContact(peer.peerID) {
                             Label("Not your verified “\(peer.nickname)” — same name, different device", systemImage: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Theme.Colors.danger)
                                 .accessibilityIdentifier("info.impersonation")
                         }
-                        LabeledContent("Mesh ID", value: peer.peerID.short)
-                        LabeledContent("Reachability", value: peer.hops.map { $0 == 0 ? "Direct" : "\($0 + 1) hops" } ?? "Out of range")
+                        InfoRow("Mesh ID", value: peer.peerID.short)
+                        InfoRow("Reachability", value: peer.hops.map { $0 == 0 ? "Direct" : "\($0 + 1) hops" } ?? "Out of range")
                         if peer.capabilities.contains(.onDeviceAI) {
                             Label("Can answer Ask-the-Mesh questions", systemImage: "sparkles")
                         }
-                    }
+                    } header: { SectionTitle("Contact") }
                     Section {
                         Text(peer.identity.fingerprint).font(.system(.body, design: .monospaced))
                             .accessibilityIdentifier("info.theirSafetyNumber")
-                        Text(mesh.myFingerprint).font(.system(.body, design: .monospaced)).foregroundStyle(.secondary)
+                        Text(mesh.myFingerprint).font(.system(.body, design: .monospaced)).foregroundStyle(Theme.Colors.secondaryText)
                     } header: {
-                        Text("Safety numbers (theirs, then yours)")
+                        Text("Safety numbers (theirs, then yours)").foregroundStyle(Theme.Colors.secondaryText)
                     } footer: {
-                        Text("Compare these in person. If they match on both phones, nobody is impersonating either of you.")
+                        Text("Compare these in person. If they match on both phones, nobody is impersonating either of you.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                     Section {
                         Button {
@@ -156,7 +157,7 @@ struct ConversationInfoView: View {
                         Button("Report as spam or abuse", role: .destructive) { confirmReport = true }
                             .accessibilityIdentifier("info.report")
                     } footer: {
-                        Text("Blocked and reported devices disappear from this phone. Their traffic is still relayed for others.")
+                        Text("Blocked and reported devices disappear from this phone. Their traffic is still relayed for others.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
                 if let group = mesh.group(for: conversationKey) {
@@ -164,21 +165,29 @@ struct ConversationInfoView: View {
                         ForEach(group.members.sorted(), id: \.self) { member in
                             HStack {
                                 Text(member == mesh.myPeerID ? "\(mesh.nickname) (you)" : mesh.uniqueName(for: member))
-                                if trust.isVerified(member) { Image(systemName: "checkmark.seal.fill").foregroundStyle(.green) }
+                                if trust.isVerified(member) { Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.Colors.success) }
                                 Spacer()
-                                if member == group.admin { Text("Admin").font(.caption).foregroundStyle(.secondary) }
+                                if member == group.admin { Text("Admin").font(.caption).foregroundStyle(Theme.Colors.secondaryText) }
                                 if mesh.isGroupAdmin(groupKey: conversationKey) && member != mesh.myPeerID {
                                     Button("Remove") { mesh.removeMember(member, groupKey: conversationKey) }
                                         .buttonStyle(.borderless)
-                                        .foregroundStyle(.red)
+                                        .foregroundStyle(Theme.Colors.danger)
                                         .accessibilityIdentifier("info.remove.\(mesh.displayName(for: member))")
                                 }
                             }
                         }
+                        if mesh.isGroupAdmin(groupKey: conversationKey) {
+                            Button {
+                                showInvite = true
+                            } label: {
+                                Label("Invite with QR code", systemImage: "qrcode")
+                            }
+                            .accessibilityIdentifier("info.invite")
+                        }
                     } header: {
-                        Text("Members")
+                        Text("Members").foregroundStyle(Theme.Colors.secondaryText)
                     } footer: {
-                        Text("Removing someone, or anyone leaving, changes the group key so they can't read new messages.")
+                        Text("Removing someone, or anyone leaving, changes the group key so they can't read new messages.").foregroundStyle(Theme.Colors.secondaryText)
                     }
                     Section {
                         NavigationLink {
@@ -202,6 +211,7 @@ struct ConversationInfoView: View {
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             // Presented from the list level: sheets attached to lazily-built rows may never appear.
+            .sheet(isPresented: $showInvite) { GroupInviteCodeView(groupKey: conversationKey) }
             .sheet(isPresented: $verifying) {
                 if let peer = ConversationKey.peer(from: conversationKey) { VerifyContactView(peer: peer) }
             }
@@ -242,17 +252,17 @@ struct CatchUpView: View {
                         }
                     }
                     if !result.summary.highlights.isEmpty {
-                        Section("Most important") {
+                        Section {
                             ForEach(result.summary.highlights, id: \.id) { message in
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(message.senderName).font(.caption.weight(.semibold))
                                     Text(message.text)
-                                    Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary)
+                                    Text(message.date, style: .relative).font(.caption2).foregroundStyle(Theme.Colors.secondaryText)
                                 }
                                 .accessibilityElement(children: .combine)
                                 .accessibilityIdentifier("catchup.highlight")
                             }
-                        }
+                        } header: { SectionTitle("Most important") }
                     }
                 } else {
                     HStack { ProgressView(); Text("Reading what you missed…") }
